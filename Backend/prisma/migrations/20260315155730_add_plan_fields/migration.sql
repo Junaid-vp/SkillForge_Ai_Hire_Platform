@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "HR" ADD COLUMN     "interviewCount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "interviewLimit" INTEGER NOT NULL DEFAULT 10,
+ADD COLUMN     "plan" TEXT NOT NULL DEFAULT 'free';

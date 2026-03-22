@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model HR {
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  companyName    String
+  designation    String?
+  companyWebsite String
+  password       String
+  createdAt      DateTime @default(now())
+
+  
+  plan           String   @default("free")
+  interviewCount Int      @default(0)
+  interviewLimit Int      @default(10)
+
+  // Relations
+  developer      Developer[]
+  interviews     Interview[]
+  taskLibrary    TaskLibrary[]  
+
+}
+
+model Developer {
+  id             String   @id @default(uuid())
+  hrId           String
+  developerName  String
+  developerEmail String
+  position       String
+  experience     Int
+  interviewDate  DateTime
+  interviewTime  String
+  uniqueCode     String   @unique
+  createdAt      DateTime @default(now())
+
+  hr         HR          @relation(fields: [hrId], references: [id])
+  interviews Interview[]
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  STARTED
+  COMPLETED
+  CANCELLED
+}
+
+model Interview {
+  id          String          @id @default(uuid())
+  hrId        String
+  developerId String
+  status      InterviewStatus @default(SCHEDULED)
+  scheduledAt DateTime?
+  createdAt   DateTime        @default(now())
+
+  hr        HR        @relation(fields: [hrId], references: [id])
+  developer Developer @relation(fields: [developerId], references: [id])
+}
+
+
+model TaskLibrary {
+  id           String   @id @default(uuid())
+  hrId         String?
+  title        String
+  description  String
+  requirements String
+  category     String
+  techStack    String
+  difficulty   String
+  duration     Int
+  usedCount    Int      @default(0)
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  hr           HR?      @relation(fields: [hrId], references: [id])
+}
