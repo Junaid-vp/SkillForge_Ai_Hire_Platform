@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Formik, Form, Field, type FormikHelpers } from "formik";
 import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
-import { api } from '../Api/Axios';
+import { api } from '../../Api/Axios';
 import OTPModal from '../Components/OtpModal';
 
 const initialValues = {

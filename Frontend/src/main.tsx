@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import MobileGuard from "./Components/DesktopGaurd.tsx";
+import MobileGuard from "./HR/Components/DesktopGaurd.tsx";
 
 const queryClient = new QueryClient();
 

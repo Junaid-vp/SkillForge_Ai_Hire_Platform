@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Formik, Form, Field } from "formik";
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, Eye, EyeOff, ArrowRight } from 'lucide-react';
-import { api } from '../Api/Axios';
+import { api } from '../../Api/Axios';
 import { SignUPValidation } from '../Validation/SignUpValidation';
 
 interface HrDetails {

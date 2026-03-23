@@ -12,6 +12,21 @@ datasource db {
   provider = "postgresql"
 }
 
+enum InterviewStatus {
+  SCHEDULED
+  STARTED
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  PENDING
+  SUBMITTED
+  EXPIRED
+  REVIEWED
+}
+
+
 model HR {
   id             String   @id @default(uuid())
   name           String
@@ -21,17 +36,15 @@ model HR {
   companyWebsite String
   password       String
   createdAt      DateTime @default(now())
-
-  
   plan           String   @default("free")
   interviewCount Int      @default(0)
   interviewLimit Int      @default(10)
 
   // Relations
-  developer      Developer[]
-  interviews     Interview[]
-  taskLibrary    TaskLibrary[]  
-
+  developer   Developer[]
+  interviews  Interview[]
+  taskLibrary TaskLibrary[]
+  tasks       Task[]
 }
 
 model Developer {
@@ -46,15 +59,11 @@ model Developer {
   uniqueCode     String   @unique
   createdAt      DateTime @default(now())
 
-  hr         HR          @relation(fields: [hrId], references: [id])
-  interviews Interview[]
-}
+  // Relations
+  hr          HR           @relation(fields: [hrId], references: [id])
+  interviews  Interview[]
+  tasks       Task[]
 
-enum InterviewStatus {
-  SCHEDULED
-  STARTED
-  COMPLETED
-  CANCELLED
 }
 
 model Interview {
@@ -65,10 +74,11 @@ model Interview {
   scheduledAt DateTime?
   createdAt   DateTime        @default(now())
 
+  // Relations
   hr        HR        @relation(fields: [hrId], references: [id])
   developer Developer @relation(fields: [developerId], references: [id])
+  task      Task?
 }
-
 
 model TaskLibrary {
   id           String   @id @default(uuid())
@@ -84,5 +94,24 @@ model TaskLibrary {
   isDefault    Boolean  @default(false)
   createdAt    DateTime @default(now())
 
-  hr           HR?      @relation(fields: [hrId], references: [id])
+  // Relations
+  hr    HR?    @relation(fields: [hrId], references: [id])
+  tasks Task[]
+}
+
+model Task {
+  id            String     @id @default(uuid())
+  interviewId   String     @unique
+  hrId          String
+  developerId   String
+  taskLibraryId String
+  status        TaskStatus @default(PENDING)
+  deadline      DateTime
+  createdAt     DateTime   @default(now())
+
+  // Relations
+  interview   Interview   @relation(fields: [interviewId], references: [id])
+  hr          HR          @relation(fields: [hrId], references: [id])
+  developer   Developer   @relation(fields: [developerId], references: [id])
+  taskLibrary TaskLibrary @relation(fields: [taskLibraryId], references: [id])
 }

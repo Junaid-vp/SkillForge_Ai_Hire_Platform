@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Formik, Form, Field } from "formik";
 import { LinkIcon, Send, CalendarDays, User, Sparkles, CheckCircle2 } from 'lucide-react';
-import { api } from '../Api/Axios';
+import { api } from '../../Api/Axios';
 import { InterviewValidation } from '../Validation/InterviewValidation';
 
 

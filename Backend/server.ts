@@ -7,7 +7,7 @@ import cors from "cors";
 import { startRedisServer } from "./src/HR/Lib/redis.js";
 import cookieParser from "cookie-parser";
 import { main } from "./prisma/seed.js";
-
+import DevAuthroute from "./src/Dev/Routes/AuthRoutes.js";
 
 dotenv.config();
 const app: Application = express();
@@ -31,7 +31,7 @@ app.use(cookieParser())
 app.use("/api/auth/", AuthRoute);
 app.use('/api/interview/',InterviewRoute)
 app.use('/api/tasklibary',TaskLibaryRoute)
-
+app.use('/api/dev/',DevAuthroute)
 startRedisServer()
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

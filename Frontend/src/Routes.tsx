@@ -1,16 +1,16 @@
 import { createBrowserRouter } from "react-router-dom";
 import Home from "./Home/Home";
-import SignUp from "./Authentication/SignUp";
-import RollSelection from "./Pages/RollSelection";
-import Login from "./Authentication/Login";
-import Dashboard from "./Pages/Dashboard";
-import DashboardLayout from "./Components/DashBoardLayort";
-import CreateInterview from "./Pages/CreateInterview";
-import DeveloperList from "./Pages/DeveloperList";
-import ScheduledInterview from "./Pages/SheduledInterview";
-import TaskLibraryList from "./Pages/TaskList";
-import TaskLibraryEdit from "./Pages/TaskEdit";
-import TaskPreview from "./Pages/TaskPreview";
+import SignUp from "./HR/Authentication/SignUp";
+import RollSelection from "./HR/Pages/RollSelection";
+import Login from "./HR/Authentication/Login";
+import Dashboard from "./HR/Pages/Dashboard";
+import DashboardLayout from "./HR/Components/DashBoardLayort";
+import CreateInterview from "./HR/Pages/CreateInterview";
+import DeveloperList from "./HR/Pages/DeveloperList";
+import ScheduledInterview from "./HR/Pages/SheduledInterview";
+import TaskLibraryList from "./HR/Pages/TaskList";
+import TaskLibraryEdit from "./HR/Pages/TaskEdit";
+import TaskPreview from "./HR/Pages/TaskPreview";
 
 
 export const router = createBrowserRouter([

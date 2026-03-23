@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { Sparkles, LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, BarChart2, Settings, ChevronLeft, AlignJustify, LogOut } from 'lucide-react'
-import { api } from '../Api/Axios'
+import { api } from '../../Api/Axios'
 
 const navItems = [
   { label: 'Dashboard',          path: '/dashboard',                  group: 'Main',   icon: <LayoutDashboard size={15} /> },

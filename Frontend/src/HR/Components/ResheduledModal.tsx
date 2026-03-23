@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "../Api/Axios";
+import { api } from "../../Api/Axios";
 import { CalendarDays, Clock, X } from "lucide-react";
 
 interface Props {
