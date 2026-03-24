@@ -1,4 +1,4 @@
-import { Briefcase, Code, User, Sparkles, ArrowRight } from 'lucide-react';
+import { Briefcase, Code, User, Sparkles, ArrowRight, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const roles = [
@@ -29,11 +29,12 @@ const roles = [
     label: 'Job Seekers',
     desc: 'Prepare for interviews, get personalized AI feedback on answers, and perfect your resume.',
     path: '#',
-    color: 'text-violet-600',
-    bg: 'bg-violet-50',
-    hoverBorder: 'hover:border-violet-200',
-    hoverShadow: 'hover:shadow-violet-50',
-    btnLabel: "I'm a Job Seeker",
+    color: 'text-gray-400',
+    bg: 'bg-gray-100',
+    hoverBorder: 'border-gray-100',
+    hoverShadow: '',
+    btnLabel: "Coming Soon",
+    locked: true,
   },
 ]
 
@@ -93,11 +94,16 @@ function RollSelection() {
             {roles.map((role) => (
               <div
                 key={role.label}
-                onClick={() => navigate(role.path)}
-                className={`bg-white rounded-xl border border-gray-100 ${role.hoverBorder} hover:shadow-lg ${role.hoverShadow} transition-all group flex flex-col cursor-pointer`}
+                onClick={() => !role.locked && navigate(role.path)}
+                className={`bg-white rounded-xl border border-gray-100 ${role.hoverBorder} ${role.hoverShadow} transition-all flex flex-col ${role.locked ? 'opacity-70 cursor-not-allowed filter grayscale-[0.3]' : 'hover:shadow-lg cursor-pointer group'}`}
               >
-                <div className="p-7 flex-1">
-                  <div className={`w-10 h-10 ${role.bg} rounded-lg flex items-center justify-center mb-5 ${role.color} group-hover:scale-110 transition-transform`}>
+                <div className="p-7 flex-1 relative">
+                  {role.locked && (
+                    <span className="absolute top-6 right-6 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-gray-200">
+                      Coming Soon
+                    </span>
+                  )}
+                  <div className={`w-10 h-10 ${role.bg} rounded-lg flex items-center justify-center mb-5 ${role.color} ${role.locked ? '' : 'group-hover:scale-110'} transition-transform`}>
                     {role.icon}
                   </div>
                   <h3 className="text-base font-semibold mb-2 text-gray-900">{role.label}</h3>
@@ -105,9 +111,13 @@ function RollSelection() {
                 </div>
 
                 <div className="px-7 pb-7">
-                  <div className="flex items-center justify-between text-sm font-semibold text-gray-400 group-hover:text-blue-600 transition-colors border-t border-gray-100 pt-5">
+                  <div className={`flex items-center justify-between text-sm font-semibold border-t border-gray-100 pt-5 transition-colors ${role.locked ? 'text-gray-400' : 'text-gray-400 group-hover:text-blue-600'}`}>
                     <span>{role.btnLabel}</span>
-                    <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
+                    {role.locked ? (
+                      <Lock size={15} className="text-gray-400" />
+                    ) : (
+                      <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
+                    )}
                   </div>
                 </div>
               </div>

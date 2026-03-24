@@ -15,12 +15,8 @@ export const DevLoginController = async (req: Request, res: Response) => {
       });
     }
 
-
     const Dev = await prisma.developer.findFirst({
-      where: {
-        developerEmail: email,
-        uniqueCode: code,
-      }
+      where: { developerEmail: email, uniqueCode: code }
     })
 
     if (!Dev) {
@@ -29,52 +25,55 @@ export const DevLoginController = async (req: Request, res: Response) => {
       });
     }
 
-
     const interview = await prisma.interview.findFirst({
       where: { developerId: Dev.id }
     })
 
     if (!interview) {
-      return res.status(400).json({
-        Message: "No interview found"
-      })
+      return res.status(400).json({ Message: "No interview found" })
     }
 
-    if (
-      interview.status === "COMPLETED" ||
-      interview.status === "CANCELLED"
-    ) {
-      return res.status(403).json({
-        Message: "This interview has already been completed"
+    
+    if (interview.status === "CANCELLED") {
+      return res.status(403).json({ Message: "Interview cancelled" })
+    }
+
+    if (interview.status === "COMPLETED") {
+      const task = await prisma.task.findFirst({
+        where: { developerId: Dev.id }
       })
+
+      if (!task) {
+        return res.status(403).json({
+          Message: "Interview completed. Waiting for task assignment.",
+          waitingForTask: true
+        })
+      }
+
+      if (task.status === "SUBMITTED") {
+        return res.status(403).json({
+          Message: "Your task has already been submitted"
+        })
+      }
+
+      if (task.status === "EXPIRED") {
+        return res.status(403).json({
+          Message: "Your task deadline has passed"
+        })
+      }
+
+
     }
 
 
-    const task = await prisma.task.findFirst({
-      where: { developerId: Dev.id }
-    })
-
-    if (task?.status === "SUBMITTED") {
-      return res.status(403).json({
-        Message: "Your task has already been submitted"
-      })
-    }
-
-    if (task?.status === "EXPIRED") {
-      return res.status(403).json({
-        Message: "Your task deadline has passed"
-      })
-    }
-
-    const otp = otpGenerate();
-
-    await sentOTPtoDev(email, otp);
     await redis.del(`otp:${email}`)
+    const otp = otpGenerate();
+    await sentOTPtoDev(email, otp);
     await redis.set(`otp:${email}`, otp, { EX: 300 });
 
     res.status(200).json({
       Message: "OTP sent to email",
-      Status: "Success"
+      Status: "success"
     });
 
   } catch (e: any) {
@@ -84,7 +83,6 @@ export const DevLoginController = async (req: Request, res: Response) => {
     });
   }
 };
-
 
 export const otpValidationDev = async (req: Request, res: Response) => {
   try {

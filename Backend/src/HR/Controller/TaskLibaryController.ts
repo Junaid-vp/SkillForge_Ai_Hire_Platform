@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { prisma } from "../Lib/prisma.js";
 import { TaskLibary } from "../Lib/type.js";
 
-// ── GET ALL ───────────────────────────────────────────────
 export const getAllTask = async (req: Request, res: Response) => {
   try {
     const id = req.userId;

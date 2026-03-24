@@ -13,6 +13,7 @@ import TaskLibraryEdit from "./HR/Pages/TaskEdit";
 import TaskPreview from "./HR/Pages/TaskPreview";
 import DevLogin from "./Dev/Auth/DevLogin";
 import DevDashBoard from "./Dev/Page/DevDashBoard";
+import Settings from "./HR/Pages/Settings";
 
 
 export const router = createBrowserRouter([
@@ -70,6 +71,10 @@ export const router = createBrowserRouter([
         path:'/dashboard/task-preview/:id',
         element:<TaskPreview/>
       },
+      {
+    path:"/dashboard/settings",
+    element:<Settings/>
+  }
     ]
   },
   {
@@ -79,5 +84,6 @@ export const router = createBrowserRouter([
   {
     path:'/devDashboard',
     element:<DevDashBoard/>
-  }
+  },
+  
 ]);
