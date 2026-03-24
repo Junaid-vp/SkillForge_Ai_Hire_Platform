@@ -15,7 +15,7 @@ export const DevLoginController = async (req: Request, res: Response) => {
       });
     }
 
-   
+
     const Dev = await prisma.developer.findFirst({
       where: {
         developerEmail: email,
@@ -49,9 +49,9 @@ export const DevLoginController = async (req: Request, res: Response) => {
       })
     }
 
-  
+
     const task = await prisma.task.findFirst({
-      where: { developerId:Dev.id }
+      where: { developerId: Dev.id }
     })
 
     if (task?.status === "SUBMITTED") {
@@ -67,12 +67,14 @@ export const DevLoginController = async (req: Request, res: Response) => {
     }
 
     const otp = otpGenerate();
+
     await sentOTPtoDev(email, otp);
+    await redis.del(`otp:${email}`)
     await redis.set(`otp:${email}`, otp, { EX: 300 });
 
     res.status(200).json({
       Message: "OTP sent to email",
-      Status: "success"
+      Status: "Success"
     });
 
   } catch (e: any) {
@@ -103,7 +105,7 @@ export const otpValidationDev = async (req: Request, res: Response) => {
     const Dev = await prisma.developer.findFirst({
       where: {
         developerEmail: email,
-        uniqueCode: uniqueCode  
+        uniqueCode: uniqueCode
       }
     })
 
@@ -111,7 +113,7 @@ export const otpValidationDev = async (req: Request, res: Response) => {
       return res.status(404).json({ Message: "Developer not found" })
     }
 
-    const {AccessToken } = tokenGeneratorDev(email, Dev.id)
+    const { AccessToken } = tokenGeneratorDev(email, Dev.id)
     res
       .status(200)
       .cookie("Dev_Access_Token", AccessToken, {
@@ -120,7 +122,7 @@ export const otpValidationDev = async (req: Request, res: Response) => {
         secure: true,
       }).json({
         Message: "Login Successful",
-        Status: "success"
+        Status: "Success"
       })
 
   } catch (e: any) {
@@ -131,7 +133,7 @@ export const otpValidationDev = async (req: Request, res: Response) => {
   }
 }
 
-export const otpResend = async (req: Request, res: Response) => {
+export const DevOtpResend = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
@@ -142,14 +144,14 @@ export const otpResend = async (req: Request, res: Response) => {
     await redis.del(`otp:${email}`)
 
     const otp = otpGenerate();
-
+    console.log(otp)
     await sentOTPtoDev(email, otp);
 
     await redis.set(`otp:${email}`, otp, { EX: 300 });
 
     res.status(200).json({
-      Message: "OTP sent to email",
-      Status: "success"
+      Message: "OTP Re-sent to email",
+      Status: "Success"
     });
 
   } catch (e: any) {
@@ -158,5 +160,22 @@ export const otpResend = async (req: Request, res: Response) => {
       Message: "Server Error",
       Error: e.message
     });
+  }
+};
+
+
+
+ export const DevLogoutController = async (req: Request, res:Response) => {
+  try {
+    res
+      .clearCookie("Dev_Access_Token", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false,
+      })
+      .status(200)
+      .json({ Message: "Logout successful" });
+  } catch (e) {
+    res.status(500).json({ Message: "Logout error" });
   }
 };

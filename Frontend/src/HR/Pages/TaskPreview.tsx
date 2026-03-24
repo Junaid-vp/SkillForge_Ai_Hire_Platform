@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../../Api/Axios";
 import {
@@ -15,6 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import DeleteConfirmModal from "../Components/DeleteConformModal";
+import { useQuery } from "@tanstack/react-query";
 
 interface TaskLibrary {
   id: string;
@@ -52,29 +53,24 @@ const difficultyConfig: Record<
   },
 };
 
+const fetchSpecificData = async (id: string) => {
+  const res = await api.get(`/tasklibary/specifictask/${id}`);
+  return res.data.data;
+};
+
 function TaskPreview() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [task, setTask] = useState<TaskLibrary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [deleted, setDeleted] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    const fetchTask = async () => {
-      setIsLoading(true);
-      try {
-        const res = await api.get(`/tasklibary/specifictask/${id}`);
-        setTask(res.data.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchTask();
-  }, [id]);
+  const { data, isLoading,  } = useQuery<TaskLibrary>({
+    queryKey: ["SpecificData", id],
+    queryFn: () => fetchSpecificData(id!),
+    enabled: !!id,
+  });
+
 
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
@@ -82,7 +78,7 @@ function TaskPreview() {
       await api.delete(`/tasklibary/delete/${id}`);
       setShowDeleteModal(false);
       setDeleted(true);
-      setTimeout(() => navigate("/dashboard/task-library-list"), 1500);
+      setTimeout(() => navigate("/dashboard/task-library-list"), 2000);
     } catch (e) {
       console.error(e);
     } finally {
@@ -90,16 +86,16 @@ function TaskPreview() {
     }
   };
 
-  const diff = task
-    ? (difficultyConfig[task.difficulty.toLowerCase()] ?? {
+  const diff = data
+    ? difficultyConfig[data.difficulty.toLowerCase()] ?? {
         bg: "bg-gray-50",
         text: "text-gray-600",
         border: "border-gray-200",
-      })
+      }
     : null;
 
-  const requirements = task?.requirements
-    ? task.requirements.split("|").filter((r) => r.trim())
+  const requirements = data?.requirements
+    ? data.requirements.split("|").filter((r) => r.trim())
     : [];
 
   if (isLoading)
@@ -114,7 +110,7 @@ function TaskPreview() {
       </div>
     );
 
-  if (!task)
+  if (!data)
     return (
       <div className="max-w-3xl mx-auto pb-10">
         <div className="bg-white border border-red-100 rounded-2xl p-12 text-center">
@@ -134,7 +130,7 @@ function TaskPreview() {
       {/* Delete Modal */}
       {showDeleteModal && (
         <DeleteConfirmModal
-          taskTitle={task.title}
+          taskTitle={data.title}
           isDeleting={isDeleting}
           onConfirm={handleDeleteConfirm}
           onCancel={() => setShowDeleteModal(false)}
@@ -189,7 +185,7 @@ function TaskPreview() {
               Assign Task
             </button>
 
-            {!task.isDefault && (
+            {!data.isDefault && (
               <>
                 <button
                   onClick={() => navigate(`/dashboard/task-edit/${id}`)}
@@ -219,8 +215,8 @@ function TaskPreview() {
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-gray-900">{task.title}</h2>
-              {task.isDefault && (
+              <h2 className="text-sm font-bold text-gray-900">{data.title}</h2>
+              {data.isDefault && (
                 <span className="text-[9px] font-semibold bg-blue-50 border border-blue-100 text-blue-600 px-2 py-0.5 rounded-full uppercase tracking-wide">
                   Default
                 </span>
@@ -231,18 +227,18 @@ function TaskPreview() {
                 <span
                   className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${diff.bg} ${diff.text} ${diff.border} capitalize`}
                 >
-                  {task.difficulty}
+                  {data.difficulty}
                 </span>
               )}
               <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                <Clock size={10} /> {task.duration} Day
-                {task.duration !== 1 ? "s" : ""}
+                <Clock size={10} /> {data.duration} Day
+                {data.duration !== 1 ? "s" : ""}
               </span>
               <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                <Layers size={10} /> {task.category}
+                <Layers size={10} /> {data.category}
               </span>
               <span className="text-[10px] text-gray-400">
-                Used {task.usedCount} time{task.usedCount !== 1 ? "s" : ""}
+                Used {data.usedCount} time{data.usedCount !== 1 ? "s" : ""}
               </span>
             </div>
           </div>
@@ -254,7 +250,7 @@ function TaskPreview() {
               Description
             </p>
             <p className="text-sm text-gray-600 leading-relaxed">
-              {task.description}
+              {data.description}
             </p>
           </div>
 
@@ -283,7 +279,7 @@ function TaskPreview() {
               </span>
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {task.techStack.split(",").map((t, i) => (
+              {data.techStack.split(",").map((t, i) => (
                 <span
                   key={i}
                   className="text-xs font-medium bg-gray-50 border border-gray-200 text-gray-600 px-3 py-1 rounded-lg"
@@ -306,7 +302,7 @@ function TaskPreview() {
             </p>
           </div>
           <p className="text-sm font-bold text-gray-900 capitalize">
-            {task.difficulty}
+            {data.difficulty}
           </p>
         </div>
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm px-5 py-4">
@@ -317,7 +313,7 @@ function TaskPreview() {
             </p>
           </div>
           <p className="text-sm font-bold text-gray-900">
-            {task.duration} Day{task.duration !== 1 ? "s" : ""}
+            {data.duration} Day{data.duration !== 1 ? "s" : ""}
           </p>
         </div>
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm px-5 py-4">
@@ -327,7 +323,7 @@ function TaskPreview() {
               Times Used
             </p>
           </div>
-          <p className="text-sm font-bold text-gray-900">{task.usedCount}</p>
+          <p className="text-sm font-bold text-gray-900">{data.usedCount}</p>
         </div>
       </div>
     </div>

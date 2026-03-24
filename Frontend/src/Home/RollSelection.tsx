@@ -17,7 +17,7 @@ const roles = [
     icon: <Code className="w-5 h-5" />,
     label: 'Developers',
     desc: 'Access practice arenas, track progress, participate in code evaluations and connect with Github.',
-    path: "#",
+    path: "/devLogin",
     color: 'text-indigo-600',
     bg: 'bg-indigo-50',
     hoverBorder: 'hover:border-indigo-200',

@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Home from "./Home/Home";
 import SignUp from "./HR/Authentication/SignUp";
-import RollSelection from "./HR/Pages/RollSelection";
+import RollSelection from "./Home/RollSelection";
 import Login from "./HR/Authentication/Login";
 import Dashboard from "./HR/Pages/Dashboard";
 import DashboardLayout from "./HR/Components/DashBoardLayort";
@@ -11,6 +11,8 @@ import ScheduledInterview from "./HR/Pages/SheduledInterview";
 import TaskLibraryList from "./HR/Pages/TaskList";
 import TaskLibraryEdit from "./HR/Pages/TaskEdit";
 import TaskPreview from "./HR/Pages/TaskPreview";
+import DevLogin from "./Dev/Auth/DevLogin";
+import DevDashBoard from "./Dev/Page/DevDashBoard";
 
 
 export const router = createBrowserRouter([
@@ -67,7 +69,15 @@ export const router = createBrowserRouter([
       {
         path:'/dashboard/task-preview/:id',
         element:<TaskPreview/>
-      }
-    ],
+      },
+    ]
   },
+  {
+    path:"/devLogin",
+    element:<DevLogin/>
+  },
+  {
+    path:'/devDashboard',
+    element:<DevDashBoard/>
+  }
 ]);

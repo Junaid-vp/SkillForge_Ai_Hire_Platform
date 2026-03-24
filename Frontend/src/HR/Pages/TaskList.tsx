@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { api } from "../../Api/Axios";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,6 +12,7 @@ import {
   Plus,
   Eye,
 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface TaskLibrary {
   id: string;
@@ -50,33 +50,25 @@ const difficultyConfig: Record<
   },
 };
 
+const fetchLibraryData = async () => {
+  const res = await api.get("/tasklibary/alltask");
+  return res.data.data;
+};
+
 function TaskLibraryList() {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState<TaskLibrary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    const fetchTask = async () => {
-      setIsLoading(true);
-      try {
-        const res = await api.get("/tasklibary/alltask");
-        setTasks(res.data.data);
-      } catch (e) {
-        console.error(e);
-        setError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchTask();
-  }, []);
+const queryClient = useQueryClient();
+const {data,isLoading,error} = useQuery<TaskLibrary[]>({
+    queryKey: ["TaskLibary"],
+    queryFn: fetchLibraryData,
+  })
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this task?")) return;
     try {
       await api.delete(`/tasklibary/delete/${id}`);
-      setTasks((prev) => prev.filter((t) => t.id !== id));
+      queryClient.invalidateQueries({ queryKey: ["TaskLibrary"] });
     } catch (e) {
       console.error(e);
     }
@@ -155,7 +147,7 @@ function TaskLibraryList() {
       )}
 
       {/* Empty */}
-      {!isLoading && !error && tasks.length === 0 && (
+      {!isLoading && !error && data && data.length === 0 && (
         <div className="bg-white border border-gray-100 rounded-2xl p-14 text-center">
           <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <BookOpen size={20} className="text-blue-400" />
@@ -174,9 +166,9 @@ function TaskLibraryList() {
       )}
 
       {/* Task Cards */}
-      {!isLoading && !error && tasks.length > 0 && (
+      {!isLoading && !error && data && data.length > 0 && (
         <div className="space-y-3">
-          {tasks.map((task) => {
+          {data.map((task) => {
             const diff = getDifficultyStyle(task.difficulty);
             let requirementCount = 0;
             requirementCount = task.requirements

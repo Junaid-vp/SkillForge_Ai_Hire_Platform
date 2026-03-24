@@ -189,7 +189,7 @@ function ScheduledInterview() {
       )}
 
       {/* Empty */}
-      {!isLoading && !error && data?.length === 0 && (
+      {!isLoading && !error && data && data.length === 0 && (
         <div className="bg-white border border-gray-100 rounded-2xl p-14 text-center">
           <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <CalendarDays size={20} className="text-blue-400" />

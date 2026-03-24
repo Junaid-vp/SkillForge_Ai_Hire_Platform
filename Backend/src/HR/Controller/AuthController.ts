@@ -166,13 +166,13 @@ export const otpResend = async (req: Request, res: Response) => {
     res
       .clearCookie("Access_Token", {
         httpOnly: true,
-        sameSite: "lax",
-        secure: false,
+        sameSite: "none",
+        secure: true,
       })
       .clearCookie("Refresh_Token", {
         httpOnly: true,
-        sameSite: "lax",
-        secure: false,
+        sameSite: "none",
+        secure: true,
       })
       .status(200)
       .json({ Message: "Logout successful" });
