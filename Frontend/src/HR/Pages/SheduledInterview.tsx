@@ -9,6 +9,7 @@ import {
   Timer,
   Video,
   RotateCcw,
+  LinkIcon
 } from "lucide-react";
 import RescheduleModal from "../Components/ResheduledModal";
 import { useState } from "react";
@@ -253,7 +254,15 @@ function ScheduledInterview() {
                           {interview.developer.position}
                         </span>
                       </div>
+                     
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <LinkIcon size={11} className="text-gray-400" />
+                        <span className="text-xs text-gray-500">
+                          {interview.developer.uniqueCode}
+                        </span>
+                      </div>
 
+                        
                       {/* Date · Time */}
                       <div className="flex items-center gap-1 text-xs text-gray-400">
                         <CalendarDays size={11} className="text-gray-300" />

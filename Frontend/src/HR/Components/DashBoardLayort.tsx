@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
-import { Sparkles, LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, BarChart2, Settings, ChevronLeft, AlignJustify, LogOut } from 'lucide-react'
+import { Sparkles, LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, BarChart2, Settings, ChevronLeft, AlignJustify, LogOut, Crown } from 'lucide-react'
 import { api } from '../../Api/Axios'
 
 const navItems = [
@@ -87,6 +87,8 @@ export default function DashboardLayout() {
           })}
         </nav>
 
+
+
         {/* Sidebar bottom — Logout + Collapse */}
         <div className="px-3 py-4 border-t border-gray-100 space-y-1">
 
@@ -134,14 +136,21 @@ export default function DashboardLayout() {
             <h1 className="text-sm font-semibold text-gray-900 tracking-tight">{activeLabel}</h1>
           </div>
 
-          {/* Avatar + dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white text-[11px] font-bold tracking-wide hover:bg-gray-800 transition-colors shadow-sm"
-            >
-              HR
+          {/* Right Side: Upgrade + Avatar */}
+          <div className="flex items-center gap-4">
+            <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-lg text-xs font-semibold shadow-sm transition-all shadow-indigo-200/50">
+              <Crown size={14} className="text-indigo-100" />
+              Upgrade to Pro
             </button>
+
+            {/* Avatar + dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white text-[11px] font-bold tracking-wide hover:bg-gray-800 transition-colors shadow-sm"
+              >
+                HR
+              </button>
 
             {showDropdown && (
               <>
@@ -168,6 +177,7 @@ export default function DashboardLayout() {
                 </div>
               </>
             )}
+          </div>
           </div>
         </header>
 
