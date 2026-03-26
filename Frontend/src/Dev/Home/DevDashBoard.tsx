@@ -26,12 +26,16 @@ interface HR {
 
 interface Task {
   id: string;
-  title: string;
-  description: string;
-  difficulty: string;
-  duration: number;
-  category: string;
-  techStack: string;
+  taskLibrary: {
+    title: string;
+    description: string;
+    requirements: string,
+    difficulty: string;
+    duration: number;
+    category: string;
+    techStack: string;
+  };
+  deadline: string;
 }
 
 interface Interview {
@@ -55,6 +59,7 @@ interface DevData {
   uniqueCode: string;
   createdAt: string;
   interviews: Interview[];
+  
 }
 
 const fetchDashBoard = async (): Promise<DevData> => {
@@ -122,6 +127,8 @@ function DevDashBoard() {
     queryFn: fetchDashBoard,
   });
 
+  
+  
   return (
     <div className="min-h-screen bg-gray-50 font-sans antialiased flex flex-col">
       {/* Topbar */}
@@ -179,7 +186,7 @@ function DevDashBoard() {
             const isScheduled = interview?.status === "SCHEDULED";
             const isStarted = interview?.status === "STARTED";
             const diff = task
-              ? difficultyColors[task.difficulty?.toLowerCase()] ?? difficultyColors["medium"]
+              ? difficultyColors[task.taskLibrary.difficulty?.toLowerCase()] ?? difficultyColors["medium"]
               : null;
 
             return (
@@ -195,7 +202,7 @@ function DevDashBoard() {
                     </span>
                   </div>
                   <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                    Welcome, {data.developerName.split(" ")[0]}
+                    Welcome, {data.developerName?.split(" ")[0]}
                   </h1>
                   <p className="text-sm text-gray-400 mt-1">
                     Here's your interview and task overview
@@ -301,25 +308,43 @@ function DevDashBoard() {
                     <div className="px-6 py-5 space-y-4">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h2 className="text-sm font-bold text-gray-900">{task.title}</h2>
+                          <h2 className="text-sm font-bold text-gray-900">{task.taskLibrary.title}</h2>
                           <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${diff.bg} ${diff.text} ${diff.border} capitalize`}>
-                            {task.difficulty}
+                            {task.taskLibrary.difficulty}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-400 leading-relaxed">{task.description}</p>
+                        <p className="text-xs text-gray-400 leading-relaxed">{task.taskLibrary.description}</p>
                       </div>
+
+                      {task.taskLibrary.requirements && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Requirements</p>
+                          <div className="space-y-2">
+                            {task.taskLibrary.requirements.split("|").filter(r => r.trim()).map((req, i) => (
+                              <div key={i} className="flex items-start gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+                                <p className="text-xs text-gray-600 leading-relaxed">{req.trim()}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div className="flex items-center gap-4">
                         <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
                           <Clock size={11} className="text-gray-300" />
-                          {task.duration} day{task.duration !== 1 ? "s" : ""}
+                          {task.taskLibrary.duration} day{task.taskLibrary.duration !== 1 ? "s" : ""}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                          <CalendarDays size={11} className="text-gray-300" />
+                          Deadline: {formatDate(task.deadline)}
                         </span>
                         <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
                           <Layers size={11} className="text-gray-300" />
-                          {task.category}
+                          {task.taskLibrary.category}
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {task.techStack.split(",").map((t, i) => (
+                        {task?.taskLibrary?.techStack?.split(",").map((t, i) => (
                           <span key={i} className="text-xs font-medium bg-gray-50 border border-gray-200 text-gray-600 px-2.5 py-0.5 rounded-lg">
                             {t.trim()}
                           </span>

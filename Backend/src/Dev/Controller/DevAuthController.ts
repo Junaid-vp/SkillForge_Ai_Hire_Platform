@@ -15,15 +15,24 @@ export const DevLoginController = async (req: Request, res: Response) => {
       });
     }
 
-    const Dev = await prisma.developer.findFirst({
-      where: { developerEmail: email, uniqueCode: code }
-    })
+const Dev = await prisma.developer.findUnique({
+  where: { uniqueCode: code }
+});
 
-    if (!Dev) {
-      return res.status(400).json({
-        Message: "Invalid email or invite code"
-      });
-    }
+if (!Dev) {
+  return res.status(400).json({
+    Message: "Invalid invite code"
+  });
+}
+
+
+
+if (Dev.developerEmail !== email) {
+  return res.status(400).json({
+    Message: "Email does not match this code"
+  });
+}
+
 
     const interview = await prisma.interview.findFirst({
       where: { developerId: Dev.id }
@@ -33,7 +42,7 @@ export const DevLoginController = async (req: Request, res: Response) => {
       return res.status(400).json({ Message: "No interview found" })
     }
 
-    
+
     if (interview.status === "CANCELLED") {
       return res.status(403).json({ Message: "Interview cancelled" })
     }
@@ -73,7 +82,7 @@ export const DevLoginController = async (req: Request, res: Response) => {
 
     res.status(200).json({
       Message: "OTP sent to email",
-      Status: "success"
+      Status: "Success"
     });
 
   } catch (e: any) {
@@ -163,7 +172,7 @@ export const DevOtpResend = async (req: Request, res: Response) => {
 
 
 
- export const DevLogoutController = async (req: Request, res:Response) => {
+export const DevLogoutController = async (req: Request, res: Response) => {
   try {
     res
       .clearCookie("Dev_Access_Token", {

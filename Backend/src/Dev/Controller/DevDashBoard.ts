@@ -26,7 +26,9 @@ export const getDashboard = async (req: Request, res: Response) => {
               },
             },
             task: {
-              include: {
+              select: {
+                id: true,
+                deadline: true,
                 taskLibrary: {
                   select: {
                     title: true,

@@ -14,8 +14,9 @@ import {
   ArrowLeft,
   CheckCircle2,
 } from "lucide-react";
-import DeleteConfirmModal from "../Components/DeleteConformModal";
+import DeleteConfirmModal from "../Components/Mod/DeleteConformModal";
 import { useQuery } from "@tanstack/react-query";
+import TaskAssignModal from "../Components/Mod/TaskAssignModal";
 
 interface TaskLibrary {
   id: string;
@@ -64,7 +65,8 @@ function TaskPreview() {
   const [deleted, setDeleted] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const [showAssignModal,setShowAssignModal] = useState(false)
+  const[isAssgin,setIsAssgin] = useState(false)
   const { data, isLoading,  } = useQuery<TaskLibrary>({
     queryKey: ["SpecificData", id],
     queryFn: () => fetchSpecificData(id!),
@@ -78,13 +80,29 @@ function TaskPreview() {
       await api.delete(`/tasklibary/delete/${id}`);
       setShowDeleteModal(false);
       setDeleted(true);
-      setTimeout(() => navigate("/dashboard/task-library-list"), 2000);
+      setTimeout(() => navigate("/dashboard/task-library"), 2000);
     } catch (e) {
       console.error(e);
     } finally {
       setIsDeleting(false);
     }
   };
+
+ const handleTaskAssign = async (code: string) => {
+  setIsAssgin(true);
+  try {
+    await api.post("/task/taskassgin", { code, libaryId: data?.id });
+    setShowAssignModal(false);
+    alert("Task Assgin Success")
+    
+  } catch (e: any) {
+    console.error(e.message);
+    throw e;
+  } finally {
+    setIsAssgin(false);
+  }
+ };
+
 
   const diff = data
     ? difficultyConfig[data.difficulty.toLowerCase()] ?? {
@@ -136,6 +154,14 @@ function TaskPreview() {
           onCancel={() => setShowDeleteModal(false)}
         />
       )}
+      {showAssignModal && (
+        <TaskAssignModal
+        taskTitle={data.title}
+          isAssgin={isAssgin}
+          onConfirm={handleTaskAssign}
+          onCancel={() => setShowAssignModal(false)}
+        />
+      )}
 
       {/* Deleted banner */}
       {deleted && (
@@ -176,9 +202,7 @@ function TaskPreview() {
           {/* Action buttons */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                /* handle assign */
-              }}
+              onClick={() => setShowAssignModal(true)}
               className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm shadow-green-100"
             >
               <UserPlus size={13} />
@@ -279,7 +303,7 @@ function TaskPreview() {
               </span>
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {data.techStack.split(",").map((t, i) => (
+              {data.techStack?.split(",").map((t, i) => (
                 <span
                   key={i}
                   className="text-xs font-medium bg-gray-50 border border-gray-200 text-gray-600 px-3 py-1 rounded-lg"

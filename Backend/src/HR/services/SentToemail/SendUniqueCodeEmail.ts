@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
 export const sendUniqueCode = async (
@@ -11,34 +11,40 @@ export const sendUniqueCode = async (
   interviewTime: string,
   email: string | undefined,
   companyName: string | undefined,
-  name: string | undefined
+  name: string | undefined,
 ) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+        pass: process.env.EMAIL_PASS,
+      },
     });
 
     const dateObj = new Date(interviewDate);
-    const formattedDate = isNaN(dateObj.getTime()) ? interviewDate
-      : dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const formattedDate = isNaN(dateObj.getTime())
+      ? interviewDate
+      : dateObj.toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
 
     const formatTime = (t: string) => {
-      if (!t?.includes(':')) return t;
-      const [h, m] = t.split(':').map(Number);
-      return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+      if (!t?.includes(":")) return t;
+      const [h, m] = t.split(":").map(Number);
+      return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
     };
-    
+
     console.log("Sending Schedule Email With Transporter...");
     console.log("To:", developerEmail);
 
     await transporter.sendMail({
-      from: `"${companyName ?? 'SkillForge AI'}" <${process.env.EMAIL_USER}>`,
+      from: `"${companyName ?? "SkillForge AI"}" <${process.env.EMAIL_USER}>`,
       to: developerEmail,
-      subject: `Interview Invitation — ${position} at ${companyName ?? 'SkillForge AI'}`,
+      subject: `Interview Invitation — ${position} at ${companyName ?? "SkillForge AI"}`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -64,7 +70,7 @@ export const sendUniqueCode = async (
         <td style="background:linear-gradient(135deg,#1d4ed8 0%,#4f46e5 100%);padding:40px 48px 36px;">
           <p style="margin:0 0 6px;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#bfdbfe;">You're Invited</p>
           <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.2;">Interview Invitation</h1>
-          <p style="margin:0;font-size:14px;color:#93c5fd;line-height:1.6;">${position} &nbsp;·&nbsp; ${companyName ?? 'SkillForge AI'}</p>
+          <p style="margin:0;font-size:14px;color:#93c5fd;line-height:1.6;">${position} &nbsp;·&nbsp; ${companyName ?? "SkillForge AI"}</p>
         </td>
       </tr>
     </table>
@@ -75,7 +81,7 @@ export const sendUniqueCode = async (
       <!-- Greeting -->
       <p style="margin:0 0 6px;font-size:18px;font-weight:700;color:#0f172a;">Dear ${developerName},</p>
       <p style="margin:0 0 28px;font-size:14px;color:#475569;line-height:1.8;">
-        <strong style="color:#0f172a;">${name ?? 'Our HR Team'}</strong> from
+        <strong style="color:#0f172a;">${name ?? "Our HR Team"}</strong> from
         <strong style="color:#0f172a;">${companyName}</strong> has scheduled an interview for you
         on the <strong style="color:#1d4ed8;">SkillForge AI</strong> platform. Your interview will include
         an <strong style="color:#0f172a;">HR round</strong> followed by a <strong style="color:#0f172a;">technical assessment</strong>.
@@ -101,20 +107,33 @@ export const sendUniqueCode = async (
         <tr>
           <td style="padding:18px 20px;">
             <p style="margin:0 0 3px;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">Invited By</p>
-            <p style="margin:0;font-size:15px;font-weight:700;color:#0f172a;">${name ?? 'HR Team'}</p>
-            <p style="margin:2px 0 0;font-size:12px;color:#64748b;">${email ?? ''}</p>
+            <p style="margin:0;font-size:15px;font-weight:700;color:#0f172a;">${name ?? "HR Team"}</p>
+            <p style="margin:2px 0 0;font-size:12px;color:#64748b;">${email ?? ""}</p>
           </td>
         </tr>
       </table>
 
       <!-- Access code box -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
         <tr><td style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:24px 28px;text-align:center;">
           <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#3b82f6;">Your Access Code</p>
           <p style="margin:0 0 14px;font-size:12px;color:#64748b;">Enter this code on SkillForge AI to begin your session</p>
           <p style="margin:0;font-size:34px;font-weight:900;color:#1d4ed8;letter-spacing:0.4em;font-family:'Courier New',monospace;">${UniqueCode}</p>
         </td></tr>
       </table>
+
+      <!-- ✅ NEW: Join Interview CTA Button -->
+     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+  <tr><td align="center">
+    <a href="http://localhost:5173/devLogin"
+       style="display:inline-block;background:#1d4ed8;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:13px 40px;border-radius:8px;letter-spacing:0.2px;">
+      Go to Login Page
+    </a>
+    <p style="margin:10px 0 0;font-size:11px;color:#94a3b8;">
+      <a href="http://localhost:5173/devLogin" style="color:#1d4ed8;text-decoration:none;">http://localhost:5173/devLogin</a>
+    </p>
+  </td></tr>
+</table>
 
       <!-- Notice -->
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
@@ -134,13 +153,13 @@ export const sendUniqueCode = async (
       <!-- Sign off -->
       <p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.8;">
         Should you have any questions, please reach out to
-        <a href="mailto:${email}" style="color:#1d4ed8;text-decoration:none;font-weight:500;">${email ?? ''}</a>.
+        <a href="mailto:${email}" style="color:#1d4ed8;text-decoration:none;font-weight:500;">${email ?? ""}</a>.
         We look forward to speaking with you.
       </p>
       <p style="margin:0;font-size:14px;color:#0f172a;line-height:1.8;">
         Warm regards,<br/>
-        <strong>${name ?? 'The HR Team'}</strong><br/>
-        <span style="font-size:13px;color:#64748b;">${companyName ?? 'SkillForge AI'}</span>
+        <strong>${name ?? "The HR Team"}</strong><br/>
+        <span style="font-size:13px;color:#64748b;">${companyName ?? "SkillForge AI"}</span>
       </p>
 
     </td></tr></table>
@@ -148,7 +167,7 @@ export const sendUniqueCode = async (
 
   <!-- Footer -->
   <tr><td align="center" style="padding:24px 0 0;">
-    <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">Sent via <strong style="color:#64748b;">SkillForge AI</strong> on behalf of ${companyName ?? 'the hiring team'}</p>
+    <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">Sent via <strong style="color:#64748b;">SkillForge AI</strong> on behalf of ${companyName ?? "the hiring team"}</p>
     <p style="margin:0;font-size:11px;color:#cbd5e1;">© 2026 SkillForge AI · All rights reserved.</p>
   </td></tr>
 
@@ -157,7 +176,7 @@ export const sendUniqueCode = async (
 </table>
 </body>
 </html>
-      `
+`,
     });
   } catch (e) {
     console.error("Email sending error:", e);

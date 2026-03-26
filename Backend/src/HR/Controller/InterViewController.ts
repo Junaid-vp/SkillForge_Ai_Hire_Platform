@@ -50,7 +50,7 @@ export const sheduleInterview = async (req: Request, res: Response) => {
       return res.status(404).json({ Message: "HR not found" });
     }
 
-    
+
     if (user.plan === "free" && user.interviewCount >= user.interviewLimit) {
       return res.status(403).json({
         Message: "Interview limit reached. Please upgrade to Pro.",
@@ -150,13 +150,13 @@ export const sheduledInterviewDetails = async (req: Request, res: Response) => {
       orderBy: { createdAt: "desc" },
     });
 
-    
+
     if (details.length === 0) {
-  return res.status(200).json({
-    data: [],
-    status: "success"
-  });
-}
+      return res.status(200).json({
+        data: [],
+        status: "success"
+      });
+    }
 
     res.status(200).json({
       data: details,
@@ -182,11 +182,11 @@ export const getDevelopers = async (req: Request, res: Response) => {
     });
 
     if (developers.length === 0) {
-  return res.status(200).json({
-    data: [],
-    status: "success"
-  });
-}
+      return res.status(200).json({
+        data: [],
+        status: "success"
+      });
+    }
 
     res.status(200).json({
       data: developers,
@@ -212,17 +212,17 @@ export const rescheduleInterview = async (req: Request, res: Response) => {
       return res.status(400).json({ Message: "interviewId, newDate and newTime are required" });
     }
 
- 
+
     const interview = await prisma.interview.findUnique({
       where: { id: interviewId },
-      include: { developer: true,hr:true }
+      include: { developer: true, hr: true }
     });
 
     if (!interview) {
       return res.status(404).json({ Message: "Interview not found" });
     }
 
-   
+
     if (interview.hrId !== id) {
       return res.status(403).json({ Message: "Unauthorized" });
     }
@@ -235,8 +235,8 @@ export const rescheduleInterview = async (req: Request, res: Response) => {
         Message: "Cannot schedule interview in the past"
       });
     }
-  
- 
+
+
     await prisma.interview.update({
       where: { id: interviewId },
       data: {
@@ -254,7 +254,7 @@ export const rescheduleInterview = async (req: Request, res: Response) => {
       }
     });
 
-       await sendResheduledTime(
+    await sendResheduledTime(
       interview.developer.developerName,
       interview.developer.developerEmail,
       interview.developer.position,

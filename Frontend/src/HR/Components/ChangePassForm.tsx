@@ -3,7 +3,7 @@ import { Formik, Form, Field, type FormikHelpers, type FormikProps } from "formi
 import { Lock, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react';
 
 import { api } from '../../Api/Axios';
-import PassConformationOtpModal from './PassConformationOtpModal';
+import PassConformationOtpModal from './Mod/PassConformationOtpModal';
 import { ChangePassValidation } from '../Validation/ChangePassValidation';
 
 

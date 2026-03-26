@@ -11,7 +11,7 @@ import {
   RotateCcw,
   LinkIcon
 } from "lucide-react";
-import RescheduleModal from "../Components/ResheduledModal";
+import RescheduleModal from "../Components/Mod/ResheduledModal";
 import { useState } from "react";
 
 type InterviewStatus = "SCHEDULED" | "STARTED" | "COMPLETED" | "CANCELLED";

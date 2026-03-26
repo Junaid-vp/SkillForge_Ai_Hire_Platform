@@ -10,6 +10,8 @@ import { main } from "./prisma/seed.js";
 import DevAuthroute from "./src/Dev/Routes/AuthRoutes.js";
 import DevDashRoute from "./src/Dev/Routes/DevDashRoutes.js";
 import SettingRoute from "./src/HR/Routes/SettingsRoute.js";
+import { CheckTaskDeadLine } from "./src/Dev/Services/CheckDeadline.js";
+import TaskRoute from "./src/HR/Routes/TaskRoute.js";
 dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +37,8 @@ app.use('/api/tasklibary',TaskLibaryRoute)
 app.use('/api/dev/',DevAuthroute)
 app.use('/api/dash/dev',DevDashRoute)
 app.use('/api/setting/',SettingRoute)
+app.use('/api/task/',TaskRoute)
+CheckTaskDeadLine()
 startRedisServer()
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
