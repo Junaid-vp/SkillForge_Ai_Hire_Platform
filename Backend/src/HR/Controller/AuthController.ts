@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "../Lib/prisma.js";
 import { generateOTP } from "../services/generateOTP.js";
-import { sentOTPemail } from "../services/SentToemail/sendEmailOTP.js";
+import { sentOTPemail } from "../services/Email/sendEmailOTP.js";
 import { tokenGenerator } from "../services/tokenGeneratior.js";
 import { HrDetails } from "../Lib/type.js";
 import { redis } from "../Lib/redis.js";

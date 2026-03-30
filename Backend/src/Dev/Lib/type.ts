@@ -1,7 +1,7 @@
 // JwtPayload
 
 export interface JwtPayloadDev {
-  Email: string;
+  Email?: string;
   Id: string;
 }
 

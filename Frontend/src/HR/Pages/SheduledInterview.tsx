@@ -5,11 +5,13 @@ import {
   Clock,
   Briefcase,
   CheckCircle2,
+  Check,
   Circle,
   Timer,
   Video,
   RotateCcw,
-  LinkIcon
+  LinkIcon,
+  Copy
 } from "lucide-react";
 import RescheduleModal from "../Components/Mod/ResheduledModal";
 import { useState } from "react";
@@ -104,6 +106,23 @@ function ScheduledInterview() {
   });
   const [openModal, setOpenModal] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [copiedInterviewId, setCopiedInterviewId] = useState<string | null>(
+    null,
+  );
+
+  const handleCopyCode = async (code: string, interviewId: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedInterviewId(interviewId);
+      window.setTimeout(() => {
+        setCopiedInterviewId((current) =>
+          current === interviewId ? null : current,
+        );
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to copy code:", error);
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto pb-10">
@@ -260,6 +279,32 @@ function ScheduledInterview() {
                         <span className="text-xs text-gray-500">
                           {interview.developer.uniqueCode}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void handleCopyCode(
+                              interview.developer.uniqueCode,
+                              interview.id,
+                            )
+                          }
+                          title={
+                            copiedInterviewId === interview.id
+                              ? "Code copied"
+                              : "Copy code"
+                          }
+                          aria-label={
+                            copiedInterviewId === interview.id
+                              ? "Code copied"
+                              : "Copy code"
+                          }
+                          className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                        >
+                          {copiedInterviewId === interview.id ? (
+                            <Check size={13} className="text-green-600" />
+                          ) : (
+                            <Copy size={13} />
+                          )}
+                        </button>
                       </div>
 
                         

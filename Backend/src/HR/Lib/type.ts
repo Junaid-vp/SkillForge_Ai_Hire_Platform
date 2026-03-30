@@ -34,14 +34,17 @@ export  interface HrDetails {
 
 // Developer Details
 export interface DeveloperDetails {
-hrId:string,
-  developerName: string;
+  hrId:         string;
+  developerName:  string;
   developerEmail: string;
-  position: string;
-  experience: string;
-  interviewDate: string;
-  interviewTime: string;
-  uniqueCode: string;
+  position:       string;
+  experience:     string;
+  interviewDate:  string;
+  interviewTime:  string;
+  uniqueCode:     string;
+  resumeUrl:      string | null;
+  aiSummary:      string | null;
+  skills:         string[] | null;
 }
 
 

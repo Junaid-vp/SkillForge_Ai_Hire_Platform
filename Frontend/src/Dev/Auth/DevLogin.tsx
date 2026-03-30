@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Formik, Form, Field, type FormikHelpers } from "formik";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Sparkles, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
 import { api } from "../../Api/Axios";
 import DevOtpModal from "../Components/DevOtpModal";
@@ -13,13 +13,39 @@ const initialValues = {
 
 function DevLogin() {
   const navigate = useNavigate();
-
+  const [searchParams] = useSearchParams();
   const [showOTP, setShowOTP] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [uniqueCode,setUniqueCode ] = useState<string>("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isInvalid, setIsInvalid] = useState<null | string>(null);
   const [showUniqueCode, setShowUniqueCode] = useState(false);
+  const token  = searchParams.get("token");
+
+
+
+  useEffect(() => {
+    if (!token) return;
+
+    const MagicLogin = async () => {
+      try {
+        const res = await api.post("/dev/magicLink", { token });
+
+        if (res.data.Status === "success") {
+          navigate("/devDashboard");
+        } else {
+          setIsInvalid(res.data?.Message || "Magic link login failed");
+        }
+      } catch (e: any) {
+        setIsInvalid(
+          e?.response?.data?.Message || "Invalid or expired magic link",
+        );
+      }
+    };
+
+    MagicLogin();
+  }, [token, navigate]);
+
 
   const HandleLogin = async (
     values: typeof initialValues,

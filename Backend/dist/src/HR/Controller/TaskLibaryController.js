@@ -1,0 +1,155 @@
+import { prisma } from "../Lib/prisma.js";
+export const getAllTask = async (req, res) => {
+    try {
+        const id = req.userId;
+        if (!id) {
+            return res.status(401).json({ Message: "HR not logged in" });
+        }
+        const data = await prisma.taskLibrary.findMany({
+            where: {
+                OR: [{ isDefault: true }, { hrId: id }],
+            },
+            orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+        });
+        if (data.length === 0) {
+            return res.status(200).json({
+                data: [],
+                status: "success",
+            });
+        }
+        return res.status(200).json({
+            data,
+            count: data.length,
+            status: "success",
+        });
+    }
+    catch (e) {
+        res.status(500).json({ Message: "Server Error", Error: e.message });
+    }
+};
+export const taskGetById = async (req, res) => {
+    try {
+        const id = req.userId;
+        if (!id) {
+            return res.status(401).json({ Message: "HR not logged in" });
+        }
+        const taskId = req.params.id;
+        const data = await prisma.taskLibrary.findUnique({
+            where: { id: taskId },
+        });
+        if (!data) {
+            return res.status(404).json({ Message: "Task not found" });
+        }
+        res.status(200).json({ data, status: "success" });
+    }
+    catch (e) {
+        res.status(500).json({ Message: "Server Error", Error: e.message });
+    }
+};
+export const createTask = async (req, res) => {
+    try {
+        const id = req.userId;
+        if (!id) {
+            return res.status(401).json({ Message: "HR not logged in" });
+        }
+        const { title, description, requirements, category, techStack, difficulty, duration, } = req.body;
+        await prisma.taskLibrary.create({
+            data: {
+                hrId: id,
+                title,
+                description,
+                requirements: Array.isArray(requirements)
+                    ? requirements.join("|")
+                    : requirements,
+                category,
+                techStack,
+                difficulty,
+                duration,
+                isDefault: false,
+            },
+        });
+        res.status(201).json({
+            Message: "Task added to Task Library",
+            status: "success",
+        });
+    }
+    catch (e) {
+        res.status(500).json({ Message: "Server Error", Error: e.message });
+    }
+};
+export const updateTask = async (req, res) => {
+    try {
+        const id = req.userId;
+        if (!id) {
+            return res.status(401).json({ Message: "HR not logged in" });
+        }
+        const taskId = req.params.id;
+        const existing = await prisma.taskLibrary.findUnique({
+            where: { id: taskId },
+        });
+        if (!existing) {
+            return res.status(404).json({ Message: "Task not found" });
+        }
+        if (existing.isDefault) {
+            return res.status(403).json({ Message: "Cannot edit default tasks" });
+        }
+        if (existing.hrId !== id) {
+            return res.status(403).json({ Message: "Unauthorized" });
+        }
+        const { title, description, requirements, category, techStack, difficulty, duration, } = req.body;
+        await prisma.taskLibrary.update({
+            where: { id: taskId },
+            data: {
+                title,
+                description,
+                requirements: Array.isArray(requirements)
+                    ? requirements.join("|")
+                    : requirements,
+                category,
+                techStack,
+                difficulty,
+                duration,
+            },
+        });
+        res.status(200).json({
+            Message: "Task Library updated",
+            status: "success",
+        });
+    }
+    catch (e) {
+        res.status(500).json({ Message: "Server Error", Error: e.message });
+    }
+};
+export const DeleteTaskLibary = async (req, res) => {
+    try {
+        const id = req.userId;
+        if (!id) {
+            return res.status(401).json({ Message: "HR not logged in" });
+        }
+        const taskId = req.params.id;
+        const existing = await prisma.taskLibrary.findUnique({
+            where: { id: taskId },
+        });
+        if (!existing) {
+            return res.status(404).json({ Message: "Task not found" });
+        }
+        if (existing.isDefault) {
+            return res.status(403).json({
+                Message: "Default tasks cannot be deleted",
+            });
+        }
+        if (existing.hrId !== id) {
+            return res.status(403).json({ Message: "Unauthorized" });
+        }
+        await prisma.taskLibrary.delete({
+            where: { id: taskId },
+        });
+        res.status(200).json({
+            Message: "Task deleted successfully",
+            status: "success",
+        });
+    }
+    catch (e) {
+        res.status(500).json({ Message: "Server Error", Error: e.message });
+    }
+};

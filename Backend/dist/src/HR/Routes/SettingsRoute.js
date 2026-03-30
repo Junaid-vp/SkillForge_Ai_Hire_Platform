@@ -1,0 +1,12 @@
+import express from "express";
+import isHr from "../Middleware/isHr.js";
+import { changePassword, GetSpecificHrDetails, passCodeVarifyOtpResend, passwordCodeVarification, updateHrDetails } from "../Controller/SettingsController.js";
+import Validate from "../Middleware/Validate.js";
+import { HrUpdationValidation } from "../Validator/HrUpdateValidation.js";
+const route = express.Router();
+route.get("/hrSpecificDetails", isHr, GetSpecificHrDetails);
+route.post('/update', Validate(HrUpdationValidation), isHr, updateHrDetails);
+route.post('/passChange', isHr, changePassword);
+route.post('/validationChangepass', isHr, passwordCodeVarification);
+route.post('/resentOtpVarification', isHr, passCodeVarifyOtpResend);
+export default route;

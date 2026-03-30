@@ -3,7 +3,7 @@ import { prisma } from "../Lib/prisma.js";
 import bcrypt from "bcryptjs";
 import { generateOTP } from "../services/generateOTP.js";
 import { redis } from "../Lib/redis.js";
-import { sentChangePassOtp } from "../services/SentToemail/SendChangePassOtp.js";
+import { sentChangePassOtp } from "../services/Email/SendChangePassOtp.js";
 
 export const GetSpecificHrDetails = async (req: Request, res: Response) => {
   try {

@@ -151,7 +151,7 @@ export const DevOtpResend = async (req: Request, res: Response) => {
     await redis.del(`otp:${email}`)
 
     const otp = otpGenerate();
-    console.log(otp)
+    
     await sentOTPtoDev(email, otp);
 
     await redis.set(`otp:${email}`, otp, { EX: 300 });
@@ -184,5 +184,69 @@ export const DevLogoutController = async (req: Request, res: Response) => {
       .json({ Message: "Logout successful" });
   } catch (e) {
     res.status(500).json({ Message: "Logout error" });
+  }
+};
+
+export const MaginLinkVarification = async(req:Request,res:Response)=>{
+  try{
+  const {token} = req.body
+  
+  const developerId = await redis.get(`magic:${token}`)
+if (!developerId) {
+      return res.status(400).json({
+        Message: "Invalid or expired link. Please contact HR."
+      });
+    }
+
+    const developer = await prisma.developer.findUnique({
+      where: { id: developerId }
+    });
+
+    if (!developer) {
+      return res.status(404).json({ Message: "Developer not found" });
+    }
+
+  
+    const interview = await prisma.interview.findFirst({
+      where: { developerId: developer.id }
+    });
+
+    if (interview?.status === "CANCELLED") {
+      return res.status(403).json({ Message: "Interview cancelled" });
+    }
+
+
+    const task = await prisma.task.findFirst({
+      where: { developerId: developer.id }
+    });
+
+    if (task?.status === "SUBMITTED") {
+      return res.status(403).json({ Message: "Task already submitted" });
+    }
+
+    if (task?.status === "EXPIRED") {
+      return res.status(403).json({ Message: "Task deadline passed" });
+    }
+
+   
+    const { AccessToken } = tokenGeneratorDev(
+      developer.developerEmail,
+      developer.id
+    );
+
+    res
+      .status(200)
+      .cookie("Dev_Access_Token", AccessToken, {
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+      })
+      .json({
+        Message: "Login successful",
+        Status: "success"
+      });
+
+  } catch (e: any) {
+    res.status(500).json({ Message: "Server Error", Error: e.message });
   }
 };

@@ -3,8 +3,8 @@ import { DeveloperDetails } from "../Lib/type.js";
 import { prisma } from "../Lib/prisma.js";
 import { UniqueCodeGenerator } from "../services/uniqueCodeGenerator.js";
 import { redis } from "../Lib/redis.js";
-import { sendUniqueCode } from "../services/SentToemail/SendUniqueCodeEmail.js";
-import { sendResheduledTime } from "../services/SentToemail/sendReshedule.js";
+import { sendUniqueCode } from "../services/Email/SendUniqueCodeEmail.js";
+import { sendResheduledTime } from "../services/Email/sendReshedule.js";
 
 
 export const generateUniqueCode = async (req: Request, res: Response) => {
@@ -66,6 +66,10 @@ export const sheduleInterview = async (req: Request, res: Response) => {
       interviewTime,
       position,
       uniqueCode,
+      resumeUrl,
+      aiSummary,
+      skills,
+
     }: DeveloperDetails = req.body;
 
     const Code = await redis.get(`Unique:${uniqueCode}`);
@@ -73,6 +77,8 @@ export const sheduleInterview = async (req: Request, res: Response) => {
     if (Code !== uniqueCode) {
       return res.status(400).json({ Message: "Invalid uniqueCode" });
     }
+      
+       
 
     await redis.del(`Unique:${uniqueCode}`);
 
@@ -88,12 +94,15 @@ export const sheduleInterview = async (req: Request, res: Response) => {
         interviewDate: new Date(interviewDate),
         interviewTime,
         uniqueCode,
+        resumeUrl:  resumeUrl  ?? null,  
+        aiSummary:  aiSummary  ?? null,  
+        skills:     skills  ? JSON.stringify(skills) : null,                   
       },
     });
 
     const scheduledAt = new Date(`${interviewDate}T${interviewTime}:00`);
 
-    await prisma.interview.create({
+  await prisma.interview.create({
       data: {
         hrId: id,
         developerId: dev.id,
@@ -101,15 +110,25 @@ export const sheduleInterview = async (req: Request, res: Response) => {
       },
     });
 
-    await prisma.hR.update({
+  await prisma.hR.update({
       where: { id },
       data: { interviewCount: { increment: 1 } },
     });
 
-    await sendUniqueCode(
+
+
+  const magicLink = `${process.env.FRONTEND_URL}/devLogin?token=${uniqueCode}`;
+
+  const today = new Date()
+  const secondsUntilExpired = Math.floor((scheduledAt.getTime() - today.getTime()) / 1000) + 604800;
+
+  await redis.set(`magic:${uniqueCode}`,dev.id,{ EX: secondsUntilExpired });
+
+
+  await sendUniqueCode(
       developerName, developerEmail, position,
       uniqueCode, interviewDate, interviewTime,
-      user.email, user.companyName, user.name
+      user.email, user.companyName, user.name,magicLink
     );
 
     res.status(201).json({
@@ -254,6 +273,15 @@ export const rescheduleInterview = async (req: Request, res: Response) => {
       }
     });
 
+
+  const magicLink = `${process.env.FRONTEND_URL}/devLogin?token=${interview.developer.uniqueCode}`;
+
+  const today = new Date()
+  const secondsUntilExpired = Math.floor((scheduledAt.getTime() - today.getTime()) / 1000) + 604800;
+
+  await redis.set(`magic:${interview.developer.uniqueCode}`,interview.developerId,{ EX: secondsUntilExpired });
+
+
     await sendResheduledTime(
       interview.developer.developerName,
       interview.developer.developerEmail,
@@ -263,7 +291,8 @@ export const rescheduleInterview = async (req: Request, res: Response) => {
       interview.hr.companyName,
       interview.hr.name,
       newTime,
-      newDate
+      newDate,
+      magicLink
     )
 
     res.status(200).json({

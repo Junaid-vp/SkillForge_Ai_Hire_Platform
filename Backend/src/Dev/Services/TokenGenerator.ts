@@ -25,6 +25,6 @@ export const tokenGeneratorDev = (email: string, id: string) => {
     expiresIn: "7d",
   });
 
-  return {  AccessToken };
+  return { AccessToken };
 };
 

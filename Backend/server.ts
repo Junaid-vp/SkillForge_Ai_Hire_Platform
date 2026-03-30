@@ -7,6 +7,7 @@ import cors from "cors";
 import { startRedisServer } from "./src/HR/Lib/redis.js";
 import cookieParser from "cookie-parser";
 import { main } from "./prisma/seed.js";
+import ResumeRoute from "./src/HR/Routes/Resume.js";
 import DevAuthroute from "./src/Dev/Routes/AuthRoutes.js";
 import DevDashRoute from "./src/Dev/Routes/DevDashRoutes.js";
 import SettingRoute from "./src/HR/Routes/SettingsRoute.js";
@@ -26,7 +27,7 @@ app.use(
 
 
 
-
+console.log(process.env.FRONTEND_URL)
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,6 +39,7 @@ app.use('/api/dev/',DevAuthroute)
 app.use('/api/dash/dev',DevDashRoute)
 app.use('/api/setting/',SettingRoute)
 app.use('/api/task/',TaskRoute)
+app.use('/api/resume/',ResumeRoute)
 CheckTaskDeadLine()
 startRedisServer()
 app.listen(PORT, () => {

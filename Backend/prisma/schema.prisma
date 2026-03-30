@@ -59,11 +59,14 @@ model Developer {
   uniqueCode     String   @unique
   createdAt      DateTime @default(now())
 
-  // Relations
-  hr          HR           @relation(fields: [hrId], references: [id])
+  
+  resumeUrl      String?  
+  skills         String? 
+  aiSummary      String? 
+
+  hr          HR          @relation(fields: [hrId], references: [id])
   interviews  Interview[]
   tasks       Task[]
-
 }
 
 model Interview {

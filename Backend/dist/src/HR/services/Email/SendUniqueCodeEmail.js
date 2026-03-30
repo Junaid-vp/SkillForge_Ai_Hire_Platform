@@ -1,51 +1,37 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
-
-export const sendUniqueCode = async (
-  developerName: string,
-  developerEmail: string,
-  position: string,
-  UniqueCode: string,
-  interviewDate: string,
-  interviewTime: string,
-  email: string | undefined,
-  companyName: string | undefined,
-  name: string | undefined,
-) => {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    const dateObj = new Date(interviewDate);
-    const formattedDate = isNaN(dateObj.getTime())
-      ? interviewDate
-      : dateObj.toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
+export const sendUniqueCode = async (developerName, developerEmail, position, UniqueCode, interviewDate, interviewTime, email, companyName, name, magicLink) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
         });
-
-    const formatTime = (t: string) => {
-      if (!t?.includes(":")) return t;
-      const [h, m] = t.split(":").map(Number);
-      return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
-    };
-
-    console.log("Sending Schedule Email With Transporter...");
-    console.log("To:", developerEmail);
-
-    await transporter.sendMail({
-      from: `"${companyName ?? "SkillForge AI"}" <${process.env.EMAIL_USER}>`,
-      to: developerEmail,
-      subject: `Interview Invitation — ${position} at ${companyName ?? "SkillForge AI"}`,
-      html: `
+        const dateObj = new Date(interviewDate);
+        const formattedDate = isNaN(dateObj.getTime())
+            ? interviewDate
+            : dateObj.toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            });
+        const formatTime = (t) => {
+            if (!t?.includes(":"))
+                return t;
+            const [h, m] = t.split(":").map(Number);
+            return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+        };
+        console.log("Sending Schedule Email With Transporter...");
+        console.log("To:", developerEmail);
+        await transporter.sendMail({
+            from: `"${companyName ?? "SkillForge AI"}" <${process.env.EMAIL_USER}>`,
+            to: developerEmail,
+            subject: `Interview Invitation — ${position} at ${companyName ?? "SkillForge AI"}`,
+            html: `
 <!DOCTYPE html>
 <html>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
@@ -113,24 +99,26 @@ export const sendUniqueCode = async (
         </tr>
       </table>
 
-      <!-- Access code box -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-        <tr><td style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:24px 28px;text-align:center;">
-          <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#3b82f6;">Your Access Code</p>
-          <p style="margin:0 0 14px;font-size:12px;color:#64748b;">Enter this code on SkillForge AI to begin your session</p>
-          <p style="margin:0;font-size:34px;font-weight:900;color:#1d4ed8;letter-spacing:0.4em;font-family:'Courier New',monospace;">${UniqueCode}</p>
-        </td></tr>
-      </table>
-
-      <!-- ✅ NEW: Join Interview CTA Button -->
-     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
   <tr><td align="center">
-    <a href="http://localhost:5173/devLogin"
-       style="display:inline-block;background:#1d4ed8;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:13px 40px;border-radius:8px;letter-spacing:0.2px;">
-      Go to Login Page
-    </a>
-    <p style="margin:10px 0 0;font-size:11px;color:#94a3b8;">
-      <a href="http://localhost:5173/devLogin" style="color:#1d4ed8;text-decoration:none;">http://localhost:5173/devLogin</a>
+    <a href="${magicLink}"
+       style="display:inline-block;background:#1d4ed8;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:15px 40px;border-radius:10px;box-shadow:0 4px 15px rgba(29,78,216,0.25);">
+    Click And Enter Interview Dashboard
+    </a>  
+  </td></tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+  <tr><td align="center" style="padding-bottom:12px;">
+    <p style="margin:0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.1em;">OR JOIN MANUALLY</p>
+  </td></tr>
+  <tr><td style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;padding:20px;text-align:center;">
+    <p style="margin:0;font-size:13px;color:#475569;">
+      If the button fails, visit <strong>SkillForge AI</strong> and enter:
+    </p>
+    <p style="margin:8px 0 0;font-size:15px;color:#0f172a;">
+      <strong>Email:</strong> ${developerEmail}<br/>
+      <strong>Access Code:</strong> <span style="font-family:monospace;font-weight:800;color:#1d4ed8;">${UniqueCode}</span>
     </p>
   </td></tr>
 </table>
@@ -139,7 +127,7 @@ export const sendUniqueCode = async (
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
         <tr><td style="background:#fefce8;border-left:3px solid #eab308;border-radius:0 8px 8px 0;padding:13px 16px;">
           <p style="margin:0;font-size:12px;color:#713f12;line-height:1.7;">
-            <strong>Please note:</strong> This code is personal and single-use. Do not share it.
+            <strong>Please note:</strong> This code is personal . Do not share it.
             Join on time — late access may not be accommodated.
           </p>
         </td></tr>
@@ -177,9 +165,10 @@ export const sendUniqueCode = async (
 </body>
 </html>
 `,
-    });
-  } catch (e) {
-    console.error("Email sending error:", e);
-    throw e;
-  }
+        });
+    }
+    catch (e) {
+        console.error("Email sending error:", e);
+        throw e;
+    }
 };
