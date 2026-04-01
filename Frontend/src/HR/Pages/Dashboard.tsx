@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../Api/Axios";
 import {
@@ -10,9 +11,11 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
-  BarChart2,
   Users,
+  Crown,
+  X,
 } from "lucide-react";
+import { useState } from "react";
 
 interface DashboardStats {
   totalDevelopers: number;
@@ -87,6 +90,7 @@ const quickActions = [
     path: "/dashboard/create-interview",
     accent: "border-blue-100 hover:border-blue-300",
     iconBg: "bg-blue-50",
+    comingSoon: false,
   },
   {
     label: "Task Library",
@@ -95,6 +99,7 @@ const quickActions = [
     path: "/dashboard/task-library",
     accent: "border-purple-100 hover:border-purple-300",
     iconBg: "bg-purple-50",
+    comingSoon: false,
   },
   {
     label: "Interview Schedule",
@@ -103,6 +108,7 @@ const quickActions = [
     path: "/dashboard/schedule",
     accent: "border-yellow-100 hover:border-yellow-300",
     iconBg: "bg-yellow-50",
+    comingSoon: false,
   },
   {
     label: "Developers",
@@ -111,26 +117,92 @@ const quickActions = [
     path: "/dashboard/developers",
     accent: "border-green-100 hover:border-green-300",
     iconBg: "bg-green-50",
-  },
-  {
-    label: "Reports",
-    description: "Analyse hiring metrics and trends",
-    icon: <BarChart2 size={18} className="text-red-500" />,
-    path: "/dashboard/reports",
-    accent: "border-red-100 hover:border-red-300",
-    iconBg: "bg-red-50",
+    comingSoon: false,
   },
 ];
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [banner, setBanner] = useState<"success" | "cancelled" | null>(null);
+
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["DashboardStats"],
     queryFn: fetchStats,
   });
 
+  // ✅ Handle Stripe redirect params
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+
+    if (payment === "success") {
+      setBanner("success");
+      setSearchParams({});
+    } else if (payment === "cancelled") {
+      setBanner("cancelled");
+      setSearchParams({});
+    }
+  }, []);
+
   return (
     <div className="max-w-5xl mx-auto pb-10">
+
+      {/* ✅ Payment Banner */}
+      {banner === "success" && (
+        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-2xl px-5 py-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center">
+              <Crown size={15} className="text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-green-800">
+                You're now on Pro! 
+              </p>
+              <p className="text-xs text-green-600 mt-0.5">
+                Unlimited interviews, AI resume parsing and full task
+                library are now unlocked.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setBanner(null)}
+            className="text-green-400 hover:text-green-600 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {banner === "cancelled" && (
+        <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+              <X size={15} className="text-gray-500" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-700">
+                Checkout cancelled
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                No charge was made.{" "}
+                <button
+                  onClick={() => navigate("/dashboard/upgrade")}
+                  className="text-blue-500 hover:underline font-medium"
+                >
+                  Upgrade anytime
+                </button>
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setBanner(null)}
+            className="text-gray-300 hover:text-gray-500 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
@@ -156,7 +228,9 @@ export default function Dashboard() {
             key={card.key}
             className={`bg-white border ${card.border} rounded-2xl shadow-sm px-5 py-4`}
           >
-            <div className={`w-8 h-8 ${card.bg} rounded-xl flex items-center justify-center mb-3`}>
+            <div
+              className={`w-8 h-8 ${card.bg} rounded-xl flex items-center justify-center mb-3`}
+            >
               {card.icon}
             </div>
             {isLoading ? (
@@ -206,6 +280,7 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
     </div>
   );
 }

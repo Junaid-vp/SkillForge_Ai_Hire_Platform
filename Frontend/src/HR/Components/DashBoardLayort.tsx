@@ -21,7 +21,9 @@ export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
 
-  const activeLabel = navItems.find(n => n.path === location.pathname)?.label ?? 'Dashboard'
+  const activeLabel =
+    navItems.find(n => n.path === location.pathname)?.label ??
+    (location.pathname === '/dashboard/upgrade' ? 'Upgrade' : 'Dashboard')
 
   const handleLogout = async () => {
     try {
@@ -138,10 +140,12 @@ export default function DashboardLayout() {
 
           {/* Right Side: Upgrade + Avatar */}
           <div className="flex items-center gap-4">
-            <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-lg text-xs font-semibold shadow-sm transition-all shadow-indigo-200/50">
-              <Crown size={14} className="text-indigo-100" />
-              Upgrade to Pro
-            </button>
+            {location.pathname !== "/dashboard/upgrade" && (
+              <button onClick={() => navigate("/dashboard/settings")} className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-lg text-xs font-semibold shadow-sm transition-all shadow-indigo-200/50">
+                <Crown size={14} className="text-indigo-100" />
+                Upgrade to Pro
+              </button>
+            )}
 
             {/* Avatar + dropdown */}
             <div className="relative">

@@ -12,6 +12,7 @@ import DevDashRoute from "./src/Dev/Routes/DevDashRoutes.js";
 import SettingRoute from "./src/HR/Routes/SettingsRoute.js";
 import { CheckTaskDeadLine } from "./src/Dev/Services/CheckDeadline.js";
 import TaskRoute from "./src/HR/Routes/TaskRoute.js";
+import SubscriptonRoute from "./src/HR/Routes/SubscriptonRoute.js";
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,7 +20,7 @@ app.use(cors({
     origin: " http://localhost:5173",
     credentials: true,
 }));
-console.log(process.env.FRONTEND_URL);
+app.use('/api/subscription/webhook', express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -31,6 +32,7 @@ app.use('/api/dash/dev', DevDashRoute);
 app.use('/api/setting/', SettingRoute);
 app.use('/api/task/', TaskRoute);
 app.use('/api/resume/', ResumeRoute);
+app.use('/api/subscription', SubscriptonRoute);
 CheckTaskDeadLine();
 startRedisServer();
 app.listen(PORT, () => {

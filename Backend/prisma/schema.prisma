@@ -45,6 +45,7 @@ model HR {
   interviews  Interview[]
   taskLibrary TaskLibrary[]
   tasks       Task[]
+  subscription Subscription?
 }
 
 model Developer {
@@ -117,4 +118,19 @@ model Task {
   hr          HR          @relation(fields: [hrId], references: [id])
   developer   Developer   @relation(fields: [developerId], references: [id])
   taskLibrary TaskLibrary @relation(fields: [taskLibraryId], references: [id])
+}
+
+
+
+model Subscription {
+  id               String    @id @default(uuid())
+  hrId             String    @unique
+  plan             String    @default("free")
+  stripeCustomerId String?
+  stripeSubId      String?
+  status           String    @default("active")
+  currentPeriodEnd DateTime?
+  createdAt        DateTime  @default(now())
+
+  hr               HR        @relation(fields: [hrId], references: [id])
 }

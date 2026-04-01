@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import { parseResume } from "../services/resumeParser.js"
 import { randomBytes } from "crypto"
 import { uploadFile } from "../services/cloudinary.js"
+import { prisma } from "../Lib/prisma.js"
 
 
 export const parseResumeController = async(req:Request,res:Response)=>{
@@ -45,4 +46,88 @@ export const parseResumeController = async(req:Request,res:Response)=>{
             Error:e.message
         })
     }
+}
+
+export const specificDevTotalDetails = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const hrId = req.userId
+    const devId = req.params.id as string
+
+    if (!hrId) {
+      return res.status(401).json({ Message: "HR not logged in" })
+    }
+
+    if (!devId) {
+      return res.status(400).json({ Message: "Developer ID required" })
+    }
+
+    
+    const DevDetails = await prisma.developer.findUnique({
+      where: { id: devId }
+    })
+
+    if (!DevDetails) {
+      return res.status(404).json({ Message: "Developer not found" })
+    }
+
+    if (DevDetails.hrId !== hrId) {
+      return res.status(403).json({ Message: "Unauthorized" })
+    }
+
+  
+    const DevInterview = await prisma.interview.findFirst({
+      where: {
+        developerId: devId,
+        hrId: hrId
+      }
+    })
+
+    const DevTask = DevInterview
+      ? await prisma.task.findFirst({
+          where: {
+            interviewId: DevInterview.id
+          },
+          include: {
+            taskLibrary: {
+              select: {
+                title: true,
+                description: true,
+                requirements: true,
+                difficulty: true,
+                duration: true,
+                category: true,
+                techStack: true
+              }
+            }
+          }
+        })
+      : null
+
+  
+    // const skills = DevDetails.skills
+    //   ? DevDetails.skills.split("|")
+    //   : []
+
+ 
+    res.status(200).json({
+      data: {
+        developer: 
+        DevDetails ?? null ,
+           
+        interview: DevInterview ?? null,
+        task: DevTask ?? null
+      },
+      status: "success"
+    })
+
+  } catch (e: any) {
+    
+    res.status(500).json({
+      Message: "Server Error",
+      Error: e.message
+    })
+  }
 }

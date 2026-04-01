@@ -3,38 +3,42 @@ import { Formik, Form, Field } from "formik";
 import {
   Sparkles, CheckCircle2, Send, User, Building2,
   Globe, Briefcase, X, CreditCard, CalendarDays,
-  Mail, Activity, ArrowUpCircle, Settings as SettingsIcon,
+  Mail, Activity, ArrowUpCircle, XCircle, Loader2,
 } from "lucide-react";
 import { api } from "../../Api/Axios";
 import { SettingsValidation } from "../Validation/SettingValidation";
 import ChangePassForm from "../Components/ChangePassForm";
 import Notification from "../Components/Notification";
+import { useNavigate } from "react-router-dom";
 
 interface Profile {
-  email: string;
-  name: string;
-  companyName: string;
-  designation: string | null;
+  email:          string;
+  name:           string;
+  companyName:    string;
+  designation:    string | null;
   companyWebsite: string;
-  createdAt: string;
-  plan: string;
+  createdAt:      string;
+  plan:           string;
   interviewCount: number;
   interviewLimit: number;
 }
 
 const initialValues = {
-  name: "",
-  companyName: "",
-  designation: "",
+  name:           "",
+  companyName:    "",
+  designation:    "",
   companyWebsite: "",
 };
 
 function Settings() {
-  const [formValues, setFormValues] = useState(initialValues);
-  const [loading, setLoading] = useState(true);
-  const [saved, setSaved] = useState(false);
-  const [profile, setProfile] = useState<Profile | null>(null);
-   
+  const [formValues, setFormValues]     = useState(initialValues);
+  const [loading, setLoading]           = useState(true);
+  const [saved, setSaved]               = useState(false);
+  const [profile, setProfile]           = useState<Profile | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);   
+  const [cancelSaved, setCancelSaved]   = useState(false);   
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
@@ -42,9 +46,9 @@ function Settings() {
         const res = await api.get("/setting/hrSpecificDetails");
         const hr = res.data.Hr;
         setFormValues({
-          name:           hr.name          ?? "",
-          companyName:    hr.companyName   ?? "",
-          designation:    hr.designation   ?? "",
+          name:           hr.name           ?? "",
+          companyName:    hr.companyName    ?? "",
+          designation:    hr.designation    ?? "",
           companyWebsite: hr.companyWebsite ?? "",
         });
         setProfile(hr);
@@ -67,11 +71,35 @@ function Settings() {
       setTimeout(() => setSaved(false), 3000);
       if (profile) setProfile({ ...profile, ...values });
       setFormValues(values);
-
     } catch (e) {
       console.error("Update failed:", e);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const onCancelSuccess = () => {
+    setCancelSaved(true);
+    setTimeout(() => setCancelSaved(false), 4000);
+    if (profile) setProfile({ ...profile, plan: "free" });
+  };
+
+
+  const handleCancel = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel? Your Pro plan stays active until the end of the billing period."
+    );
+    if (!confirmed) return;
+
+    setIsCancelling(true);
+    try {
+      await api.post("/subscription/cancel");
+      onCancelSuccess();
+    } catch (e) {
+      console.error("Cancel error:", e);
+      alert("Failed to cancel subscription. Please try again.");
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -98,6 +126,9 @@ function Settings() {
     ? Math.min(Math.round((profile.interviewCount / profile.interviewLimit) * 100), 100)
     : 0;
 
+  const isPro = profile?.plan === "pro";
+console.log(profile);
+
   return (
     <div className="max-w-3xl mx-auto pb-10">
 
@@ -113,7 +144,7 @@ function Settings() {
         <p className="text-sm text-gray-400 mt-1">Manage your profile, company information, security, and preferences</p>
       </div>
 
-      {/* Success Banner */}
+      {/* Profile saved banner */}
       {saved && (
         <div className="flex items-center gap-3 bg-green-50 border border-green-100 rounded-xl px-5 py-3.5 mb-5">
           <CheckCircle2 size={16} className="text-green-500 shrink-0" />
@@ -124,9 +155,21 @@ function Settings() {
         </div>
       )}
 
+      {/* ✅ Cancellation scheduled banner */}
+      {cancelSaved && (
+        <div className="flex items-center gap-3 bg-orange-50 border border-orange-100 rounded-xl px-5 py-3.5 mb-5">
+          <CheckCircle2 size={16} className="text-orange-500 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-orange-800">Subscription cancellation scheduled</p>
+            <p className="text-xs text-orange-600 mt-0.5">
+              Your Pro plan remains active until the end of the current billing period.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-4">
 
-        {/* Account Info + Plan — 2 cards */}
         {profile && (
           <div className="grid grid-cols-2 gap-4">
 
@@ -155,7 +198,7 @@ function Settings() {
                     <CalendarDays size={12} className="text-gray-400 shrink-0" />
                     <p className="text-sm font-medium text-gray-900">
                       {new Date(profile.createdAt).toLocaleDateString("en-US", {
-                        year: 'numeric', month: 'long', day: 'numeric'
+                        year: "numeric", month: "long", day: "numeric",
                       })}
                     </p>
                   </div>
@@ -173,11 +216,17 @@ function Settings() {
                   <h2 className="text-xs font-semibold text-gray-800">Current Plan</h2>
                   <p className="text-[11px] text-gray-400">Your subscription details</p>
                 </div>
-                <span className="text-[9px] font-bold bg-blue-50 border border-blue-100 text-blue-600 px-2.5 py-1 rounded-full uppercase tracking-widest">
+                <span className={`text-[9px] font-bold border px-2.5 py-1 rounded-full uppercase tracking-widest
+                  ${isPro
+                    ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                    : "bg-blue-50 border-blue-100 text-blue-600"
+                  }`}>
                   {profile.plan}
                 </span>
               </div>
+
               <div className="p-6">
+                {/* Usage bar */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
@@ -190,18 +239,35 @@ function Settings() {
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all ${usagePercent > 80 ? 'bg-red-500' : 'bg-blue-500'}`}
+                      className={`h-1.5 rounded-full transition-all ${usagePercent > 80 ? "bg-red-500" : "bg-blue-500"}`}
                       style={{ width: `${usagePercent}%` }}
                     />
                   </div>
                   <p className="text-[10px] text-gray-400 mt-1.5">
-                    {usagePercent > 80 ? '⚠ Approaching limit' : 'Healthy usage'}
+                    {usagePercent > 80 ? "⚠ Approaching limit" : "Healthy usage"}
                   </p>
                 </div>
-                <button className="w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-xl transition-colors shadow-sm shadow-blue-100">
-                  <ArrowUpCircle size={13} />
-                  Upgrade Plan
-                </button>
+
+                {/* ✅ Upgrade or Cancel button */}
+                {!isPro ? (
+                  <button
+                    onClick={() => navigate("/dashboard/upgrade")}
+                    className="w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-xl transition-colors shadow-sm shadow-blue-100"
+                  >
+                    <ArrowUpCircle size={13} /> Upgrade to Pro
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleCancel}
+                    disabled={isCancelling}
+                    className="w-full flex items-center justify-center gap-1.5 bg-white border border-red-200 hover:bg-red-50 text-red-500 text-xs font-semibold py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCancelling
+                      ? <><Loader2 size={13} className="animate-spin" /> Cancelling...</>
+                      : <><XCircle size={13} /> Cancel Subscription</>
+                    }
+                  </button>
+                )}
               </div>
             </div>
 
@@ -218,7 +284,7 @@ function Settings() {
           {({ errors, touched, isSubmitting, resetForm }) => (
             <Form className="space-y-4">
 
-              {/* Section 1 — Personal Info */}
+              {/* Personal Info */}
               <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/60">
                   <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
@@ -229,7 +295,6 @@ function Settings() {
                     <p className="text-[11px] text-gray-400">Your name and role</p>
                   </div>
                 </div>
-
                 <div className="p-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -253,7 +318,7 @@ function Settings() {
                 </div>
               </div>
 
-              {/* Section 2 — Company Info */}
+              {/* Company Info */}
               <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/60">
                   <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
@@ -264,7 +329,6 @@ function Settings() {
                     <p className="text-[11px] text-gray-400">Details about your company</p>
                   </div>
                 </div>
-
                 <div className="p-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -314,8 +378,8 @@ function Settings() {
           )}
         </Formik>
 
-        <ChangePassForm/>
-        <Notification/>
+        <ChangePassForm />
+        <Notification />
       </div>
     </div>
   );

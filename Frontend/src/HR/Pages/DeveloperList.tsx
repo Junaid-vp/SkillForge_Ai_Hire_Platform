@@ -2,6 +2,7 @@
 import { api } from "../../Api/Axios";
 import { useQuery } from '@tanstack/react-query';
 import { Users, Calendar, Clock, Briefcase, ChevronRight } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
 interface DevDetails {
   id: string;
@@ -35,6 +36,8 @@ function DeveloperList() {
     queryKey: ['Developers'],
     queryFn: fetchDevDatas,
   });
+
+const navigate = useNavigate()
 
   return (
     <div className="max-w-6xl mx-auto pb-10">
@@ -157,11 +160,11 @@ function DeveloperList() {
                 {/* Action */}
                 <div className="col-span-2 flex justify-end">
                   <button
-                    onClick={() => {/* you will handle this */}}
-                    className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-colors"
+                    onClick={() => navigate(`/dashboard/devFullDetails/${dev.id}`)}
+                    className="group inline-flex w-[172px] items-center justify-between rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-200"
                   >
-                    View Progress
-                    <ChevronRight size={13} />
+                    <span className="whitespace-nowrap">View Details</span>
+                    <ChevronRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
                   </button>
                 </div>
 

@@ -200,6 +200,7 @@ export const getDevelopers = async (req: Request, res: Response) => {
       orderBy: { createdAt: "desc" }
     });
 
+
     if (developers.length === 0) {
       return res.status(200).json({
         data: [],

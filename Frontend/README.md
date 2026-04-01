@@ -12,3 +12,9 @@ React, Node.js, PostgreSQL, WebRTC, and Claude AI.
 React | Node.js | PostgreSQL | Prisma | Redis
 WebRTC | Socket.io | Claude AI | Stripe
 ```
+
+
+## PENDING WORK FOR FUTURE
+
+CLOUDNARY TO AWS
+STRAPE

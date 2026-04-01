@@ -14,6 +14,8 @@ import TaskPreview from "./HR/Pages/TaskPreview";
 import DevLogin from "./Dev/Auth/DevLogin";
 import DevDashBoard from "./Dev/Page/DevDashBoard";
 import Settings from "./HR/Pages/Settings";
+import DeveloperTotalDetails from "./HR/Pages/DeveloperTotalDetails";
+import UpgradePage from "./HR/Pages/Upgradepage";
 
 
 export const router = createBrowserRouter([
@@ -74,7 +76,16 @@ export const router = createBrowserRouter([
       {
     path:"/dashboard/settings",
     element:<Settings/>
+      },
+      {
+        path:'/dashboard/devFullDetails/:id',
+        element:<DeveloperTotalDetails/>
+      },
+       {
+    path:'/dashboard/upgrade',
+    element:<UpgradePage/>
   }
+  
     ]
   },
   {
@@ -85,5 +96,6 @@ export const router = createBrowserRouter([
     path:'/devDashboard',
     element:<DevDashBoard/>
   },
+ 
   
 ]);

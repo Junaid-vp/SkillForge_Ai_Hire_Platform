@@ -13,7 +13,7 @@ export const uploadFile  = async(buffer:Buffer,fileName:string): Promise<string>
 return new Promise((resolve,reject)=>{
     const uploadstream = cloudinary.uploader.upload_stream(
         {
-            resource_type:"raw",
+            resource_type:"image",
             folder:"skillforge/resumes",
             public_id:fileName,
             format:"pdf"
