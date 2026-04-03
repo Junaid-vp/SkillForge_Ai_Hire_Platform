@@ -4,5 +4,5 @@ import { cancelSubscription, createCheckout, stripeWebhook } from '../Controller
 const route = express.Router();
 route.post("/checkout", isHr, createCheckout);
 route.post('/cancel', isHr, cancelSubscription);
-route.post('/webhook', stripeWebhook);
+route.post('/webhook', express.raw({ type: "application/json" }), stripeWebhook);
 export default route;

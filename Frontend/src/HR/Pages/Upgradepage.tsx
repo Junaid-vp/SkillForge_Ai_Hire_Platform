@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Check, X, Crown, Zap, Users, FileText, Brain,
-  ArrowLeft, Loader2, Sparkles, Star, Calendar,
+  ArrowLeft, Loader2, Star, Calendar,
   Code2
 } from "lucide-react";
 import { api } from "../../Api/Axios";

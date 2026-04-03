@@ -3,21 +3,11 @@ import dotenv from "dotenv";
 import { prisma } from "../Lib/prisma.js";
 dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const getHrIdFromCheckoutSession = (session) => {
-    return session.metadata?.hrId ?? session.client_reference_id ?? null;
-};
 export const createCheckout = async (req, res) => {
     try {
         const id = req.userId;
-        const priceId = process.env.STRIPE_PRO_PRICE_ID;
-        const frontendUrl = process.env.FRONTEND_URL;
         if (!id) {
             return res.status(401).json({ Message: "Not authorized" });
-        }
-        if (!priceId || !frontendUrl) {
-            return res.status(500).json({
-                Message: "Stripe is not configured correctly",
-            });
         }
         const hr = await prisma.hR.findUnique({
             where: {
@@ -30,28 +20,17 @@ export const createCheckout = async (req, res) => {
         const session = await stripe.checkout.sessions.create({
             mode: "subscription",
             customer_email: hr.email,
-            client_reference_id: id,
             line_items: [
                 {
-                    price: priceId,
+                    price: process.env.STRIPE_PRO_PRICE_ID,
                     quantity: 1,
                 },
             ],
             metadata: {
                 hrId: id,
             },
-            subscription_data: {
-                metadata: {
-                    hrId: id,
-                },
-            },
-            success_url: `${frontendUrl}/dashboard?payment=success`,
-            cancel_url: `${frontendUrl}/dashboard?payment=cancelled`,
-        });
-        console.log("Stripe checkout created", {
-            sessionId: session.id,
-            hrId: id,
-            email: hr.email,
+            success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
+            cancel_url: `${process.env.FRONTEND_URL}/dashboard?payment=cancelled`,
         });
         res.status(200).json({
             checkoutUrl: session.url,
@@ -65,93 +44,46 @@ export const createCheckout = async (req, res) => {
 export const stripeWebhook = async (req, res) => {
     try {
         const sig = req.headers["stripe-signature"];
-        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-        if (!sig || !webhookSecret) {
-            return res.status(400).json({
-                Message: "Stripe webhook signature configuration missing",
-            });
-        }
-        if (!Buffer.isBuffer(req.body)) {
-            console.error("Stripe webhook received non-raw body", {
-                bodyType: typeof req.body,
-            });
-        }
-        const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-        console.log("Stripe webhook hit", {
-            eventId: event.id,
-            eventType: event.type,
-        });
+        const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        console.log("🔥 Webhook hit");
+        console.log("Event:", event.type);
         switch (event.type) {
             case "checkout.session.completed": {
                 const session = event.data.object;
-                const hrId = getHrIdFromCheckoutSession(session);
-                const stripeSubId = typeof session.subscription === "string"
-                    ? session.subscription
-                    : session.subscription?.id ?? null;
-                const stripeCustomerId = typeof session.customer === "string"
-                    ? session.customer
-                    : session.customer?.id ?? null;
-                console.log("Processing checkout.session.completed", {
-                    sessionId: session.id,
-                    hrId,
-                    stripeSubId,
-                    stripeCustomerId,
-                });
-                if (!hrId) {
-                    console.warn("checkout.session.completed missing hrId", {
-                        sessionId: session.id,
+                const hrId = session.metadata?.hrId;
+                if (hrId) {
+                    await prisma.hR.update({
+                        where: { id: hrId },
+                        data: {
+                            plan: "pro",
+                            interviewLimit: 999999
+                        }
                     });
-                    break;
+                    await prisma.subscription.upsert({
+                        where: { hrId },
+                        create: {
+                            hrId,
+                            plan: "pro",
+                            stripeCustomerId: session.customer,
+                            stripeSubId: session.subscription,
+                            status: "active",
+                            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                        },
+                        update: {
+                            plan: "pro",
+                            stripeCustomerId: session.customer,
+                            stripeSubId: session.subscription,
+                            status: "active",
+                        }
+                    });
                 }
-                let currentPeriodEnd = null;
-                if (stripeSubId) {
-                    const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubId);
-                    const itemPeriodEnd = stripeSubscription.items.data[0]?.current_period_end;
-                    currentPeriodEnd = itemPeriodEnd ? new Date(itemPeriodEnd * 1000) : null;
-                }
-                await prisma.hR.update({
-                    where: { id: hrId },
-                    data: {
-                        plan: "pro",
-                        interviewLimit: 999999,
-                    }
-                });
-                await prisma.subscription.upsert({
-                    where: { hrId },
-                    create: {
-                        hrId,
-                        plan: "pro",
-                        stripeCustomerId,
-                        stripeSubId,
-                        status: "active",
-                        currentPeriodEnd,
-                    },
-                    update: {
-                        plan: "pro",
-                        stripeCustomerId,
-                        stripeSubId,
-                        status: "active",
-                        currentPeriodEnd,
-                    }
-                });
                 break;
             }
             case "invoice.payment_succeeded": {
                 const invoice = event.data.object;
-                const customerId = typeof invoice.customer === "string"
-                    ? invoice.customer
-                    : invoice.customer?.id ?? null;
-                const parentSubscription = invoice.parent?.subscription_details?.subscription;
-                const stripeSubId = typeof parentSubscription === "string"
-                    ? parentSubscription
-                    : parentSubscription?.id ?? null;
+                const customerId = invoice.customer;
                 const subscription = await prisma.subscription.findFirst({
-                    where: {
-                        OR: [
-                            ...(customerId ? [{ stripeCustomerId: customerId }] : []),
-                            ...(stripeSubId ? [{ stripeSubId }] : []),
-                        ],
-                    }
+                    where: { stripeCustomerId: customerId }
                 });
                 if (subscription) {
                     await prisma.subscription.update({
@@ -163,16 +95,9 @@ export const stripeWebhook = async (req, res) => {
             }
             case "customer.subscription.deleted": {
                 const sub = event.data.object;
-                const customerId = typeof sub.customer === "string"
-                    ? sub.customer
-                    : sub.customer?.id ?? null;
+                const customerId = sub.customer;
                 const subscription = await prisma.subscription.findFirst({
-                    where: {
-                        OR: [
-                            { stripeSubId: sub.id },
-                            ...(customerId ? [{ stripeCustomerId: customerId }] : []),
-                        ],
-                    }
+                    where: { stripeCustomerId: customerId }
                 });
                 if (subscription) {
                     await prisma.hR.update({
@@ -192,20 +117,9 @@ export const stripeWebhook = async (req, res) => {
             }
             case "invoice.payment_failed": {
                 const invoice = event.data.object;
-                const customerId = typeof invoice.customer === "string"
-                    ? invoice.customer
-                    : invoice.customer?.id ?? null;
-                const parentSubscription = invoice.parent?.subscription_details?.subscription;
-                const stripeSubId = typeof parentSubscription === "string"
-                    ? parentSubscription
-                    : parentSubscription?.id ?? null;
+                const customerId = invoice.customer;
                 const subscription = await prisma.subscription.findFirst({
-                    where: {
-                        OR: [
-                            ...(customerId ? [{ stripeCustomerId: customerId }] : []),
-                            ...(stripeSubId ? [{ stripeSubId }] : []),
-                        ],
-                    }
+                    where: { stripeCustomerId: customerId }
                 });
                 if (subscription) {
                     await prisma.subscription.update({
@@ -219,7 +133,6 @@ export const stripeWebhook = async (req, res) => {
         res.status(200).json({ received: true });
     }
     catch (e) {
-        console.error("Stripe webhook error", e);
         res.status(400).json({ Message: e.message });
     }
 };

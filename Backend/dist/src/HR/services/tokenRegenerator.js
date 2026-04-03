@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { authCookieOptions } from "../Lib/cookieOptions.js";
 export const TokenRegenrator = (req, res) => {
     try {
         let token = req.cookies?.Refresh_Token;
@@ -22,16 +23,8 @@ export const TokenRegenrator = (req, res) => {
             expiresIn: "15m",
         });
         res
-            .cookie("Access_Token", AccessToken, {
-            httpOnly: true,
-            sameSite: "none",
-            secure: true,
-        })
-            .cookie("Refresh_Token", RefreshToken, {
-            httpOnly: true,
-            sameSite: "none",
-            secure: true,
-        })
+            .cookie("Access_Token", AccessToken, authCookieOptions)
+            .cookie("Refresh_Token", RefreshToken, authCookieOptions)
             .json({ Message: "SuccessFuly Regenrator Access_Token" });
     }
     catch (e) {

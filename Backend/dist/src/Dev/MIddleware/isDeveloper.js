@@ -50,6 +50,18 @@ export const isDeveloper = async (req, res, next) => {
         next();
     }
     catch (e) {
+        if (e instanceof jwt.TokenExpiredError) {
+            return res.status(401).json({
+                Message: "Access token expired",
+                code: "TOKEN_EXPIRED"
+            });
+        }
+        if (e instanceof jwt.JsonWebTokenError) {
+            return res.status(401).json({
+                Message: "Invalid token",
+                code: "INVALID_TOKEN"
+            });
+        }
         res.status(500).json({
             Message: "Server Error",
             Error: e.message

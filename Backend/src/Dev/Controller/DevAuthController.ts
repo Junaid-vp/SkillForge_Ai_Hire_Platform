@@ -4,6 +4,7 @@ import { otpGenerate } from "../Services/OtpGenerator.js";
 import { sentOTPtoDev } from "../Services/Email/OtpSendToEmail.js";
 import { redis } from "../../HR/Lib/redis.js";
 import { tokenGeneratorDev } from "../Services/TokenGenerator.js";
+import { authCookieOptions } from "../../HR/Lib/cookieOptions.js";
 
 export const DevLoginController = async (req: Request, res: Response) => {
   try {
@@ -123,11 +124,7 @@ export const otpValidationDev = async (req: Request, res: Response) => {
     const { AccessToken } = tokenGeneratorDev(email, Dev.id)
     res
       .status(200)
-      .cookie("Dev_Access_Token", AccessToken, {
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-      }).json({
+      .cookie("Dev_Access_Token", AccessToken, authCookieOptions).json({
         Message: "Login Successful",
         Status: "Success"
       })
@@ -175,11 +172,7 @@ export const DevOtpResend = async (req: Request, res: Response) => {
 export const DevLogoutController = async (req: Request, res: Response) => {
   try {
     res
-      .clearCookie("Dev_Access_Token", {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: false,
-      })
+      .clearCookie("Dev_Access_Token", authCookieOptions)
       .status(200)
       .json({ Message: "Logout successful" });
   } catch (e) {
@@ -236,11 +229,7 @@ if (!developerId) {
 
     res
       .status(200)
-      .cookie("Dev_Access_Token", AccessToken, {
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-      })
+      .cookie("Dev_Access_Token", AccessToken, authCookieOptions)
       .json({
         Message: "Login successful",
         Status: "success"

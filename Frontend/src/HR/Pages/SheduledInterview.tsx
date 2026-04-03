@@ -15,13 +15,14 @@ import {
 } from "lucide-react";
 import RescheduleModal from "../Components/Mod/ResheduledModal";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 type InterviewStatus = "SCHEDULED" | "STARTED" | "COMPLETED" | "CANCELLED";
 
 interface ScheduledDetails {
   id: string;
   createdAt: Date;
-  hrId: string;
+  hrId :string,
   developerId: string;
   status: InterviewStatus;
   scheduledAt: Date | null;
@@ -36,7 +37,10 @@ interface ScheduledDetails {
     interviewTime: string;
     position: string;
     uniqueCode: string;
-  };
+  },
+  hr:{
+    name:string
+  }
 }
 
 const fetchScheduledInterview = async () => {
@@ -99,6 +103,7 @@ const statusConfig: Record<
 };
 
 function ScheduledInterview() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useQuery<ScheduledDetails[]>({
     queryKey: ["ScheduledInterview"],
@@ -329,7 +334,7 @@ function ScheduledInterview() {
                       <>
                         <button
                           onClick={() => {
-                            /* join interview */
+                           navigate(`/dashboard/HrInterviewRoom/${interview.id}?role=HR&name=${interview.hr.name}`)
                           }}
                           className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
                         >

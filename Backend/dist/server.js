@@ -13,14 +13,25 @@ import SettingRoute from "./src/HR/Routes/SettingsRoute.js";
 import { CheckTaskDeadLine } from "./src/Dev/Services/CheckDeadline.js";
 import TaskRoute from "./src/HR/Routes/TaskRoute.js";
 import SubscriptonRoute from "./src/HR/Routes/SubscriptonRoute.js";
+import { stripeWebhook } from "./src/HR/Controller/SubscriptionController.js";
+import { createServer } from 'http';
+import { Server } from "socket.io";
+import { socketHandler } from "./Services/SocketHandle.js";
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
+const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").trim();
+const httpServer = createServer(app);
+const io = new Server(httpServer, { cors: {
+        origin: frontendUrl,
+        credentials: true,
+    } });
+socketHandler(io);
 app.use(cors({
-    origin: " http://localhost:5173",
+    origin: frontendUrl,
     credentials: true,
 }));
-app.use('/api/subscription/webhook', express.raw({ type: "application/json" }));
+app.post('/api/subscription/webhook', express.raw({ type: "application/json" }), stripeWebhook);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -35,6 +46,6 @@ app.use('/api/resume/', ResumeRoute);
 app.use('/api/subscription', SubscriptonRoute);
 CheckTaskDeadLine();
 startRedisServer();
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

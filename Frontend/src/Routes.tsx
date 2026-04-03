@@ -16,7 +16,7 @@ import DevDashBoard from "./Dev/Page/DevDashBoard";
 import Settings from "./HR/Pages/Settings";
 import DeveloperTotalDetails from "./HR/Pages/DeveloperTotalDetails";
 import UpgradePage from "./HR/Pages/Upgradepage";
-
+import InterviewRoom from "./Home/Interviewroom";
 
 export const router = createBrowserRouter([
   {
@@ -40,62 +40,65 @@ export const router = createBrowserRouter([
     element: <DashboardLayout />,
     children: [
       {
-        index:true,
+        index: true,
         element: <Dashboard />,
-
-      },{
-        path:'/dashboard/create-interview',
-        element:<CreateInterview/>
       },
       {
-        path:'/dashboard/developers',
-        element:<DeveloperList/>
+        path: "/dashboard/create-interview",
+        element: <CreateInterview />,
       },
       {
-        path:'/dashboard/schedule',
-        element:<ScheduledInterview/>
-
+        path: "/dashboard/developers",
+        element: <DeveloperList />,
       },
       {
-        path:'/dashboard/task-library',
-        element:<TaskLibraryList/>
+        path: "/dashboard/schedule",
+        element: <ScheduledInterview />,
       },
       {
-       path:'/dashboard/task-create',
-       element:<TaskLibraryEdit/>
-
-      },
-       {
-       path:'/dashboard/task-edit/:id',
-       element:<TaskLibraryEdit/>
+        path: "/dashboard/task-library",
+        element: <TaskLibraryList />,
       },
       {
-        path:'/dashboard/task-preview/:id',
-        element:<TaskPreview/>
+        path: "/dashboard/task-create",
+        element: <TaskLibraryEdit />,
       },
       {
-    path:"/dashboard/settings",
-    element:<Settings/>
+        path: "/dashboard/task-edit/:id",
+        element: <TaskLibraryEdit />,
       },
       {
-        path:'/dashboard/devFullDetails/:id',
-        element:<DeveloperTotalDetails/>
+        path: "/dashboard/task-preview/:id",
+        element: <TaskPreview />,
       },
-       {
-    path:'/dashboard/upgrade',
-    element:<UpgradePage/>
+      {
+        path: "/dashboard/settings",
+        element: <Settings />,
+      },
+      {
+        path: "/dashboard/devFullDetails/:id",
+        element: <DeveloperTotalDetails />,
+      },
+      {
+        path: "/dashboard/upgrade",
+        element: <UpgradePage />,
+      },
+    ],
+  },
+  {
+    path: "/dashboard/HrInterviewRoom/:interviewId",
+    element: <InterviewRoom />,
+  },
+  {
+    path: "/devLogin",
+    element: <DevLogin />,
+  },
+  {
+    path: "/devDashboard",
+    element: <DevDashBoard />,
+  },
+  {
+        path:"/DevInterviewRoom/:interviewId",
+        element:<InterviewRoom/>
   }
-  
-    ]
-  },
-  {
-    path:"/devLogin",
-    element:<DevLogin/>
-  },
-  {
-    path:'/devDashboard',
-    element:<DevDashBoard/>
-  },
- 
-  
 ]);

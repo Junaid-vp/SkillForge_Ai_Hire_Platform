@@ -150,25 +150,29 @@ export const sheduledInterviewDetails = async (req: Request, res: Response) => {
       return res.status(401).json({ Message: "HR is not logged in" });
     }
 
-    const details = await prisma.interview.findMany({
-      where: { hrId: id },
-      include: {
-        developer: {
-          select: {
-            id: true,
-            developerName: true,
-            developerEmail: true,
-            position: true,
-            experience: true,
-            interviewDate: true,
-            interviewTime: true,
-            uniqueCode: true,
-          }
-        }
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
+const details = await prisma.interview.findMany({
+  where: { hrId: id },
+  include: {
+    developer: {
+      select: {
+        id: true,
+        developerName: true,
+        developerEmail: true,
+        position: true,
+        experience: true,
+        interviewDate: true,
+        interviewTime: true,
+        uniqueCode: true,
+      }
+    },
+    hr: {
+      select: {
+        name: true
+      }
+    }
+  },
+  orderBy: { createdAt: "desc" },
+});
 
     if (details.length === 0) {
       return res.status(200).json({

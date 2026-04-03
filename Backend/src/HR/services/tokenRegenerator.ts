@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { Request, Response } from "express";
 import { JwtPayload } from "../Lib/type.js";
+import { authCookieOptions } from "../Lib/cookieOptions.js";
 
 export const TokenRegenrator = (req: Request, res: Response) => {
   try {
@@ -15,7 +16,7 @@ export const TokenRegenrator = (req: Request, res: Response) => {
     if (!refreshKey || !accessKey) {
       throw new Error("JWT keys are not defined in environment variables");
     }
-
+   
     const decode = jwt.verify(token, refreshKey) as JwtPayload;
 
     const payload: JwtPayload = {
@@ -32,16 +33,8 @@ export const TokenRegenrator = (req: Request, res: Response) => {
     });
 
     res
-      .cookie("Access_Token", AccessToken, {
-        httpOnly: true,
-        sameSite: "none", 
-        secure: true, 
-      })
-      .cookie("Refresh_Token", RefreshToken, {
-        httpOnly: true,
-        sameSite: "none", 
-        secure: true, 
-      })
+      .cookie("Access_Token", AccessToken, authCookieOptions)
+      .cookie("Refresh_Token", RefreshToken, authCookieOptions)
       .json({ Message: "SuccessFuly Regenrator Access_Token" });
   } catch (e) {
     res.status(401).json({ Message: "Refresh token expired" });

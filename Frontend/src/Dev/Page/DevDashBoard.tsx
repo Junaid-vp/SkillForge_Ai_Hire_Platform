@@ -128,7 +128,6 @@ function DevDashBoard() {
     queryKey: ["DevDashboard"],
     queryFn: fetchDashBoard,
   });
-
   const handleLogout = async () => {
     try {
       await api.post("/dev/logout");
@@ -328,7 +327,7 @@ function DevDashBoard() {
                     {(isScheduled || isStarted) && (
                       <div className="flex items-center gap-2 px-6 py-4 border-t border-gray-50 bg-gray-50/40">
                         <button
-                          onClick={() => { /* handle join */ }}
+                          onClick={() => { navigate(`/DevInterviewRoom/${interview.id}?role=Developer&name=${data.developerName}`)}}
                           className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm shadow-blue-100"
                         >
                           <Video size={13} />

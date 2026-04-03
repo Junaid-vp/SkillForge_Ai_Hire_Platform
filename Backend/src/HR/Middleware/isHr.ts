@@ -28,8 +28,22 @@ const isHr = (req: Request, res: Response, next: NextFunction) => {
 
     next();
   } catch (error) {
-    console.error(error);
-    return res.status(401).json({ message: "Invalid or expired token" });
+    if (error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({
+        message: "Access token expired",
+        code: "TOKEN_EXPIRED",
+      });
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({
+        message: "Invalid token",
+        code: "INVALID_TOKEN",
+      });
+    }
+
+    console.error("HR auth middleware error", error);
+    return res.status(401).json({ message: "Unauthorized" });
   }
 };
 

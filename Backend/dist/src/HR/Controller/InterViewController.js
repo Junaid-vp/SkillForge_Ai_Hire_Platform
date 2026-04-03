@@ -112,6 +112,11 @@ export const sheduledInterviewDetails = async (req, res) => {
                         interviewTime: true,
                         uniqueCode: true,
                     }
+                },
+                hr: {
+                    select: {
+                        name: true
+                    }
                 }
             },
             orderBy: { createdAt: "desc" },

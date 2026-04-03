@@ -6,6 +6,7 @@ import { sentOTPemail } from "../services/Email/sendEmailOTP.js";
 import { tokenGenerator } from "../services/tokenGeneratior.js";
 import { HrDetails } from "../Lib/type.js";
 import { redis } from "../Lib/redis.js";
+import { authCookieOptions } from "../Lib/cookieOptions.js";
 
 export const HRregisterController = async (req: Request, res: Response) => {
   try {
@@ -120,16 +121,8 @@ export const otpValidation = async (req: Request, res: Response) => {
 
     res
       .status(200)
-      .cookie("Access_Token", AccessToken, {
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-      })
-      .cookie("Refresh_Token", RefreshToken, {
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-      })
+      .cookie("Access_Token", AccessToken, authCookieOptions)
+      .cookie("Refresh_Token", RefreshToken, authCookieOptions)
       .json({
         Message: "Login Successful",
         Status: "Success",
@@ -164,16 +157,8 @@ export const otpResend = async (req: Request, res: Response) => {
  export const HrLogoutController = async (req: Request, res:Response) => {
   try {
     res
-      .clearCookie("Access_Token", {
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-      })
-      .clearCookie("Refresh_Token", {
-        httpOnly: true,
-        sameSite: "none",
-        secure: true,
-      })
+      .clearCookie("Access_Token", authCookieOptions)
+      .clearCookie("Refresh_Token", authCookieOptions)
       .status(200)
       .json({ Message: "Logout successful" });
   } catch (e) {
