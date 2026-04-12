@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from 'react-hot-toast';
 import { api } from "../../../Api/Axios";
 import { CalendarDays, Clock, X } from "lucide-react";
 
@@ -43,6 +44,7 @@ function RescheduleModal({ open, onClose, interviewId, refetch }: Props) {
     try {
       setLoading(true);
       await api.put(`/interview/reschedule`, { interviewId, newDate: date, newTime: time });
+      toast.success('Interview rescheduled successfully!');
       refetch();
       onClose();
     } catch (err: any) {

@@ -1,4 +1,5 @@
 import { api } from "../../Api/Axios";
+import toast from 'react-hot-toast';
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,6 +19,7 @@ import {
   Layers,
   LogOut,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface HR {
   name: string;
@@ -122,6 +124,8 @@ const formatTime = (t: string) => {
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
 };
 
+
+
 function DevDashBoard() {
   const navigate = useNavigate();
   const { data, isLoading, error } = useQuery<DevData>({
@@ -131,12 +135,64 @@ function DevDashBoard() {
   const handleLogout = async () => {
     try {
       await api.post("/dev/logout");
+      toast.success('Logged out successfully.');
     } catch (e) {
       console.log(e);
     } finally {
       navigate("/devLogin");
     }
   };
+
+  const isJoinable = (interviewDate: string, interviewTime: string) => {
+    if (!interviewDate || !interviewTime) return false;
+    const dateStr = String(interviewDate).split("T")[0];
+    const scheduledTime = new Date(`${dateStr}T${interviewTime}`);
+    const now = new Date();
+
+    // Allow join 10 minutes before scheduled time
+    const tenMinsBefore = new Date(scheduledTime.getTime() - 10 * 60 * 1000);
+
+    return now >= tenMinsBefore;
+  };
+
+const [timeLeft, setTimeLeft] = useState("")
+
+useEffect(() => {
+  if (!data?.interviewDate || !data?.interviewTime) return;
+
+  const interval = setInterval(() => {
+    const dateStr = String(data.interviewDate).split("T")[0];
+    const scheduledTime = new Date(`${dateStr}T${data.interviewTime}`);
+    const now = new Date();
+
+    const diff = scheduledTime.getTime() - now.getTime();
+
+    if (Number.isNaN(diff)) {
+      setTimeLeft("Pending Setup");
+      return;
+    }
+
+    if (diff <= 0) {
+      setTimeLeft("Started");
+      return;
+    }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    if (hours > 24) {
+      const days = Math.floor(hours / 24);
+      setTimeLeft(`${days}d ${hours % 24}h`);
+    } else if (hours > 0) {
+      setTimeLeft(`${hours}h ${minutes}m`);
+    } else {
+      setTimeLeft(`${minutes}m ${seconds}s`);
+    }
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [data]);
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans antialiased flex flex-col">
@@ -324,17 +380,55 @@ function DevDashBoard() {
                       </div>
                     </div>
 
-                    {(isScheduled || isStarted) && (
-                      <div className="flex items-center gap-2 px-6 py-4 border-t border-gray-50 bg-gray-50/40">
-                        <button
-                          onClick={() => { navigate(`/DevInterviewRoom/${interview.id}?role=Developer&name=${data.developerName}`)}}
-                          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm shadow-blue-100"
-                        >
-                          <Video size={13} />
-                          {isStarted ? "Rejoin Interview" : "Join Interview"}
-                        </button>
+                  {(isScheduled || isStarted) && (
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/40">
+                      {/* LEFT: Status */}
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-0.5">
+                          Status
+                        </span>
+                        {isJoinable(data.interviewDate, data.interviewTime) ? (
+                          <div className="flex items-center gap-2">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                            <span className="text-xs font-bold text-green-600 tracking-wide">
+                              {isStarted ? "In Progress" : "Ready to join"}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+                            <Timer size={12} className="text-gray-400" />
+                            Starts in {timeLeft}
+                          </div>
+                        )}
                       </div>
-                    )}
+
+                      {/* RIGHT: Button */}
+                      <button
+                        disabled={!isJoinable(data.interviewDate, data.interviewTime)}
+                        onClick={() =>
+                          navigate(
+                            `/DevInterviewRoom/${interview.id}?role=Developer&name=${data.developerName}`
+                          )
+                        }
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all duration-300
+                          ${
+                            isJoinable(data.interviewDate, data.interviewTime)
+                              ? "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-[0_4px_12px_rgba(37,99,235,0.2)] hover:-translate-y-0.5 active:translate-y-0"
+                              : "bg-gray-100/80 text-gray-400 cursor-not-allowed border border-gray-200"
+                          }`}
+                      >
+                        <Video size={14} />
+                        {!isJoinable(data.interviewDate, data.interviewTime) 
+                          ? "You Can Join Before 10m" 
+                          : isStarted 
+                            ? "Rejoin Interview" 
+                            : "Join Interview"}
+                      </button>
+                    </div>
+                  )}
                   </div>
                 )}
 
@@ -417,7 +511,7 @@ function DevDashBoard() {
                       </div>
                       <p className="text-sm font-semibold text-gray-600">No task assigned yet</p>
                       <p className="text-xs text-gray-400 mt-1">
-                        Your HR will assign a task before the interview
+                        Your HR will assign a task after the interview
                       </p>
                     </div>
                   )

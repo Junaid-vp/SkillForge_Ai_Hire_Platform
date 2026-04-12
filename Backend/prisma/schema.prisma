@@ -46,6 +46,7 @@ model HR {
   taskLibrary TaskLibrary[]
   tasks       Task[]
   subscription Subscription?
+  interviewNotes InterviewNote[]
 }
 
 model Developer {
@@ -82,6 +83,10 @@ model Interview {
   hr        HR        @relation(fields: [hrId], references: [id])
   developer Developer @relation(fields: [developerId], references: [id])
   task      Task?
+  questions   Question[]
+  answers     Answer[]
+  note        InterviewNote?
+  codeAnswers CodeAnswer[] 
 }
 
 model TaskLibrary {
@@ -133,4 +138,69 @@ model Subscription {
   createdAt        DateTime  @default(now())
 
   hr               HR        @relation(fields: [hrId], references: [id])
+}
+
+
+model Question {
+  id             String   @id @default(uuid())
+  interviewId    String
+  questionText   String
+  expectedAnswer String
+  keywords       String
+  difficulty     String
+  orderIndex     Int
+  isLeetcode     Boolean  @default(false)
+  
+ 
+  estimatedTime  Int?     // AI estimated minutes (10, 20, 30)
+  inputExample   String?  // example input
+  outputExample  String?  // expected output
+  constraints    String?  // problem constraints
+  
+  createdAt      DateTime @default(now())
+
+  interview      Interview  @relation(fields: [interviewId], references: [id])
+  answer         Answer?
+  codeAnswer     CodeAnswer? // ← add this
+}
+
+
+model CodeAnswer {
+  id          String   @id @default(uuid())
+  questionId  String   @unique
+  interviewId String
+  code        String
+  language    String
+  output      String?
+  codeStatus  String?
+  runCount    Int      @default(0)
+  submittedAt DateTime @default(now())
+
+  question    Question  @relation(fields: [questionId], references: [id])
+  interview   Interview @relation(fields: [interviewId], references: [id])
+}
+
+model Answer {
+  id          String   @id @default(uuid())
+  questionId  String   @unique
+  interviewId String
+  answerText  String
+  score       Int?
+  feedback    String?
+  status      String   @default("PENDING")
+  submittedAt DateTime @default(now())
+
+  question    Question  @relation(fields: [questionId], references: [id])
+  interview   Interview @relation(fields: [interviewId], references: [id])
+}
+
+model InterviewNote {
+  id          String   @id @default(uuid())
+  interviewId String   @unique
+  hrId        String
+  content     String
+  updatedAt   DateTime @updatedAt
+
+  interview   Interview @relation(fields: [interviewId], references: [id])
+  hr          HR        @relation(fields: [hrId], references: [id])
 }

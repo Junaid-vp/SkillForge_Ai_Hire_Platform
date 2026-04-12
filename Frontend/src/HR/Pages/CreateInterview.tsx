@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Formik, Form, Field } from "formik";
 import { LinkIcon, Send, CalendarDays, User, Sparkles, CheckCircle2, FileText, Upload, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { api } from '../../Api/Axios';
 import { InterviewValidation } from '../Validation/InterviewValidation';
  
@@ -61,7 +62,7 @@ function CreateInterview() {
       });
  
     } catch (e) {
-      alert("Resume parsing failed. Please fill manually.");
+      toast.error('Resume parsing failed. Please fill the fields manually.');
     } finally {
       setIsParsing(false);
     }
@@ -75,7 +76,7 @@ function CreateInterview() {
     }
   ) => {
     if (!generatedCode) {
-      alert("Please generate a unique code first.");
+      toast.error('Please generate a unique invite code first.');
       setSubmitting(false);
       return;
     }
@@ -99,13 +100,15 @@ function CreateInterview() {
  
       resetForm();
       setGeneratedCode(null);
-      setResumeData(null);     // ✅ clear resume data on success
+      setResumeData(null);
       setSubmitted(true);
+      toast.success('Interview invitation sent successfully!');
       setTimeout(() => setSubmitted(false), 3000);
  
-    } catch (e) {
+    } catch (e: any) {
       console.error("Submission error:", e);
-      alert('Error submitting form. Please try again.');
+      const msg = e?.response?.data?.Message || e?.response?.data?.message;
+      toast.error(msg || 'Failed to send invitation. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -116,7 +119,9 @@ function CreateInterview() {
     try {
       const res = await api.post('/interview/generate-code');
       setGeneratedCode(res.data.Code);
+      toast.success('Invite code generated!');
     } catch (e) {
+      toast.error('Failed to generate invite code. Please try again.');
       console.error(e);
     } finally {
       setIsGenerating(false);

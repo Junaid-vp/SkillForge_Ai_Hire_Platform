@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from 'react-hot-toast';
 import { api } from "../../Api/Axios";
 import {
   CalendarDays,
@@ -115,10 +116,24 @@ function ScheduledInterview() {
     null,
   );
 
+  const isJoinable = (interviewDate: Date | string, interviewTime: string) => {
+    if (!interviewDate || !interviewTime) return false;
+    const dateObj = new Date(interviewDate);
+    const dateStr = dateObj.toISOString().split("T")[0];
+    const scheduledTime = new Date(`${dateStr}T${interviewTime}`);
+    const now = new Date();
+
+    // Allow join 10 minutes before scheduled time
+    const tenMinsBefore = new Date(scheduledTime.getTime() - 10 * 60 * 1000);
+
+    return now >= tenMinsBefore;
+  };
+
   const handleCopyCode = async (code: string, interviewId: string) => {
     try {
       await navigator.clipboard.writeText(code);
       setCopiedInterviewId(interviewId);
+      toast.success('Invite code copied to clipboard!');
       window.setTimeout(() => {
         setCopiedInterviewId((current) =>
           current === interviewId ? null : current,
@@ -126,6 +141,7 @@ function ScheduledInterview() {
       }, 1500);
     } catch (error) {
       console.error("Failed to copy code:", error);
+      toast.error('Failed to copy code.');
     }
   };
 
@@ -333,13 +349,20 @@ function ScheduledInterview() {
                     {interview.status === "SCHEDULED" && (
                       <>
                         <button
+                          disabled={!isJoinable(interview.developer.interviewDate, interview.developer.interviewTime)}
                           onClick={() => {
                            navigate(`/dashboard/HrInterviewRoom/${interview.id}?role=HR&name=${interview.hr.name}`)
                           }}
-                          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${
+                            isJoinable(interview.developer.interviewDate, interview.developer.interviewTime)
+                              ? "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-[0_4px_12px_rgba(37,99,235,0.2)] hover:-translate-y-0.5"
+                              : "bg-gray-100/80 text-gray-400 cursor-not-allowed border border-gray-200"
+                          }`}
                         >
                           <Video size={13} />
-                          Join Interview
+                          {!isJoinable(interview.developer.interviewDate, interview.developer.interviewTime) 
+                            ? "You Can Join Before 10m" 
+                            : "Join Interview"}
                         </button>
                         <button
                           onClick={() => {
@@ -357,9 +380,9 @@ function ScheduledInterview() {
                     {interview.status === "STARTED" && (
                       <button
                         onClick={() => {
-                          /* rejoin */
+                           navigate(`/dashboard/HrInterviewRoom/${interview.id}?role=HR&name=${interview.hr.name}`)
                         }}
-                        className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
+                        className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm hover:shadow-[0_4px_12px_rgba(22,163,74,0.2)] hover:-translate-y-0.5"
                       >
                         <Video size={13} />
                         Rejoin Interview

@@ -58,8 +58,8 @@ export const stripeWebhook = async (req: Request, res: Response) => {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
     )
-console.log("🔥 Webhook hit")
-console.log("Event:", event.type)
+    console.log("🔥 Webhook hit")
+    console.log("Event:", event.type)
     switch (event.type) {
 
       case "checkout.session.completed": {
@@ -70,28 +70,28 @@ console.log("Event:", event.type)
           await prisma.hR.update({
             where: { id: hrId },
             data: {
-              plan:           "pro",
+              plan: "pro",
               interviewLimit: 999999
             }
           })
 
           await prisma.subscription.upsert({
-            where:  { hrId },
+            where: { hrId },
             create: {
               hrId,
-              plan:             "pro",
+              plan: "pro",
               stripeCustomerId: session.customer as string,
-              stripeSubId:      session.subscription as string,
-              status:           "active",
+              stripeSubId: session.subscription as string,
+              status: "active",
               currentPeriodEnd: new Date(
                 Date.now() + 30 * 24 * 60 * 60 * 1000
               )
             },
             update: {
-              plan:             "pro",
+              plan: "pro",
               stripeCustomerId: session.customer as string,
-              stripeSubId:      session.subscription as string,
-              status:           "active",
+              stripeSubId: session.subscription as string,
+              status: "active",
             }
           })
         }
@@ -109,13 +109,13 @@ console.log("Event:", event.type)
         if (subscription) {
           await prisma.subscription.update({
             where: { id: subscription.id },
-            data:  { status: "active" }
+            data: { status: "active" }
           })
         }
         break
       }
 
-      
+
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription
         const customerId = sub.customer as string
@@ -125,31 +125,31 @@ console.log("Event:", event.type)
         })
 
         if (subscription) {
-        
+
           await prisma.hR.update({
             where: { id: subscription.hrId },
             data: {
-              plan:           "free",
+              plan: "free",
               interviewLimit: 5,
               interviewCount: 0
             }
           })
 
-         
+
           await prisma.subscription.update({
             where: { id: subscription.id },
-            data:  { plan: "free", status: "cancelled" }
+            data: { plan: "free", status: "cancelled" }
           })
         }
         break
       }
 
-      
+
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice
         const customerId = invoice.customer as string
 
-        
+
         const subscription = await prisma.subscription.findFirst({
           where: { stripeCustomerId: customerId }
         })
@@ -157,9 +157,9 @@ console.log("Event:", event.type)
         if (subscription) {
           await prisma.subscription.update({
             where: { id: subscription.id },
-            data:  { status: "payment_failed" }
+            data: { status: "payment_failed" }
           })
-         
+
         }
         break
       }
@@ -174,18 +174,18 @@ console.log("Event:", event.type)
 
 
 
-export const cancelSubscription = async(req:Request,res:Response)=>{
-try{
-const id = req.userId;
+export const cancelSubscription = async (req: Request, res: Response) => {
+  try {
+    const id = req.userId;
 
- if (!id) {
+    if (!id) {
       return res.status(401).json({ message: "Not authorized" })
     }
 
     const subscription = await prisma.subscription.findUnique({
-        where:{hrId:id}
+      where: { hrId: id }
     })
-    
+
 
     if (!subscription?.stripeSubId) {
       return res.status(404).json({
@@ -193,23 +193,23 @@ const id = req.userId;
       })
     }
 
-    await stripe.subscriptions.update(subscription.stripeSubId,{
-        cancel_at_period_end:true
+    await stripe.subscriptions.update(subscription.stripeSubId, {
+      cancel_at_period_end: true
     }),
 
-    await prisma.subscription.update({
-      where: { hrId: id },
-      data: {
-        status: "cancel_scheduled"
-      }
-    })
+      await prisma.subscription.update({
+        where: { hrId: id },
+        data: {
+          status: "cancel_scheduled"
+        }
+      })
 
-      res.status(200).json({
+    res.status(200).json({
       message: "Subscription will be cancelled at end of billing period",
       status: "success"
     })
 
-}catch (e: any) {
+  } catch (e: any) {
     res.status(500).json({
       message: "Server Error",
       error: e.message

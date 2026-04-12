@@ -1,5 +1,7 @@
 import { Server } from "socket.io";
 
+const roomStates = new Map<string, any>();
+
 export const socketHandler = (io: Server) => {
   //Connected
 
@@ -12,6 +14,18 @@ export const socketHandler = (io: Server) => {
       (socket.join(interviewId), socket.to(interviewId).emit("User-Joined"));
 
       console.log(`User ${socket.id} joined room: ${interviewId}`);
+      
+      // Send the current room state back to the joining user immediately
+      const state = roomStates.get(interviewId);
+      if (state) {
+        const sentState = { ...state };
+        if (state.questionStartTime && state.timeLimit !== undefined) {
+           const elapsedSec = Math.floor((Date.now() - state.questionStartTime) / 1000);
+           const remaining = Math.max(0, state.timeLimit - elapsedSec);
+           sentState.timeLeft = remaining;
+        }
+        socket.emit("init-room-state", sentState);
+      }
     });
 
     // Share PeerJS ID For Video
@@ -33,12 +47,19 @@ export const socketHandler = (io: Server) => {
         senderName: string;
         senderRole: string;
       }) => {
-        io.to(data.interviewId).emit("receive-message", {
+        const msg = {
           message: data.message,
           senderName: data.senderName,
           senderRole: data.senderRole,
           timestamp: new Date().toISOString(),
-        });
+        };
+
+        if (!roomStates.has(data.interviewId)) roomStates.set(data.interviewId, {});
+        const state = roomStates.get(data.interviewId);
+        if (!state.messages) state.messages = [];
+        state.messages.push(msg);
+
+        io.to(data.interviewId).emit("receive-message", msg);
       },
     );
 
@@ -68,12 +89,133 @@ export const socketHandler = (io: Server) => {
       socket.to(interviewId).emit("screen-share-stopped");
     });
 
-    //Leave Room
+    // ── Q&A Events ────────────────────
 
+    // HR starts Q&A session
+    socket.on("start-qa", (interviewId: string) => {
+      if (!roomStates.has(interviewId)) roomStates.set(interviewId, {});
+      const state = roomStates.get(interviewId);
+      state.qaStarted = true;
+      state.activePanel = "qa";
+
+      socket.to(interviewId).emit("qa-started");
+    });
+
+    // HR sends one question to developer
+    socket.on(
+      "send-question",
+      (data: {
+        interviewId: string;
+        questionId: string;
+        questionText: string;
+        orderIndex: number;
+        total: number;
+        timeLimit: number; // seconds
+      }) => {
+        if (!roomStates.has(data.interviewId)) roomStates.set(data.interviewId, {});
+        const state = roomStates.get(data.interviewId);
+        state.currentQuestion = data;
+        state.timeLimit = data.timeLimit;
+        state.questionStartTime = Date.now();
+
+        socket.to(data.interviewId).emit("receive-question", data);
+      },
+    );
+
+    // Developer submitted answer
+    socket.on(
+      "answer-submitted",
+      (data: { interviewId: string; questionId: string }) => {
+        if (!roomStates.has(data.interviewId)) roomStates.set(data.interviewId, {});
+        const state = roomStates.get(data.interviewId);
+        state.answeredQuestionId = data.questionId;
+
+        // Tell HR dev submitted — AI evaluating
+        socket.to(data.interviewId).emit("answer-submitted", data);
+      },
+    );
+
+    // ── Code Editor Events ────────────────────────────────────────────────────
+ 
+    // HR opens code editor for developer — sends full LeetCode question data
+    socket.on("open-code-editor", (data: {
+      interviewId: string
+      questions: {
+        id:            string
+        questionText:  string
+        estimatedTime: number | null
+        inputExample:  string | null
+        outputExample: string | null
+        constraints:   string | null
+      }[]
+    }) => {
+      if (!roomStates.has(data.interviewId)) roomStates.set(data.interviewId, {});
+      const state = roomStates.get(data.interviewId);
+      state.showCodeEditor = true;
+      state.activePanel = "qa";
+      state.leetcodeData = data.questions;
+      state.leetcodeStartTime = Date.now();
+
+      socket.to(data.interviewId).emit("open-code-editor", data);
+      console.log(`💻 Code editor opened for room: ${data.interviewId}`);
+    });
+ 
+    // Developer runs code — result sent to HR in real-time
+    socket.on("code-result", (data: {
+      interviewId: string
+      questionId:  string
+      output:      string
+      status:      string
+      language:    string
+      time?:       string
+      memory?:     string
+      code?:       string
+    }) => {
+      // Send to everyone in room so HR sees result live
+      io.to(data.interviewId).emit("code-result", data)
+      console.log(`💡 Code result [${data.status}] from room: ${data.interviewId}`)
+    })
+    
+        socket.on("coding-complete", (data: { interviewId: string }) => {
+      if (roomStates.has(data.interviewId)) {
+        const state = roomStates.get(data.interviewId);
+        state.showCodeEditor = false;
+        state.codingComplete = true;
+      }
+      socket.to(data.interviewId).emit("coding-complete", data)
+      console.log(`✅ Coding complete in room: ${data.interviewId}`)
+    })
+ 
+
+    // Malpractice detection
+    socket.on(
+      "malpractice",
+      (data: {
+        interviewId: string;
+        type: string;
+        message: string;
+        severity: string;
+        timestamp: string;
+      }) => {
+        // Forward to HR
+        socket.to(data.interviewId).emit("malpractice-alert", data);
+        console.log(
+          `⚠️ Malpractice [${data.severity}]: ${data.type} in room ${data.interviewId}`,
+        );
+      },
+    );
+
+    //Leave Room
     socket.on("leave-room", (interviewId: string) => {
       socket.leave(interviewId);
       socket.to(interviewId).emit("user-left");
       console.log(`User left room: ${interviewId}`);
+    });
+
+    socket.on("end-call-explicitly", (interviewId: string) => {
+      socket.to(interviewId).emit("end-call-explicitly");
+      roomStates.delete(interviewId); // Clear session memory
+      console.log(`Call explicitly ended: ${interviewId}`);
     });
 
     //    Disconnect

@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "predev": "prisma generate",
-    "dev": "nodemon --exec node --loader ts-node/esm server.ts",
+    "dev": "nodemon --exec node --import tsx server.ts",
     "prebuild": "prisma generate",
     "build": "tsc",
     "start": "node dist/server.js"
@@ -50,6 +50,7 @@
     "@types/nodemailer": "^7.0.11",
     "prisma": "^7.5.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

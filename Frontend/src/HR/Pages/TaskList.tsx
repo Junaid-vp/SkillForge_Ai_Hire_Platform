@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { api } from "../../Api/Axios";
+import toast from 'react-hot-toast';
+import DeleteConfirmModal from "../Components/Mod/DeleteConformModal";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
@@ -64,13 +67,26 @@ const {data,isLoading,error} = useQuery<TaskLibrary[]>({
     queryFn: fetchLibraryData,
   })
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this task?")) return;
+  const [taskToDelete, setTaskToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (task: { id: string; title: string }) => {
+    setTaskToDelete(task);
+  };
+
+  const confirmDelete = async () => {
+    if (!taskToDelete) return;
+    setIsDeleting(true);
     try {
-      await api.delete(`/tasklibary/delete/${id}`);
+      await api.delete(`/tasklibary/delete/${taskToDelete.id}`);
+      toast.success('Task deleted successfully!');
       queryClient.invalidateQueries({ queryKey: ["TaskLibrary"] });
-    } catch (e) {
+      setTaskToDelete(null);
+    } catch (e: any) {
       console.error(e);
+      toast.error(e?.response?.data?.Message || 'Failed to delete task.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -220,7 +236,7 @@ const {data,isLoading,error} = useQuery<TaskLibrary[]>({
                           <Pencil size={13} />
                         </button>
                         <button
-                          onClick={() => handleDelete(task.id)}
+                          onClick={() => handleDeleteClick({ id: task.id, title: task.title })}
                           className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         >
                           <Trash2 size={13} />
@@ -299,6 +315,15 @@ const {data,isLoading,error} = useQuery<TaskLibrary[]>({
             );
           })}
         </div>
+      )}
+
+      {taskToDelete && (
+        <DeleteConfirmModal
+          taskTitle={taskToDelete.title}
+          isDeleting={isDeleting}
+          onConfirm={confirmDelete}
+          onCancel={() => setTaskToDelete(null)}
+        />
       )}
     </div>
   );

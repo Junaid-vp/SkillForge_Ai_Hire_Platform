@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { Formik, Form, Field } from "formik";
 import { Link, useNavigate } from 'react-router-dom';
@@ -46,12 +47,18 @@ function SignUp() {
 
        if(response.status ===201){
         resetForm();
+        toast.success('Account created successfully! Please sign in.');
         navigate("/login");
        }
       
-    } catch (e) {
+    } catch (e: any) {
       console.error("Submission error:", e);
-      alert('Error submitting form. Please try again.');
+      const msg = e?.response?.data?.Message || e?.response?.data?.message;
+      if (msg?.toLowerCase().includes('already') || e?.response?.status === 409) {
+        toast.error('An HR account with this email already exists.');
+      } else {
+        toast.error(msg || 'Error creating account. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }

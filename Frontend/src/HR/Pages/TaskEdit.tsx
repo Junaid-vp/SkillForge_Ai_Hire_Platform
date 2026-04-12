@@ -12,6 +12,7 @@ import {
   Pencil,
   ArrowLeft,
 } from "lucide-react";
+import toast from 'react-hot-toast';
 import { api } from "../../Api/Axios";
 import { TaskValidation } from "../Validation/TaskLibaryValidation";
 import { useParams, useNavigate } from "react-router-dom";
@@ -56,6 +57,7 @@ function TaskLibraryEdit() {
         });
       } catch (e) {
         console.error("Failed to fetch task:", e);
+        toast.error('Failed to load task details.');
       } finally {
         setLoadingTask(false);
       }
@@ -96,10 +98,12 @@ function TaskLibraryEdit() {
       }
 
       setSubmitted(true);
+      toast.success(isEdit ? 'Task updated successfully!' : 'Task created successfully!');
       setTimeout(() => setSubmitted(false), 3000);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Submission error:", e);
-      alert("Error submitting form. Please try again.");
+      const msg = e?.response?.data?.Message || e?.response?.data?.message;
+      toast.error(msg || 'Error saving task. Please try again.');
     } finally {
       setSubmitting(false);
     }

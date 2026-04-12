@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Home from "./Home/Home";
 import SignUp from "./HR/Authentication/SignUp";
-import RollSelection from "./Home/RollSelection";
+import RollSelection from "./Pages/RollSelection";
 import Login from "./HR/Authentication/Login";
 import Dashboard from "./HR/Pages/Dashboard";
 import DashboardLayout from "./HR/Components/DashBoardLayort";
@@ -16,7 +16,9 @@ import DevDashBoard from "./Dev/Page/DevDashBoard";
 import Settings from "./HR/Pages/Settings";
 import DeveloperTotalDetails from "./HR/Pages/DeveloperTotalDetails";
 import UpgradePage from "./HR/Pages/Upgradepage";
-import InterviewRoom from "./Home/Interviewroom";
+import InterviewRoom from "./Pages/Interviewroom";
+import InterviewRoom_Index from "./Pages/InterviewRoom/InterviewRoom_index";
+
 
 export const router = createBrowserRouter([
   {
@@ -99,6 +101,8 @@ export const router = createBrowserRouter([
   },
   {
         path:"/DevInterviewRoom/:interviewId",
-        element:<InterviewRoom/>
-  }
+        // element:<InterviewRoom/>
+        element:<InterviewRoom_Index/>
+  },
+
 ]);

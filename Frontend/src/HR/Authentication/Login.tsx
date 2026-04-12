@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Formik, Form, Field, type FormikHelpers } from "formik";
 import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { api } from '../../Api/Axios';
 import OTPModal from '../Components/Mod/OtpModal';
 import { LoginValidation } from '../Validation/LoginValidation';
@@ -33,11 +34,19 @@ function Login() {
       if (res.data.Status === "Success") {
         setShowOTP(true);
         setIsInvalid(null);
+        toast.success('OTP sent to your email!');
       } else {
-        console.log(res.data.Message);
+        toast.error(res.data.Message || 'Login failed. Please check your credentials.');
       }
-    } catch (e) {
-      console.log(e);
+    } catch (e: any) {
+      const msg = e?.response?.data?.Message || e?.response?.data?.message;
+      if (e?.response?.status === 401) {
+        toast.error('Incorrect email or password.');
+      } else if (e?.response?.status === 404) {
+        toast.error('No account found with this email.');
+      } else {
+        toast.error(msg || 'Something went wrong. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -51,6 +60,7 @@ function Login() {
         setShowOTP(false);
         setEmail("");
         setIsInvalid(null);
+        toast.success('Login successful! Welcome back.');
         navigate("/dashboard");
       } else {
         setIsInvalid("Invalid OTP");
@@ -65,9 +75,10 @@ function Login() {
 
   const handleReSentOtp = async () => {
     try {
-      await api.post("/auth/hr/resent-otp", { email: Email.toLowerCase() }); // ✅ fixed typo
+      await api.post("/auth/hr/resent-otp", { email: Email.toLowerCase() });
+      toast.success('New OTP sent to your email!');
     } catch (e: any) {
-      console.log(e.message);
+      toast.error('Failed to resend OTP. Please try again.');
     }
   };
 

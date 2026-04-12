@@ -11,7 +11,7 @@ router.post('/hr/register', Validate(registerValidate), HRregisterController)
 router.post('/hr/login', Validate(LoginValidate), HrloginController)
 router.post('/hr/verify-otp', otpValidation)
 router.post('/hr/resent-otp', otpResend)
-router.post('/refresh',TokenRegenrator)
-router.post('/hr/logout',HrLogoutController)
+router.post('/refresh', TokenRegenrator)
+router.post('/hr/logout', HrLogoutController)
 
 export default router

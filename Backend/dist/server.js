@@ -17,12 +17,13 @@ import { stripeWebhook } from "./src/HR/Controller/SubscriptionController.js";
 import { createServer } from 'http';
 import { Server } from "socket.io";
 import { socketHandler } from "./Services/SocketHandle.js";
+import QuestionRoute from "./src/HR/Routes/QuestionRoute.js";
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").trim();
 const httpServer = createServer(app);
-const io = new Server(httpServer, { cors: {
+export const io = new Server(httpServer, { cors: {
         origin: frontendUrl,
         credentials: true,
     } });
@@ -44,6 +45,7 @@ app.use('/api/setting/', SettingRoute);
 app.use('/api/task/', TaskRoute);
 app.use('/api/resume/', ResumeRoute);
 app.use('/api/subscription', SubscriptonRoute);
+app.use('/api/questions', QuestionRoute);
 CheckTaskDeadLine();
 startRedisServer();
 httpServer.listen(PORT, () => {

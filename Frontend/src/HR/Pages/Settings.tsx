@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toast from 'react-hot-toast';
 import { Formik, Form, Field } from "formik";
 import {
   Sparkles, CheckCircle2, Send, User, Building2,
@@ -9,6 +10,7 @@ import { api } from "../../Api/Axios";
 import { SettingsValidation } from "../Validation/SettingValidation";
 import ChangePassForm from "../Components/ChangePassForm";
 import Notification from "../Components/Notification";
+import CancelSubscriptionModal from "../Components/Mod/CancelSubscriptionModal";
 import { useNavigate } from "react-router-dom";
 
 interface Profile {
@@ -21,6 +23,9 @@ interface Profile {
   plan:           string;
   interviewCount: number;
   interviewLimit: number;
+  subscription?: {
+    status: string;
+  };
 }
 
 const initialValues = {
@@ -37,6 +42,7 @@ function Settings() {
   const [profile, setProfile]           = useState<Profile | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);   
   const [cancelSaved, setCancelSaved]   = useState(false);   
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,6 +60,7 @@ function Settings() {
         setProfile(hr);
       } catch (e) {
         console.error("Failed to fetch HR profile:", e);
+        toast.error('Failed to load profile. Please refresh.');
       } finally {
         setLoading(false);
       }
@@ -68,11 +75,13 @@ function Settings() {
     try {
       await api.post("/setting/update", values);
       setSaved(true);
+      toast.success('Profile updated successfully!');
       setTimeout(() => setSaved(false), 3000);
       if (profile) setProfile({ ...profile, ...values });
       setFormValues(values);
     } catch (e) {
       console.error("Update failed:", e);
+      toast.error('Failed to update profile. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -81,23 +90,23 @@ function Settings() {
   const onCancelSuccess = () => {
     setCancelSaved(true);
     setTimeout(() => setCancelSaved(false), 4000);
-    if (profile) setProfile({ ...profile, plan: "free" });
+    if (profile) setProfile({ ...profile, subscription: { status: "cancel_scheduled" } });
   };
 
+  const handleCancel = () => {
+    setIsCancelModalOpen(true);
+  };
 
-  const handleCancel = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel? Your Pro plan stays active until the end of the billing period."
-    );
-    if (!confirmed) return;
-
+  const confirmCancel = async () => {
     setIsCancelling(true);
     try {
       await api.post("/subscription/cancel");
       onCancelSuccess();
+      toast.success('Subscription cancellation scheduled.');
+      setIsCancelModalOpen(false);
     } catch (e) {
       console.error("Cancel error:", e);
-      alert("Failed to cancel subscription. Please try again.");
+      toast.error('Failed to cancel subscription. Please try again.');
     } finally {
       setIsCancelling(false);
     }
@@ -256,6 +265,10 @@ console.log(profile);
                   >
                     <ArrowUpCircle size={13} /> Upgrade to Pro
                   </button>
+                ) : profile?.subscription?.status === "cancel_scheduled" ? (
+                  <div className="w-full bg-gray-50 border border-gray-100 text-gray-500 text-xs text-center font-medium py-3 rounded-xl">
+                    Your Pro plan will cancel at the end of the month.
+                  </div>
                 ) : (
                   <button
                     onClick={handleCancel}
@@ -381,6 +394,13 @@ console.log(profile);
         <ChangePassForm />
         <Notification />
       </div>
+
+      <CancelSubscriptionModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={confirmCancel}
+        isCancelling={isCancelling}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Formik, Form, Field, type FormikHelpers } from "formik";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Sparkles, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
+import toast from 'react-hot-toast';
 import { api } from "../../Api/Axios";
 import DevOtpModal from "../Components/DevOtpModal";
 import { DevLoginValidation } from "../Validation/DevLoginValidation";
@@ -35,11 +36,13 @@ function DevLogin() {
           navigate("/devDashboard");
         } else {
           setIsInvalid(res.data?.Message || "Magic link login failed");
+          toast.error(res.data?.Message || 'Magic link login failed.');
         }
       } catch (e: any) {
         setIsInvalid(
           e?.response?.data?.Message || "Invalid or expired magic link",
         );
+        toast.error(e?.response?.data?.Message || 'Invalid or expired magic link.');
       }
     };
 
@@ -65,13 +68,16 @@ function DevLogin() {
       if (res.data.Status === "Success") {
         setShowOTP(true);
         setIsInvalid(null);
+        toast.success('OTP sent to your email!');
       } else {
         setIsInvalid(res.data.Message || "Login failed. Please try again.");
+        toast.error(res.data.Message || 'Login failed. Please check your credentials.');
       }
     } catch (e: any) {
       setIsInvalid(
         e?.response?.data?.message || "Something went wrong. Please try again.",
       );
+      toast.error(e?.response?.data?.message || 'Invalid email or unique code.');
       console.error(e);
     } finally {
       setSubmitting(false);
@@ -88,6 +94,7 @@ function DevLogin() {
         setEmail("");
         setUniqueCode("")
         setIsInvalid(null);
+        toast.success('Login successful! Welcome.');
         navigate("/devDashboard");
       } else {
         setIsInvalid(res.data.Message || "Invalid OTP. Please try again.");
@@ -104,8 +111,10 @@ function DevLogin() {
     try {
       await api.post("/dev/ResendOtp", { email: email.toLowerCase() });
       setIsInvalid(null);
+      toast.success('New OTP sent to your email!');
     } catch (e: any) {
       console.error("Resend OTP error:", e.message);
+      toast.error('Failed to resend OTP. Please try again.');
     }
   };
 

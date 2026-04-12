@@ -1,4 +1,5 @@
 import {  useState } from "react";
+import toast from 'react-hot-toast';
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../../Api/Axios";
 import {
@@ -80,9 +81,11 @@ function TaskPreview() {
       await api.delete(`/tasklibary/delete/${id}`);
       setShowDeleteModal(false);
       setDeleted(true);
+      toast.success('Task deleted successfully!');
       setTimeout(() => navigate("/dashboard/task-library"), 2000);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      toast.error(e?.response?.data?.Message || 'Failed to delete task.');
     } finally {
       setIsDeleting(false);
     }
@@ -93,10 +96,11 @@ function TaskPreview() {
   try {
     await api.post("/task/taskassgin", { code, libaryId: data?.id });
     setShowAssignModal(false);
-    alert("Task Assgin Success")
+    toast.success('Task assigned successfully!')
     
   } catch (e: any) {
     console.error(e.message);
+    toast.error(e?.response?.data?.Message || 'Failed to assign task.');
     throw e;
   } finally {
     setIsAssgin(false);

@@ -38,6 +38,37 @@ export const socketHandler = (io) => {
         socket.on("screen-share-stopped", (interviewId) => {
             socket.to(interviewId).emit("screen-share-stopped");
         });
+        // ── Q&A Events ────────────────────
+        // HR starts Q&A session
+        socket.on("start-qa", (interviewId) => {
+            socket.to(interviewId).emit("qa-started");
+        });
+        // HR sends one question to developer
+        socket.on("send-question", (data) => {
+            socket.to(data.interviewId).emit("receive-question", data);
+        });
+        // Developer submitted answer
+        socket.on("answer-submitted", (data) => {
+            // Tell HR dev submitted — AI evaluating
+            socket.to(data.interviewId).emit("answer-submitted", data);
+        });
+        // ── Code Editor Events ────────────
+        // HR opens code editor for developer
+        socket.on("open-code-editor", (data) => {
+            // Send to developer with the 2 leetcode questions
+            socket.to(data.interviewId).emit("open-code-editor", data);
+        });
+        // Developer code executed — result to HR
+        socket.on("code-result", (data) => {
+            // Send to everyone in room including HR
+            io.to(data.interviewId).emit("code-result", data);
+        });
+        // Malpractice detection
+        socket.on("malpractice", (data) => {
+            // Forward to HR
+            socket.to(data.interviewId).emit("malpractice-alert", data);
+            console.log(`⚠️ Malpractice [${data.severity}]: ${data.type} in room ${data.interviewId}`);
+        });
         //Leave Room
         socket.on("leave-room", (interviewId) => {
             socket.leave(interviewId);

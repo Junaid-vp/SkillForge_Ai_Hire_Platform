@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import toast from 'react-hot-toast';
 import { useNavigate } from "react-router-dom";
 import {
   Check, X, Crown, Zap, Users, FileText, Brain,
@@ -98,6 +99,22 @@ function Cell({ value }: { value: boolean | string }) {
 export default function UpgradePage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const res = await api.get("/setting/hrSpecificDetails");
+        setIsPro(res.data.Hr.plan === "pro");
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchStatus();
+  }, []);
 
   const handleCheckout = async () => {
     setLoading(true);
@@ -108,7 +125,7 @@ export default function UpgradePage() {
       }
     } catch (e) {
       console.error(e);
-      alert("Failed to start checkout. Please try again.");
+      toast.error('Failed to start checkout. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -249,13 +266,24 @@ export default function UpgradePage() {
 
             <button
               onClick={handleCheckout}
-              disabled={loading}
-              className="relative w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 rounded-xl transition-colors shadow-lg shadow-blue-500/30 disabled:opacity-60"
+              disabled={loading || fetching || isPro}
+              className={`relative w-full flex items-center justify-center gap-2 text-white text-xs font-bold py-2.5 rounded-xl transition-colors shadow-lg disabled:opacity-60 ${
+                isPro 
+                  ? "bg-emerald-600 shadow-emerald-500/30 cursor-not-allowed" 
+                  : "bg-blue-600 hover:bg-blue-700 shadow-blue-500/30"
+              }`}
             >
-              {loading ? (
+              {fetching ? (
+                 <><Loader2 size={13} className="animate-spin" /> Verifying status...</>
+              ) : loading ? (
                 <>
                   <Loader2 size={13} className="animate-spin" />
                   Redirecting...
+                </>
+              ) : isPro ? (
+                <>
+                  <Check size={13} />
+                  Active Pro Member
                 </>
               ) : (
                 <>
@@ -363,13 +391,24 @@ export default function UpgradePage() {
             </p>
             <button
               onClick={handleCheckout}
-              disabled={loading}
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-8 py-3 rounded-xl transition-colors shadow-xl shadow-blue-500/20 disabled:opacity-60"
+              disabled={loading || fetching || isPro}
+              className={`inline-flex items-center gap-2 text-white text-sm font-bold px-8 py-3 rounded-xl transition-colors shadow-xl disabled:opacity-60 ${
+                isPro 
+                  ? "bg-emerald-600 shadow-emerald-500/30 cursor-not-allowed" 
+                  : "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20"
+              }`}
             >
-              {loading ? (
+              {fetching ? (
+                 <><Loader2 size={15} className="animate-spin" /> Verifying status...</>
+              ) : loading ? (
                 <>
                   <Loader2 size={15} className="animate-spin" />
                   Redirecting to checkout...
+                </>
+              ) : isPro ? (
+                <>
+                  <Check size={15} />
+                  Active Pro Member
                 </>
               ) : (
                 <>

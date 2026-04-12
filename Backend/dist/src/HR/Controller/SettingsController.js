@@ -22,6 +22,11 @@ export const GetSpecificHrDetails = async (req, res) => {
                 plan: true,
                 interviewCount: true,
                 interviewLimit: true,
+                subscription: {
+                    select: {
+                        status: true,
+                    }
+                }
             },
         });
         if (!data) {

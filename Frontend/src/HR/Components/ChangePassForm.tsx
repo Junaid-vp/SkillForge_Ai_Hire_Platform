@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Formik, Form, Field, type FormikHelpers, type FormikProps } from "formik";
 import { Lock, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import { api } from '../../Api/Axios';
 import PassConformationOtpModal from './Mod/PassConformationOtpModal';
@@ -41,11 +42,14 @@ function ChangePassForm() {
       if (res.data.Status === "Success" || res.data.Message === "PassWord Change Otp Sent To Email") {
         setShowOTP(true);
         setIsInvalid(null);
+        toast.success('Verification code sent to your email!');
       } else {
         setErrorMsg(res.data.Message || "Failed to initiate password change");
+        toast.error(res.data.Message || 'Failed to initiate password change.');
       }
     } catch (e: any) {
       setErrorMsg(e.response?.data?.Message || "An error occurred");
+      toast.error(e.response?.data?.Message || 'Current password is incorrect.');
       console.error(e);
     } finally {
       setSubmitting(false);
@@ -63,6 +67,7 @@ function ChangePassForm() {
         setShowOTP(false);
         setIsInvalid(null);
         setSuccessMsg("Password successfully changed!");
+        toast.success('Password changed successfully!');
         formRef.current?.resetForm({ values: initialValues, errors: {}, touched: {} });
         setTimeout(() => setSuccessMsg(null), 5000);
       } else {
@@ -80,8 +85,9 @@ function ChangePassForm() {
     try {
      
       await api.post("/setting/resentOtpVarification"); 
+      toast.success('New verification code sent!');
     } catch (e: any) {
-      console.log(e.message);
+      toast.error('Failed to resend code. Please try again.');
     }
   };
 

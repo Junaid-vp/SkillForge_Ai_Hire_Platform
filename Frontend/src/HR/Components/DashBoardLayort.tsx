@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { Sparkles, LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, BarChart2, Settings, ChevronLeft, AlignJustify, LogOut, Crown } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { api } from '../../Api/Axios'
 
 const navItems = [
@@ -28,6 +29,7 @@ export default function DashboardLayout() {
   const handleLogout = async () => {
     try {
       await api.post('/auth/hr/logout')
+      toast.success('Logged out successfully.')
     } catch (e) {
       console.log(e)
     } finally {
@@ -141,7 +143,7 @@ export default function DashboardLayout() {
           {/* Right Side: Upgrade + Avatar */}
           <div className="flex items-center gap-4">
             {location.pathname !== "/dashboard/upgrade" && (
-              <button onClick={() => navigate("/dashboard/settings")} className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-lg text-xs font-semibold shadow-sm transition-all shadow-indigo-200/50">
+              <button onClick={() => navigate("/dashboard/upgrade")} className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-lg text-xs font-semibold shadow-sm transition-all shadow-indigo-200/50">
                 <Crown size={14} className="text-indigo-100" />
                 Upgrade to Pro
               </button>
