@@ -83,7 +83,7 @@ estimatedTime:
 Return ONLY a valid JSON array of exactly 15 objects. No markdown. No extra text.`
         }
       ],
-      temperature: 0.3,
+      temperature: 0.1,
       max_tokens:  4000
     })
  

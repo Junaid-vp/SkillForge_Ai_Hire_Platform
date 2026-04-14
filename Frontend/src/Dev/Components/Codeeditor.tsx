@@ -1,6 +1,6 @@
 // src/Dev/Components/Codeeditor.tsx
 
-import { useState, useRef, useEffect, useCallback, type RefObject } from "react"
+import { useState, useRef, useEffect, useCallback,  } from "react"
 import Editor from "@monaco-editor/react"
 import {
   Play, Loader2, CheckCircle2, XCircle,
@@ -183,7 +183,7 @@ export default function EmbeddedCodeEditor({
   const submitSolution = async () => {
     if (!current.code.trim())  { toast.error("Write your solution first"); return }
     if (!current.output)       { toast.error("Run your code at least once before submitting"); return }
-    if (current.submitted)     { toast("Already submitted", { icon: "✅" }); return }
+    if (current.submitted)     { toast("Already submitted"); return }
 
     setIsSubmitting(true)
     const loadingToast = toast.loading("Submitting solution...")
@@ -201,7 +201,7 @@ export default function EmbeddedCodeEditor({
 
       updateCurrent({ submitted: true })
       toast.dismiss(loadingToast)
-      toast.success("✅ Solution submitted!")
+      toast.success("Solution submitted!")
 
       const updatedStates = {
         ...questionStates,

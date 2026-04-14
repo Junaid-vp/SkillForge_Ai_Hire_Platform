@@ -10,7 +10,7 @@ const navItems = [
   { label: 'Developers',         path: '/dashboard/developers',       group: 'Hiring', icon: <Code2 size={15} /> },
   { label: 'Task Library',       path: '/dashboard/task-library',     group: 'Hiring', icon: <BookOpen size={15} /> },
   { label: 'Interview Schedule', path: '/dashboard/schedule',         group: 'Hiring', icon: <CalendarDays size={15} /> },
-  { label: 'Reports',            path: '/dashboard/reports',          group: 'System', icon: <BarChart2 size={15} /> },
+  // { label: 'Reports',            path: '/dashboard/reports',          group: 'System', icon: <BarChart2 size={15} /> },
   { label: 'Settings',           path: '/dashboard/settings',         group: 'System', icon: <Settings size={15} /> },
 ]
 
@@ -24,7 +24,11 @@ export default function DashboardLayout() {
 
   const activeLabel =
     navItems.find(n => n.path === location.pathname)?.label ??
-    (location.pathname === '/dashboard/upgrade' ? 'Upgrade' : 'Dashboard')
+    (location.pathname === '/dashboard/upgrade'
+      ? 'Upgrade'
+      : location.pathname.startsWith('/dashboard/devFullDetails')
+        ? 'Developer details'
+        : 'Dashboard')
 
   const handleLogout = async () => {
     try {

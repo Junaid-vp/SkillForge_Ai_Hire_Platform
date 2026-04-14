@@ -13,9 +13,11 @@ export interface Developer {
 }
 
 export interface Interview {
-  id:          string;
-  scheduledAt: string | null;
-  status:      "SCHEDULED" | "COMPLETED" | "CANCELLED" | "IN_PROGRESS";
+  id:                   string;
+  scheduledAt:          string | null;
+  status:               "SCHEDULED" | "STARTED" | "COMPLETED" | "CANCELLED";
+  feedback:             Record<string, any> | null;
+  feedbackGeneratedAt:  string | null;
 }
 
 export interface TaskLibrary {
@@ -29,10 +31,30 @@ export interface TaskLibrary {
 }
 
 export interface Task {
-  id:          string;
-  status:      "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
-  deadline:    string;
-  taskLibrary: TaskLibrary | null;
+  id:            string
+  interviewId:   string
+  hrId:          string
+  developerId:   string
+  taskLibraryId: string
+  status:        "PENDING" | "SUBMITTED" | "EVALUATED" | "EXPIRED"
+  deadline:      string
+  createdAt:     string
+ 
+ 
+  submissionUrl: string | null
+  submittedAt:   string | null
+  aiReport:      any | null
+  aiScore:       number | null
+
+  taskLibrary: {
+    title:        string
+    description:  string
+    requirements: string
+    difficulty:   string
+    duration:     number
+    category:     string
+    techStack:    string
+  }
 }
 
 export interface DevDetailsResponse {
@@ -46,8 +68,11 @@ export const STATUS_STYLES: Record<string, string> = {
   COMPLETED:   "bg-green-50  text-green-600  border-green-100",
   CANCELLED:   "bg-red-50    text-red-500    border-red-100",
   IN_PROGRESS: "bg-yellow-50 text-yellow-600 border-yellow-100",
-  PENDING:     "bg-gray-100  text-gray-500   border-gray-200",
   FAILED:      "bg-red-50    text-red-500    border-red-100",
+  PENDING:   "bg-yellow-50 text-yellow-700 border border-yellow-200",
+  SUBMITTED: "bg-blue-50 text-blue-700 border border-blue-200",
+  EVALUATED: "bg-green-50 text-green-700 border border-green-200",
+  EXPIRED:   "bg-red-50 text-red-600 border border-red-200",
 };
 
 export const DIFFICULTY_STYLES: Record<string, string> = {

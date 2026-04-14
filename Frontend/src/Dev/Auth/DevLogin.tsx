@@ -64,6 +64,7 @@ function DevLogin() {
       setUniqueCode(values.uniqueCode)
 
       const res = await api.post("/dev/login", data);
+console.log(res);
 
       if (res.data.Status === "Success") {
         setShowOTP(true);
@@ -77,7 +78,7 @@ function DevLogin() {
       setIsInvalid(
         e?.response?.data?.message || "Something went wrong. Please try again.",
       );
-      toast.error(e?.response?.data?.message || 'Invalid email or unique code.');
+      toast.error(e?.response?.data?.Message || 'Invalid email or unique code.');
       console.error(e);
     } finally {
       setSubmitting(false);

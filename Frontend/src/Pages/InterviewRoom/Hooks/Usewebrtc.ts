@@ -58,7 +58,7 @@ export function useWebRTC(interviewId: string, isHR: boolean, navigate: (path: s
         peerRef.current = peer
 
         peer.on("open", (myPeerId) => {
-          socket.emit("join-room", interviewId)
+          socket.emit("join-room", { interviewId, role: isHR ? "HR" : "Developer" })
           socket.emit("send-peer-id", { interviewId, peerId: myPeerId })
         })
 

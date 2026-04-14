@@ -36,41 +36,40 @@ export const isDeveloper = async (
       where: { developerId: decode.Id }
     })
 
-    if (task?.status === "SUBMITTED"){
+    req.devId = decode.Id
+     
+    if(!task){
+      return next()
+    }
+   
+    if (interview.status === "CANCELLED") {
+    return res.status(403).json({
+      Message: "Interview cancelled"
+    })
+    }
+
+   if (interview.status === "COMPLETED") {
+    if (task && task.status === "PENDING") {
+      return next()
+    }
+
+    if (task?.status === "SUBMITTED") {
       return res.status(403).json({
         Message: "Task already submitted"
       })
     }
 
-    if (task?.status === "EXPIRED"){
+    if (task?.status === "EXPIRED") {
       return res.status(403).json({
         Message: "Task deadline passed"
       })
     }
 
-   
-    if (interview.status === "CANCELLED"){
-      return res.status(403).json({
-        Message: "Interview cancelled"
-      })
-    }
+    return res.status(403).json({
+      Message: "Interview completed. No task assigned yet.",
+    })
+  }
 
-    if (interview.status === "COMPLETED"){
-     
-      if (task && task.status === "PENDING") {
-        req.devId = decode.Id
-        return next()
-      }
-
-  
-      return res.status(403).json({
-        Message: "Interview completed. No task assigned yet.",
-        waitingForTask: true 
-      })
-    }
-
-
-    req.devId = decode.Id
     next()
 
   } catch (e: any) {

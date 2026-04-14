@@ -101,8 +101,8 @@ export const router = createBrowserRouter([
   },
   {
         path:"/DevInterviewRoom/:interviewId",
-        // element:<InterviewRoom/>
-        element:<InterviewRoom_Index/>
+        element:<InterviewRoom/>
+        // element:<InterviewRoom_Index/>
   },
 
 ]);

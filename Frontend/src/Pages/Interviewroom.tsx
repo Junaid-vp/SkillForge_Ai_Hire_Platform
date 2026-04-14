@@ -125,9 +125,9 @@ export default function InterviewRoom() {
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   
 
-  useMalpracticeDetection(interviewId,remoteVideoRef,!isHR)
-  useBrowserMalpractice(interviewId,!isHR)
-  useObjectDetection(interviewId,remoteVideoRef,!isHR)
+  // useMalpracticeDetection(interviewId,remoteVideoRef,!isHR)
+  // useBrowserMalpractice(interviewId,!isHR)
+  // useObjectDetection(interviewId,remoteVideoRef,!isHR)
 
 
 
@@ -208,7 +208,7 @@ export default function InterviewRoom() {
         peerRef.current = peer;
 
         peer.on("open", (myPeerId) => {
-          socket.emit("join-room", interviewId);
+          socket.emit("join-room", { interviewId, role: isHR ? "HR" : "Developer" })
           socket.emit("send-peer-id", { interviewId, peerId: myPeerId });
         });
 
@@ -660,8 +660,10 @@ export default function InterviewRoom() {
     peerRef.current?.destroy();
     screenPeerRef.current?.destroy();
     getSocket().emit("end-call-explicitly", interviewId); // Explicit end triggers kick
-    disconnectSocket();
+    setTimeout(()=>{
+      disconnectSocket();
     navigate(isHR ? "/dashboard" : "/devDashboard");
+    },800)
   };
 
   const scoreColor = (score: number) =>

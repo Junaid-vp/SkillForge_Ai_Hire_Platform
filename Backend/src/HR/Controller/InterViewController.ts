@@ -5,6 +5,9 @@ import { UniqueCodeGenerator } from "../services/uniqueCodeGenerator.js";
 import { redis } from "../Lib/redis.js";
 import { sendUniqueCode } from "../services/Email/SendUniqueCodeEmail.js";
 import { sendResheduledTime } from "../services/Email/sendReshedule.js";
+import Groq from "groq-sdk";
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 
 export const generateUniqueCode = async (req: Request, res: Response) => {
@@ -303,6 +306,232 @@ export const rescheduleInterview = async (req: Request, res: Response) => {
     res.status(200).json({
       message: "Interview rescheduled successfully",
       status: "success"
+    });
+
+  } catch (e: any) {
+    res.status(500).json({ Message: "Server Error", Error: e.message });
+  }
+};
+
+export const cancelInterview = async (req: Request, res: Response) => {
+  try {
+    const id = req.userId;
+
+    if (!id) {
+      return res.status(401).json({ Message: "HR is not logged in" });
+    }
+
+    const { interviewId } = req.body;
+
+    if (!interviewId) {
+      return res.status(400).json({ Message: "interviewId is required" });
+    }
+
+    const interview = await prisma.interview.findUnique({
+      where: { id: interviewId },
+    });
+
+    if (!interview) {
+      return res.status(404).json({ Message: "Interview not found" });
+    }
+
+    if (interview.hrId !== id) {
+      return res.status(403).json({ Message: "Unauthorized" });
+    }
+
+    if (interview.status === "COMPLETED") {
+      return res.status(400).json({ Message: "Cannot cancel a completed interview" });
+    }
+
+    if (interview.status === "CANCELLED") {
+      return res.status(400).json({ Message: "Interview is already cancelled" });
+    }
+
+    await prisma.interview.update({
+      where: { id: interviewId },
+      data: { status: "CANCELLED" }
+    });
+
+    res.status(200).json({
+      message: "Interview cancelled successfully",
+      status: "success"
+    });
+
+  } catch (e: any) {
+    res.status(500).json({ Message: "Server Error", Error: e.message });
+  }
+};
+
+// ── Generate AI Interview Feedback ──────────────────────────────────────────
+
+export const generateInterviewFeedback = async (req: Request, res: Response) => {
+  try {
+    const hrId = req.userId;
+    if (!hrId) return res.status(401).json({ Message: "HR is not logged in" });
+
+    const { interviewId } = req.body;
+    if (!interviewId) return res.status(400).json({ Message: "interviewId is required" });
+
+    // Fetch all interview data in one query
+    const interview = await prisma.interview.findUnique({
+      where: { id: interviewId },
+      include: {
+        developer: true,
+        hr: { select: { name: true, companyName: true } },
+        answers: {
+          include: { question: { select: { questionText: true, expectedAnswer: true, difficulty: true } } }
+        },
+        codeAnswers: {
+          include: { question: { select: { questionText: true } } }
+        },
+        note: true,
+        task: {
+          include: { taskLibrary: { select: { title: true, description: true, techStack: true } } }
+        },
+      },
+    });
+
+    if (!interview) return res.status(404).json({ Message: "Interview not found" });
+    if (interview.hrId !== hrId) return res.status(403).json({ Message: "Unauthorized" });
+    if (interview.status !== "COMPLETED") return res.status(400).json({ Message: "Interview must be COMPLETED to generate feedback" });
+
+    // ── Task Persistence Check ─────────────────────────────────────────────
+    if (!interview.task) {
+      return res.status(400).json({ 
+        Message: "Cannot generate feedback. Please assign a task to the developer first and wait for its evaluation." 
+      });
+    }
+
+    const taskStatus = interview.task.status;
+    if (taskStatus !== "EVALUATED" && taskStatus !== "EXPIRED") {
+      return res.status(400).json({ 
+        Message: `Cannot generate feedback yet. Task is currently ${taskStatus}. Please wait for it to be EVALUATED or EXPIRED.` 
+      });
+    }
+
+    // ── Build prompt sections ──────────────────────────────────────────────
+
+    const devName = interview.developer.developerName;
+    const position = interview.developer.position;
+    const experience = interview.developer.experience;
+
+    // Q&A section
+    const qaSection = interview.answers.length > 0
+      ? interview.answers.map((a, i) =>
+          `Q${i + 1} [${a.question.difficulty}]: ${a.question.questionText}\n` +
+          `Expected: ${a.question.expectedAnswer}\n` +
+          `Developer Answer: ${a.answerText}\n` +
+          `Score: ${a.score ?? "N/A"}/10 | AI Feedback: ${a.feedback ?? "N/A"}`
+        ).join("\n\n")
+      : "No Q&A answers recorded.";
+
+    // Code section
+    const codeSection = interview.codeAnswers.length > 0
+      ? interview.codeAnswers.map((c, i) =>
+          `Problem ${i + 1}: ${c.question.questionText}\n` +
+          `Language: ${c.language}\n` +
+          `Code:\n${c.code}\n` +
+          `Output: ${c.output ?? "N/A"} | Status: ${c.codeStatus ?? "N/A"}`
+        ).join("\n\n")
+      : "No code submissions recorded.";
+
+    // HR Notes
+    const hrNotes = interview.note?.content || "No HR notes recorded.";
+
+    // Task evaluation
+    const taskSection = interview.task
+      ? `Task: ${interview.task.taskLibrary.title} (${interview.task.taskLibrary.techStack})\n` +
+        `Description: ${interview.task.taskLibrary.description}\n` +
+        `AI Score: ${interview.task.aiScore ?? "N/A"}/100\n` +
+        `AI Report: ${JSON.stringify(interview.task.aiReport ?? {})}`
+      : "No task assigned.";
+
+    const prompt = `You are an expert technical interviewer generating a comprehensive candidate feedback report.
+
+Candidate: ${devName}
+Position: ${position}
+Experience: ${experience} years
+Company: ${interview.hr.companyName}
+Interviewer: ${interview.hr.name}
+
+=== Q&A TECHNICAL ANSWERS ===
+${qaSection}
+
+=== CODE SUBMISSIONS ===
+${codeSection}
+
+=== HR INTERVIEW NOTES ===
+${hrNotes}
+
+=== TASK EVALUATION ===
+${taskSection}
+
+Based on ALL the above data, generate a comprehensive interview feedback report as a VALID JSON object with EXACTLY this structure (no markdown, no extra text, just raw JSON):
+{
+  "overallScore": <number 1-10>,
+  "recommendation": "<HIRE|MAYBE|NO_HIRE>",
+  "summary": "<2-3 sentence executive summary>",
+  "technicalScore": <number 1-10>,
+  "communicationScore": <number 1-10>,
+  "codeQualityScore": <number 1-10>,
+  "taskScore": <number 1-10>,
+  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "weaknesses": ["<weakness 1>", "<weakness 2>"],
+  "qaAnalysis": "<detailed analysis of Q&A performance>",
+  "codeAnalysis": "<detailed analysis of code quality and problem solving>",
+  "taskAnalysis": "<analysis of the take-home task>",
+  "hrNotesSummary": "<key observations from HR notes>",
+  "hiringRationale": "<clear explanation of why this recommendation was made>"
+}`;
+
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+      max_tokens: 1500,
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? "";
+
+    // Extract JSON safely
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ Message: "AI returned invalid response" });
+    const feedback = JSON.parse(jsonMatch[0]);
+
+    // Save to DB
+    await prisma.interview.update({
+      where: { id: interviewId },
+      data: { feedback, feedbackGeneratedAt: new Date() },
+    });
+
+    res.status(200).json({ feedback, status: "success" });
+
+  } catch (e: any) {
+    res.status(500).json({ Message: "Server Error", Error: e.message });
+  }
+};
+
+// ── Get Interview Feedback ───────────────────────────────────────────────────
+
+export const getInterviewFeedback = async (req: Request, res: Response) => {
+  try {
+    const hrId = req.userId;
+    if (!hrId) return res.status(401).json({ Message: "HR is not logged in" });
+
+    const interviewId = req.params.interviewId as string;
+
+    const interview = await prisma.interview.findUnique({
+      where: { id: interviewId },
+      select: { hrId: true, feedback: true, feedbackGeneratedAt: true, status: true },
+    });
+
+    if (!interview) return res.status(404).json({ Message: "Interview not found" });
+    if (interview.hrId !== hrId) return res.status(403).json({ Message: "Unauthorized" });
+
+    res.status(200).json({
+      feedback: interview.feedback ?? null,
+      feedbackGeneratedAt: interview.feedbackGeneratedAt ?? null,
+      status: "success",
     });
 
   } catch (e: any) {

@@ -44,6 +44,7 @@ const fetchDeveloperDetails = async (id: string): Promise<DevDetailsResponse> =>
   );
 
   const { developer, interview, task } = data;
+console.log(task);
 
   return (
     <div className="max-w-4xl mx-auto pb-10">
@@ -64,7 +65,7 @@ const fetchDeveloperDetails = async (id: string): Promise<DevDetailsResponse> =>
 
       <div className="space-y-4">
         <DeveloperDetailsSection dev={developer} />
-        <InterviewSection        interview={interview} />
+        <InterviewSection        interview={interview} task={task} />
         <AISummarySection        summary={developer.aiSummary} />
         <TaskSection             task={task} />
         <ResumeSection           resumeUrl={developer.resumeUrl} />

@@ -23,7 +23,7 @@ enum TaskStatus {
   PENDING
   SUBMITTED
   EXPIRED
-  REVIEWED
+  EVALUATED
 }
 
 
@@ -72,12 +72,14 @@ model Developer {
 }
 
 model Interview {
-  id          String          @id @default(uuid())
-  hrId        String
-  developerId String
-  status      InterviewStatus @default(SCHEDULED)
-  scheduledAt DateTime?
-  createdAt   DateTime        @default(now())
+  id                   String          @id @default(uuid())
+  hrId                 String
+  developerId          String
+  status               InterviewStatus @default(SCHEDULED)
+  scheduledAt          DateTime?
+  createdAt            DateTime        @default(now())
+  feedback             Json?
+  feedbackGeneratedAt  DateTime?
 
   // Relations
   hr        HR        @relation(fields: [hrId], references: [id])
@@ -118,7 +120,12 @@ model Task {
   deadline      DateTime
   createdAt     DateTime   @default(now())
 
-  // Relations
+  
+  submissionUrl String?    // ZIP file URL
+  submittedAt   DateTime?  // when submitted
+  aiReport      Json?        //store full AI response
+  aiScore       Int?       // overall score
+
   interview   Interview   @relation(fields: [interviewId], references: [id])
   hr          HR          @relation(fields: [hrId], references: [id])
   developer   Developer   @relation(fields: [developerId], references: [id])

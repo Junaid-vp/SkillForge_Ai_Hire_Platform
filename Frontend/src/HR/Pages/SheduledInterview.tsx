@@ -12,8 +12,10 @@ import {
   Video,
   RotateCcw,
   LinkIcon,
-  Copy
+  Copy,
+  XCircle
 } from "lucide-react";
+
 import RescheduleModal from "../Components/Mod/ResheduledModal";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -142,6 +144,17 @@ function ScheduledInterview() {
     } catch (error) {
       console.error("Failed to copy code:", error);
       toast.error('Failed to copy code.');
+    }
+  };
+
+  const handleCancel = async (interviewId: string) => {
+    if (!window.confirm("Are you sure you want to cancel this interview? This action cannot be undone.")) return;
+    try {
+      await api.put("/interview/cancel", { interviewId });
+      toast.success("Interview cancelled successfully");
+      queryClient.invalidateQueries({ queryKey: ["ScheduledInterview"] });
+    } catch (err: any) {
+      toast.error(err.response?.data?.Message || "Failed to cancel interview");
     }
   };
 
@@ -373,6 +386,13 @@ function ScheduledInterview() {
                         >
                           <RotateCcw size={12} />
                           Reschedule
+                        </button>
+                        <button
+                          onClick={() => handleCancel(interview.id)}
+                          className="flex items-center gap-1.5 bg-white border border-red-200 hover:bg-red-50 text-red-600 text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
+                        >
+                          <XCircle size={12} />
+                          Cancel
                         </button>
                       </>
                     )}

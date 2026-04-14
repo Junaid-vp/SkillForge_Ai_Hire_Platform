@@ -247,9 +247,14 @@ export default function InterviewRoom_Index() {
   // ── End call ─────────────────────────────────────────────────────────────
   const endCall = () => {
     webrtc.stopAll()
-    getSocket().emit("end-call-explicitly", interviewId)
-    disconnectSocket()
-    navigate(isHR ? "/dashboard" : "/devDashboard")
+    const socket = getSocket()
+    socket.emit("end-call-explicitly", interviewId)
+    // Give the server 800ms to receive the event and update the DB status
+    // before we disconnect the socket and navigate away
+    setTimeout(() => {
+      disconnectSocket()
+      navigate(isHR ? "/dashboard" : "/devDashboard")
+    }, 800)
   }
 
   const handleEndCallClick = () => {

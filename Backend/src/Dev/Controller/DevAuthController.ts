@@ -16,23 +16,23 @@ export const DevLoginController = async (req: Request, res: Response) => {
       });
     }
 
-const Dev = await prisma.developer.findUnique({
-  where: { uniqueCode: code }
-});
+    const Dev = await prisma.developer.findUnique({
+      where: { uniqueCode: code }
+    });
 
-if (!Dev) {
-  return res.status(400).json({
-    Message: "Invalid invite code"
-  });
-}
+    if (!Dev) {
+      return res.status(400).json({
+        Message: "Invalid invite code"
+      });
+    }
 
 
 
-if (Dev.developerEmail !== email) {
-  return res.status(400).json({
-    Message: "Email does not match this code"
-  });
-}
+    if (Dev.developerEmail !== email) {
+      return res.status(400).json({
+        Message: "Email does not match this code"
+      });
+    }
 
 
     const interview = await prisma.interview.findFirst({
@@ -48,33 +48,27 @@ if (Dev.developerEmail !== email) {
       return res.status(403).json({ Message: "Interview cancelled" })
     }
 
-    if (interview.status === "COMPLETED") {
+
       const task = await prisma.task.findFirst({
         where: { developerId: Dev.id }
       })
 
-      if (!task) {
-        return res.status(403).json({
-          Message: "Interview completed. Waiting for task assignment.",
-          waitingForTask: true
-        })
-      }
+  
 
-      if (task.status === "SUBMITTED") {
+      if (task?.status === "SUBMITTED" || task?.status === "EVALUATED"
+      ) {
         return res.status(403).json({
           Message: "Your task has already been submitted"
         })
       }
 
-      if (task.status === "EXPIRED") {
+      if (task?.status === "EXPIRED") {
         return res.status(403).json({
           Message: "Your task deadline has passed"
         })
       }
 
-
-    }
-
+ 
 
     await redis.del(`otp:${email}`)
     const otp = otpGenerate();
@@ -148,7 +142,7 @@ export const DevOtpResend = async (req: Request, res: Response) => {
     await redis.del(`otp:${email}`)
 
     const otp = otpGenerate();
-    
+
     await sentOTPtoDev(email, otp);
 
     await redis.set(`otp:${email}`, otp, { EX: 300 });
@@ -180,12 +174,12 @@ export const DevLogoutController = async (req: Request, res: Response) => {
   }
 };
 
-export const MaginLinkVarification = async(req:Request,res:Response)=>{
-  try{
-  const {token} = req.body
-  
-  const developerId = await redis.get(`magic:${token}`)
-if (!developerId) {
+export const MaginLinkVarification = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body
+
+    const developerId = await redis.get(`magic:${token}`)
+    if (!developerId) {
       return res.status(400).json({
         Message: "Invalid or expired link. Please contact HR."
       });
@@ -199,7 +193,7 @@ if (!developerId) {
       return res.status(404).json({ Message: "Developer not found" });
     }
 
-  
+
     const interview = await prisma.interview.findFirst({
       where: { developerId: developer.id }
     });
@@ -213,7 +207,7 @@ if (!developerId) {
       where: { developerId: developer.id }
     });
 
-    if (task?.status === "SUBMITTED") {
+    if (task?.status === "SUBMITTED" ||task?.status === "EVALUATED"  ) {
       return res.status(403).json({ Message: "Task already submitted" });
     }
 
@@ -221,7 +215,9 @@ if (!developerId) {
       return res.status(403).json({ Message: "Task deadline passed" });
     }
 
-   
+
+
+
     const { AccessToken } = tokenGeneratorDev(
       developer.developerEmail,
       developer.id
