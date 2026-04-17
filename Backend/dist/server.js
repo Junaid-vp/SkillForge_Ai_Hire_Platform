@@ -10,7 +10,7 @@ import ResumeRoute from "./src/HR/Routes/Resume.js";
 import DevAuthroute from "./src/Dev/Routes/AuthRoutes.js";
 import DevDashRoute from "./src/Dev/Routes/DevDashRoutes.js";
 import SettingRoute from "./src/HR/Routes/SettingsRoute.js";
-import { CheckTaskDeadLine } from "./src/Dev/Services/CheckDeadline.js";
+import { startCronJobs } from "./src/HR/services/CronJobs.js";
 import TaskRoute from "./src/HR/Routes/TaskRoute.js";
 import SubscriptonRoute from "./src/HR/Routes/SubscriptonRoute.js";
 import { stripeWebhook } from "./src/HR/Controller/SubscriptionController.js";
@@ -18,15 +18,19 @@ import { createServer } from 'http';
 import { Server } from "socket.io";
 import { socketHandler } from "./Services/SocketHandle.js";
 import QuestionRoute from "./src/HR/Routes/QuestionRoute.js";
+import CodeRoute from "./src/HR/Routes/codeRoutes.js";
+import NotificationRoute from "./src/HR/Routes/NotificationRoute.js";
 dotenv.config();
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3005;
 const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").trim();
 const httpServer = createServer(app);
-export const io = new Server(httpServer, { cors: {
+export const io = new Server(httpServer, {
+    cors: {
         origin: frontendUrl,
         credentials: true,
-    } });
+    }
+});
 socketHandler(io);
 app.use(cors({
     origin: frontendUrl,
@@ -46,7 +50,9 @@ app.use('/api/task/', TaskRoute);
 app.use('/api/resume/', ResumeRoute);
 app.use('/api/subscription', SubscriptonRoute);
 app.use('/api/questions', QuestionRoute);
-CheckTaskDeadLine();
+app.use('/api/code/', CodeRoute);
+app.use('/api/notification', NotificationRoute);
+startCronJobs();
 startRedisServer();
 httpServer.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

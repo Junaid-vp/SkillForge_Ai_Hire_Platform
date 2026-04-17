@@ -5,6 +5,7 @@ import { UniqueCodeGenerator } from "../services/uniqueCodeGenerator.js";
 import { redis } from "../Lib/redis.js";
 import { sendUniqueCode } from "../services/Email/SendUniqueCodeEmail.js";
 import { sendResheduledTime } from "../services/Email/sendReshedule.js";
+import { createNotification } from "../services/NotificationService.js";
 import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -132,6 +133,14 @@ export const sheduleInterview = async (req: Request, res: Response) => {
       developerName, developerEmail, position,
       uniqueCode, interviewDate, interviewTime,
       user.email, user.companyName, user.name,magicLink
+    );
+
+    await createNotification(
+      id,
+      "Interview Scheduled",
+      `${developerName} interview is scheduled for ${new Date(interviewDate).toLocaleDateString()} at ${interviewTime}.`,
+      "INTERVIEW_SCHEDULED",
+      
     );
 
     res.status(201).json({
@@ -303,6 +312,14 @@ export const rescheduleInterview = async (req: Request, res: Response) => {
       magicLink
     )
 
+    await createNotification(
+      id,
+      "Interview Rescheduled",
+      `${interview.developer.developerName} interview moved to ${new Date(newDate).toLocaleDateString()} at ${newTime}.`,
+      "INTERVIEW_RESCHEDULED",
+      
+    );
+
     res.status(200).json({
       message: "Interview rescheduled successfully",
       status: "success"
@@ -351,6 +368,19 @@ export const cancelInterview = async (req: Request, res: Response) => {
       where: { id: interviewId },
       data: { status: "CANCELLED" }
     });
+
+    const developer = await prisma.developer.findUnique({
+      where: { id: interview.developerId },
+      select: { developerName: true },
+    });
+
+    await createNotification(
+      id,
+      "Interview Cancelled",
+      `Interview with ${developer?.developerName ?? "developer"} has been cancelled.`,
+      "INTERVIEW_CANCELLED",
+      
+    );
 
     res.status(200).json({
       message: "Interview cancelled successfully",

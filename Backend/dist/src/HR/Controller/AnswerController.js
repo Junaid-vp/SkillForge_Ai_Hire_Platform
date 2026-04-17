@@ -5,6 +5,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 export const submitAnswer = async (req, res) => {
     try {
         const { questionId, answerText, interviewId } = req.body;
+        console.log(answerText);
         if (!questionId || !answerText) {
             return res.status(400).json({
                 Message: "questionId and answerText required"

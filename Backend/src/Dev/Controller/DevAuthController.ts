@@ -49,26 +49,26 @@ export const DevLoginController = async (req: Request, res: Response) => {
     }
 
 
-      const task = await prisma.task.findFirst({
-        where: { developerId: Dev.id }
+    const task = await prisma.task.findFirst({
+      where: { developerId: Dev.id }
+    })
+
+
+
+    if (task?.status === "SUBMITTED" || task?.status === "EVALUATED"
+    ) {
+      return res.status(403).json({
+        Message: "Your task has already been submitted"
       })
+    }
 
-  
+    if (task?.status === "EXPIRED") {
+      return res.status(403).json({
+        Message: "Your task deadline has passed"
+      })
+    }
 
-      if (task?.status === "SUBMITTED" || task?.status === "EVALUATED"
-      ) {
-        return res.status(403).json({
-          Message: "Your task has already been submitted"
-        })
-      }
 
-      if (task?.status === "EXPIRED") {
-        return res.status(403).json({
-          Message: "Your task deadline has passed"
-        })
-      }
-
- 
 
     await redis.del(`otp:${email}`)
     const otp = otpGenerate();
@@ -207,7 +207,7 @@ export const MaginLinkVarification = async (req: Request, res: Response) => {
       where: { developerId: developer.id }
     });
 
-    if (task?.status === "SUBMITTED" ||task?.status === "EVALUATED"  ) {
+    if (task?.status === "SUBMITTED" || task?.status === "EVALUATED") {
       return res.status(403).json({ Message: "Task already submitted" });
     }
 
@@ -235,3 +235,32 @@ export const MaginLinkVarification = async (req: Request, res: Response) => {
     res.status(500).json({ Message: "Server Error", Error: e.message });
   }
 };
+
+export const getDevMeController = async (req: Request, res: Response) => {
+  try {
+    const devId = req.devId;
+
+    if (!devId) {
+      return res.status(401).json({ Message: "Unauthorized" });
+    }
+
+    const developer = await prisma.developer.findUnique({
+      where: { id: devId },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!developer) {
+      return res.status(404).json({ Message: "Developer not found" });
+    }
+
+    return res.status(200).json({ data: developer });
+  } catch (e: any) {
+    return res.status(500).json({
+      Message: "Server Error",
+      Error: e.message,
+    });
+  }
+};
+

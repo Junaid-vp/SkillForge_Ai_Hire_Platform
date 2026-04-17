@@ -261,7 +261,7 @@ function ScheduledInterview() {
       {!isLoading && !error && data && data.length > 0 && (
         <div className="space-y-3">
           {data.map((interview) => {
-            const s = statusConfig[interview.status];
+            const s = statusConfig[interview.status] || statusConfig.SCHEDULED;
             const isCompleted = interview.status === "COMPLETED";
             const isCancelled = interview.status === "CANCELLED";
             const isStarted = interview.status === "STARTED";

@@ -48,10 +48,18 @@ function CreateInterview() {
       const data = res.data.data;
  
    
-      setFieldValue("developerName",  data.developerName          ?? "");
-      setFieldValue("developerEmail", data.developerEmail         ?? "");
-      setFieldValue("position",       data.position               ?? "");
-      setFieldValue("experience",     data.experience?.toString() ?? "");
+      // ✅ Staggered population for a more "premium" AI feel
+      const fields = [
+        { name: "developerName",  value: data.developerName          ?? "" },
+        { name: "developerEmail", value: data.developerEmail         ?? "" },
+        { name: "position",       value: data.position               ?? "" },
+        { name: "experience",     value: data.experience?.toString() ?? "" },
+      ];
+
+      for (let i = 0; i < fields.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, i === 0 ? 0 : 250)); // Subtle staggering
+        setFieldValue(fields[i].name, fields[i].value);
+      }
  
 
       setResumeData({
@@ -228,12 +236,25 @@ function CreateInterview() {
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">
                       Developer Name <span className="text-red-400">*</span>
                     </label>
-                    <Field
-                      placeholder="John Doe"
-                      name="developerName"
-                      type="text"
-                      className={inputClasses}
-                    />
+                    <div className="relative group">
+                      <Field
+                        placeholder="John Doe"
+                        name="developerName"
+                        type="text"
+                        disabled={isParsing}
+                        className={`${inputClasses} ${isParsing ? 'text-transparent select-none border-blue-200' : ''} ${isParsing ? 'animate-border-glow' : ''} pr-10`}
+                      />
+                      {isParsing && (
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-xl overflow-hidden pointer-events-none">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent animate-shimmer-premium" />
+                        </div>
+                      )}
+                      {resumeData && !isParsing && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
+                          <Sparkles size={10} className="text-blue-500 fill-blue-500/10" />
+                        </div>
+                      )}
+                    </div>
                     {errors.developerName && touched.developerName && (
                       <p className="mt-1 text-[10px] text-red-500">{errors.developerName}</p>
                     )}
@@ -242,12 +263,25 @@ function CreateInterview() {
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">
                       Developer Email <span className="text-red-400">*</span>
                     </label>
-                    <Field
-                      placeholder="john@example.com"
-                      name="developerEmail"
-                      type="email"
-                      className={inputClasses}
-                    />
+                    <div className="relative group">
+                      <Field
+                        placeholder="john@example.com"
+                        name="developerEmail"
+                        type="email"
+                        disabled={isParsing}
+                        className={`${inputClasses} ${isParsing ? 'text-transparent select-none border-blue-200' : ''} ${isParsing ? 'animate-border-glow' : ''} pr-10`}
+                      />
+                      {isParsing && (
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-xl overflow-hidden pointer-events-none">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent animate-shimmer-premium" />
+                        </div>
+                      )}
+                      {resumeData && !isParsing && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
+                          <Sparkles size={10} className="text-blue-500 fill-blue-500/10" />
+                        </div>
+                      )}
+                    </div>
                     {errors.developerEmail && touched.developerEmail && (
                       <p className="mt-1 text-[10px] text-red-500">{errors.developerEmail}</p>
                     )}
@@ -259,12 +293,25 @@ function CreateInterview() {
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">
                       Position <span className="text-red-400">*</span>
                     </label>
-                    <Field
-                      placeholder="Senior Full Stack Developer"
-                      name="position"
-                      type="text"
-                      className={inputClasses}
-                    />
+                    <div className="relative group">
+                      <Field
+                        placeholder="Senior Full Stack Developer"
+                        name="position"
+                        type="text"
+                        disabled={isParsing}
+                        className={`${inputClasses} ${isParsing ? 'text-transparent select-none border-blue-200' : ''} ${isParsing ? 'animate-border-glow' : ''} pr-10`}
+                      />
+                      {isParsing && (
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-xl overflow-hidden pointer-events-none">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent animate-shimmer-premium" />
+                        </div>
+                      )}
+                      {resumeData && !isParsing && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
+                          <Sparkles size={10} className="text-blue-500 fill-blue-500/10" />
+                        </div>
+                      )}
+                    </div>
                     {errors.position && touched.position && (
                       <p className="mt-1 text-[10px] text-red-500">{errors.position}</p>
                     )}
@@ -273,12 +320,25 @@ function CreateInterview() {
                     <label className="block text-xs font-medium text-gray-600 mb-1.5">
                       Experience Level <span className="text-red-400">*</span>
                     </label>
-                    <Field
-                      placeholder="5+ years"
-                      name="experience"
-                      type="text"
-                      className={inputClasses}
-                    />
+                    <div className="relative group">
+                      <Field
+                        placeholder="5+ years"
+                        name="experience"
+                        type="text"
+                        disabled={isParsing}
+                        className={`${inputClasses} ${isParsing ? 'text-transparent select-none border-blue-200' : ''} ${isParsing ? 'animate-border-glow' : ''} pr-10`}
+                      />
+                      {isParsing && (
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-xl overflow-hidden pointer-events-none">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent animate-shimmer-premium" />
+                        </div>
+                      )}
+                      {resumeData && !isParsing && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
+                          <Sparkles size={10} className="text-blue-500 fill-blue-500/10" />
+                        </div>
+                      )}
+                    </div>
                     {errors.experience && touched.experience && (
                       <p className="mt-1 text-[10px] text-red-500">{errors.experience}</p>
                     )}

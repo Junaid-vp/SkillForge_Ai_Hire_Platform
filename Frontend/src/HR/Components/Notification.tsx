@@ -1,15 +1,53 @@
-import { useState } from 'react';
-import { Bell, CalendarClock, FileCode2, Activity } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Bell, CalendarClock, FileCode2, Activity, Loader2 } from 'lucide-react';
+import { api } from '../../Api/Axios';
+import toast from 'react-hot-toast';
 
 function Notification() {
+  const [loading, setLoading] = useState(true);
   const [toggles, setToggles] = useState({
     interviews: true,
     submissions: true,
-    progress: false,
+    progress: true,
   });
 
-  const handleToggle = (key: keyof typeof toggles) => {
-    setToggles(prev => ({ ...prev, [key]: !prev[key] }));
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await api.get('/setting/hrSpecificDetails');
+      const hr = res.data.Hr;
+      setToggles({
+        interviews: hr.notifInterviews,
+        submissions: hr.notifSubmissions,
+        progress: hr.notifProgress,
+      });
+    } catch (error) {
+      console.error('Failed to fetch notification settings', error);
+      toast.error('Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggle = async (key: keyof typeof toggles) => {
+    const newToggles = { ...toggles, [key]: !toggles[key] };
+    setToggles(newToggles);
+
+    try {
+      await api.patch('/setting/notifications', {
+        notifInterviews: newToggles.interviews,
+        notifSubmissions: newToggles.submissions,
+        notifProgress: newToggles.progress,
+      });
+      toast.success('Preferences updated', { id: 'notif-save' });
+    } catch (error) {
+      // Revert on error
+      setToggles(toggles);
+      toast.error('Failed to save changes');
+    }
   };
 
   const notifications = [
@@ -47,7 +85,12 @@ function Notification() {
       </div>
 
       {/* Body */}
-      <div className="p-6">
+      <div className="p-6 relative">
+        {loading && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
+            <Loader2 className="animate-spin text-indigo-600" size={24} />
+          </div>
+        )}
         <div className="space-y-4">
           {notifications.map((item) => {
             const isChecked = toggles[item.id as keyof typeof toggles];

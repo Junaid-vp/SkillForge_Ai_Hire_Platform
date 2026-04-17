@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
-import { Sparkles, LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, BarChart2, Settings, ChevronLeft, AlignJustify, LogOut, Crown } from 'lucide-react'
+import { Sparkles, LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, Settings, ChevronLeft, AlignJustify, LogOut, Crown } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { api } from '../../Api/Axios'
+
+
+import NotificationBell from './NotificationBell' 
+import { useAuth } from '../../Context/AuthContext'
+
+ 
 
 const navItems = [
   { label: 'Dashboard',          path: '/dashboard',                  group: 'Main',   icon: <LayoutDashboard size={15} /> },
@@ -17,8 +23,10 @@ const navItems = [
 const groups = ['Main', 'Hiring', 'System']
 
 export default function DashboardLayout() {
+
   const location = useLocation()
   const navigate = useNavigate()
+  const { hr, clearAuth } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
 
@@ -29,7 +37,6 @@ export default function DashboardLayout() {
       : location.pathname.startsWith('/dashboard/devFullDetails')
         ? 'Developer details'
         : 'Dashboard')
-
   const handleLogout = async () => {
     try {
       await api.post('/auth/hr/logout')
@@ -37,6 +44,7 @@ export default function DashboardLayout() {
     } catch (e) {
       console.log(e)
     } finally {
+      clearAuth()
       navigate('/login')
     }
   }
@@ -152,6 +160,9 @@ export default function DashboardLayout() {
                 Upgrade to Pro
               </button>
             )}
+
+            {/* Notification Bell */}
+            {hr?.id && <NotificationBell hrId={hr.id} />}
 
             {/* Avatar + dropdown */}
             <div className="relative">

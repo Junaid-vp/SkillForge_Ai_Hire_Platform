@@ -14,9 +14,10 @@ import toast from "react-hot-toast";
 import { disconnectSocket, getSocket } from "../Service/socket";
 import { api } from "../Api/Axios";
 import EmbeddedCodeEditor from "../Dev/Components/Codeeditor";
-import { useMalpracticeDetection } from "../Hooks/useMalpracticeDetection";
+
 import { useBrowserMalpractice } from "../Hooks/useBrowserMalpractice";
 import { useObjectDetection } from "../Hooks/useObjectDetection";
+import { useMalpracticeDetection } from "../Hooks/useMalpracticeDetection";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

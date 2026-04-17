@@ -47,6 +47,12 @@ model HR {
   tasks       Task[]
   subscription Subscription?
   interviewNotes InterviewNote[]
+  notifications  Notification[]
+  
+  // Notification Preferences
+  notifInterviews  Boolean  @default(true)
+  notifSubmissions Boolean  @default(true)
+  notifProgress    Boolean  @default(true)
 }
 
 model Developer {
@@ -80,7 +86,7 @@ model Interview {
   createdAt            DateTime        @default(now())
   feedback             Json?
   feedbackGeneratedAt  DateTime?
-
+   reminder10Sent       Boolean         @default(false)
   // Relations
   hr        HR        @relation(fields: [hrId], references: [id])
   developer Developer @relation(fields: [developerId], references: [id])
@@ -210,4 +216,16 @@ model InterviewNote {
 
   interview   Interview @relation(fields: [interviewId], references: [id])
   hr          HR        @relation(fields: [hrId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  hrId      String
+  title     String
+  message   String
+  type      String   // e.g., "INTERVIEW", "TASK", "SYSTEM"
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  hr HR @relation(fields: [hrId], references: [id])
 }

@@ -135,3 +135,26 @@ export const HrLogoutController = async (req, res) => {
         res.status(500).json({ Message: "Logout error" });
     }
 };
+export const getHrMeController = async (req, res) => {
+    try {
+        const hrId = req.userId;
+        const user = await prisma.hR.findUnique({
+            where: { id: hrId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                companyName: true,
+                designation: true,
+                companyWebsite: true,
+            },
+        });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({ data: user });
+    }
+    catch (e) {
+        res.status(500).json({ message: "Server error", error: e.message });
+    }
+};

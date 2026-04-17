@@ -1,15 +1,23 @@
 import { Server } from "socket.io";
 import { prisma } from "../src/HR/Lib/prisma.js";
+import { setIoInstance } from "../src/HR/services/NotificationService.js";
 
 const roomStates = new Map<string, any>();
 // Track who is in each room: { interviewId -> Set<"HR" | "Developer"> }
 const roomMembers = new Map<string, Map<string, string>>();
 
 export const socketHandler = (io: Server) => {
+  setIoInstance(io);
   //Connected
 
   io.on("connection", (socket) => {
     console.log("User Connected", socket.id);
+
+    // HR joins their private notification room
+    socket.on("join-hr-notification", (hrId: string) => {
+      socket.join(hrId);
+      console.log(`🔔 HR ${hrId} joined their notification room`);
+    });
 
     // Join-Interview
 

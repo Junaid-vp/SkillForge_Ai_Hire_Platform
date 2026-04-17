@@ -1,11 +1,66 @@
+import { prisma } from "../src/HR/Lib/prisma.js";
+import { setIoInstance } from "../src/HR/services/NotificationService.js";
+const roomStates = new Map();
+// Track who is in each room: { interviewId -> Set<"HR" | "Developer"> }
+const roomMembers = new Map();
 export const socketHandler = (io) => {
+    setIoInstance(io);
     //Connected
     io.on("connection", (socket) => {
         console.log("User Connected", socket.id);
+        // HR joins their private notification room
+        socket.on("join-hr-notification", (hrId) => {
+            socket.join(hrId);
+            console.log(`🔔 HR ${hrId} joined their notification room`);
+        });
         // Join-Interview
-        socket.on("join-room", (interviewId) => {
-            (socket.join(interviewId), socket.to(interviewId).emit("User-Joined"));
-            console.log(`User ${socket.id} joined room: ${interviewId}`);
+        socket.on("join-room", async (data) => {
+            const { interviewId, role } = data;
+            socket.join(interviewId);
+            socket.to(interviewId).emit("User-Joined");
+            console.log(`User ${socket.id} joined room: ${interviewId} as ${role ?? "unknown"}`);
+            // Track room members by role
+            if (role) {
+                if (!roomMembers.has(interviewId))
+                    roomMembers.set(interviewId, new Map());
+                roomMembers.get(interviewId).set(socket.id, role);
+                // Store the interviewId on the socket for disconnect cleanup
+                socket._interviewId = interviewId;
+                // Check if both HR and Developer are now in the room
+                const members = roomMembers.get(interviewId);
+                const roles = new Set(Array.from(members.values()));
+                if (roles.has("HR") && roles.has("Developer")) {
+                    try {
+                        const interview = await prisma.interview.findUnique({
+                            where: { id: interviewId },
+                        });
+                        if (interview && interview.status === "SCHEDULED") {
+                            await prisma.interview.update({
+                                where: { id: interviewId },
+                                data: { status: "STARTED" },
+                            });
+                            io.to(interviewId).emit("interview-status-changed", {
+                                status: "STARTED",
+                            });
+                            console.log(`✅ Interview ${interviewId} marked as STARTED`);
+                        }
+                    }
+                    catch (err) {
+                        console.error("Failed to update interview status to STARTED:", err);
+                    }
+                }
+            }
+            // Send the current room state back to the joining user immediately
+            const state = roomStates.get(interviewId);
+            if (state) {
+                const sentState = { ...state };
+                if (state.questionStartTime && state.timeLimit !== undefined) {
+                    const elapsedSec = Math.floor((Date.now() - state.questionStartTime) / 1000);
+                    const remaining = Math.max(0, state.timeLimit - elapsedSec);
+                    sentState.timeLeft = remaining;
+                }
+                socket.emit("init-room-state", sentState);
+            }
         });
         // Share PeerJS ID For Video
         socket.on("send-peer-id", (data) => {
@@ -14,12 +69,19 @@ export const socketHandler = (io) => {
         });
         //Send Message
         socket.on("send-message", (data) => {
-            io.to(data.interviewId).emit("receive-message", {
+            const msg = {
                 message: data.message,
                 senderName: data.senderName,
                 senderRole: data.senderRole,
                 timestamp: new Date().toISOString(),
-            });
+            };
+            if (!roomStates.has(data.interviewId))
+                roomStates.set(data.interviewId, {});
+            const state = roomStates.get(data.interviewId);
+            if (!state.messages)
+                state.messages = [];
+            state.messages.push(msg);
+            io.to(data.interviewId).emit("receive-message", msg);
         });
         //Screen Share
         socket.on("screen-share-on", (interviewId) => {
@@ -41,27 +103,59 @@ export const socketHandler = (io) => {
         // ── Q&A Events ────────────────────
         // HR starts Q&A session
         socket.on("start-qa", (interviewId) => {
+            if (!roomStates.has(interviewId))
+                roomStates.set(interviewId, {});
+            const state = roomStates.get(interviewId);
+            state.qaStarted = true;
+            state.activePanel = "qa";
             socket.to(interviewId).emit("qa-started");
         });
         // HR sends one question to developer
         socket.on("send-question", (data) => {
+            if (!roomStates.has(data.interviewId))
+                roomStates.set(data.interviewId, {});
+            const state = roomStates.get(data.interviewId);
+            state.currentQuestion = data;
+            state.timeLimit = data.timeLimit;
+            state.questionStartTime = Date.now();
             socket.to(data.interviewId).emit("receive-question", data);
         });
         // Developer submitted answer
         socket.on("answer-submitted", (data) => {
+            if (!roomStates.has(data.interviewId))
+                roomStates.set(data.interviewId, {});
+            const state = roomStates.get(data.interviewId);
+            state.answeredQuestionId = data.questionId;
             // Tell HR dev submitted — AI evaluating
             socket.to(data.interviewId).emit("answer-submitted", data);
         });
-        // ── Code Editor Events ────────────
-        // HR opens code editor for developer
+        // ── Code Editor Events ────────────────────────────────────────────────────
+        // HR opens code editor for developer — sends full LeetCode question data
         socket.on("open-code-editor", (data) => {
-            // Send to developer with the 2 leetcode questions
+            if (!roomStates.has(data.interviewId))
+                roomStates.set(data.interviewId, {});
+            const state = roomStates.get(data.interviewId);
+            state.showCodeEditor = true;
+            state.activePanel = "qa";
+            state.leetcodeData = data.questions;
+            state.leetcodeStartTime = Date.now();
             socket.to(data.interviewId).emit("open-code-editor", data);
+            console.log(`💻 Code editor opened for room: ${data.interviewId}`);
         });
-        // Developer code executed — result to HR
+        // Developer runs code — result sent to HR in real-time
         socket.on("code-result", (data) => {
-            // Send to everyone in room including HR
+            // Send to everyone in room so HR sees result live
             io.to(data.interviewId).emit("code-result", data);
+            console.log(`💡 Code result [${data.status}] from room: ${data.interviewId}`);
+        });
+        socket.on("coding-complete", (data) => {
+            if (roomStates.has(data.interviewId)) {
+                const state = roomStates.get(data.interviewId);
+                state.showCodeEditor = false;
+                state.codingComplete = true;
+            }
+            socket.to(data.interviewId).emit("coding-complete", data);
+            console.log(`✅ Coding complete in room: ${data.interviewId}`);
         });
         // Malpractice detection
         socket.on("malpractice", (data) => {
@@ -75,9 +169,42 @@ export const socketHandler = (io) => {
             socket.to(interviewId).emit("user-left");
             console.log(`User left room: ${interviewId}`);
         });
+        socket.on("end-call-explicitly", async (interviewId) => {
+            socket.to(interviewId).emit("end-call-explicitly");
+            roomStates.delete(interviewId); // Clear session memory
+            roomMembers.delete(interviewId); // Clear member tracking
+            // Mark interview as COMPLETED only if it was STARTED
+            try {
+                const interview = await prisma.interview.findUnique({
+                    where: { id: interviewId },
+                });
+                if (interview && interview.status === "STARTED") {
+                    await prisma.interview.update({
+                        where: { id: interviewId },
+                        data: { status: "COMPLETED" },
+                    });
+                    console.log(`✅ Interview ${interviewId} marked as COMPLETED`);
+                }
+                else {
+                    console.log(`ℹ️ Interview ${interviewId} not updated to COMPLETED (status was ${interview?.status})`);
+                }
+            }
+            catch (err) {
+                console.error("Failed to update interview status to COMPLETED:", err);
+            }
+            console.log(`Call explicitly ended: ${interviewId}`);
+        });
         //    Disconnect
         socket.on("disconnect", () => {
             console.log("❌ User disconnected:", socket.id);
+            // Clean up room member tracking
+            const interviewId = socket._interviewId;
+            if (interviewId && roomMembers.has(interviewId)) {
+                roomMembers.get(interviewId).delete(socket.id);
+                if (roomMembers.get(interviewId).size === 0) {
+                    roomMembers.delete(interviewId);
+                }
+            }
         });
     });
 };

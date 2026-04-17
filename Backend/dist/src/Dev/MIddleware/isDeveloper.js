@@ -21,15 +21,9 @@ export const isDeveloper = async (req, res, next) => {
         const task = await prisma.task.findFirst({
             where: { developerId: decode.Id }
         });
-        if (task?.status === "SUBMITTED") {
-            return res.status(403).json({
-                Message: "Task already submitted"
-            });
-        }
-        if (task?.status === "EXPIRED") {
-            return res.status(403).json({
-                Message: "Task deadline passed"
-            });
+        req.devId = decode.Id;
+        if (!task) {
+            return next();
         }
         if (interview.status === "CANCELLED") {
             return res.status(403).json({
@@ -38,15 +32,22 @@ export const isDeveloper = async (req, res, next) => {
         }
         if (interview.status === "COMPLETED") {
             if (task && task.status === "PENDING") {
-                req.devId = decode.Id;
                 return next();
+            }
+            if (task?.status === "SUBMITTED") {
+                return res.status(403).json({
+                    Message: "Task already submitted"
+                });
+            }
+            if (task?.status === "EXPIRED") {
+                return res.status(403).json({
+                    Message: "Task deadline passed"
+                });
             }
             return res.status(403).json({
                 Message: "Interview completed. No task assigned yet.",
-                waitingForTask: true
             });
         }
-        req.devId = decode.Id;
         next();
     }
     catch (e) {

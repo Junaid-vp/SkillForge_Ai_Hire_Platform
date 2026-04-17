@@ -1,10 +1,13 @@
 import express from "express";
 import isHr from "../Middleware/isHr.js";
-import { generateUniqueCode, getDevelopers, rescheduleInterview, sheduleInterview, sheduledInterviewDetails, } from "../Controller/InterViewController.js";
+import { generateUniqueCode, getDevelopers, rescheduleInterview, sheduleInterview, sheduledInterviewDetails, cancelInterview, generateInterviewFeedback, getInterviewFeedback, } from "../Controller/InterViewController.js";
 const route = express.Router();
 route.post("/generate-code", isHr, generateUniqueCode);
 route.post("/schedule", isHr, sheduleInterview);
 route.get("/interviews", isHr, sheduledInterviewDetails);
 route.get("/developers", isHr, getDevelopers);
 route.put("/reschedule", isHr, rescheduleInterview);
+route.put("/cancel", isHr, cancelInterview);
+route.post("/feedback/generate", isHr, generateInterviewFeedback);
+route.get("/feedback/:interviewId", isHr, getInterviewFeedback);
 export default route;

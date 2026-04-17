@@ -5,6 +5,7 @@ import AdmZip from "adm-zip"
 import axios from "axios"
 import fs from "fs"
 import { uploadZip } from "../services/cloudinary.js";
+import { createNotification } from "../services/NotificationService.js";
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 
@@ -142,6 +143,13 @@ export const submitTask = async (req: Request, res: Response) => {
         submittedAt: new Date()
       }
     })
+
+    await createNotification(
+      task.hrId,
+      "Task Submitted",
+      `The task ${task.taskLibrary?.title || ""} has been submitted by ${task.developer?.developerName || "developer"}.`,
+      "TASK_SUBMITTED"
+    );
 
 
     // Respond to developer immediately 
@@ -354,6 +362,13 @@ STRICT RULES:
         aiScore: evaluation.overallScore ?? 5
       }
     })
+
+    await createNotification(
+      task.hrId,
+      "Task Evaluated",
+      `The task ${task.taskLibrary?.title || ""} submitted by ${task.developer?.name || "developer"} has been evaluated by AI.`,
+      "TASK_EVALUATED"
+    );
 
   } catch (err: any) {
     console.error("AI evaluation failed:", err.message)

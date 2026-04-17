@@ -20,3 +20,13 @@ export const uploadFile = async (buffer, fileName) => {
         uploadstream.end(buffer);
     });
 };
+export const uploadZip = async (filePath, id) => {
+    const result = await cloudinary.uploader.upload_large(filePath, {
+        resource_type: "raw",
+        folder: "skillforge/submissions",
+        public_id: `task_${id}_${Date.now()}`,
+        format: "zip",
+        chunk_size: 6_000_000, // 6MB chunks
+    });
+    return result.secure_url;
+};

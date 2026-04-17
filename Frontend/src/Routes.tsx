@@ -17,92 +17,112 @@ import Settings from "./HR/Pages/Settings";
 import DeveloperTotalDetails from "./HR/Pages/DeveloperTotalDetails";
 import UpgradePage from "./HR/Pages/Upgradepage";
 import InterviewRoom from "./Pages/Interviewroom";
-import InterviewRoom_Index from "./Pages/InterviewRoom/InterviewRoom_index";
+import NotificationPage from "./HR/Pages/NotificationPage";
+import { DevProtectedRoute, HrProtectedRoute, PublicOnlyRoute } from "./Context/ProtectedRoutes";
 
 
 export const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Home />,
-  },
-  {
-    path: "/signup",
-    element: <SignUp />,
-  },
-  {
-    path: "/rollselection",
-    element: <RollSelection />,
-  },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/dashboard",
-    element: <DashboardLayout />,
+    element: <PublicOnlyRoute />,
     children: [
       {
-        index: true,
-        element: <Dashboard />,
+        path: "/",
+        element: <Home />,
       },
       {
-        path: "/dashboard/create-interview",
-        element: <CreateInterview />,
+        path: "/signup",
+        element: <SignUp />,
       },
       {
-        path: "/dashboard/developers",
-        element: <DeveloperList />,
+        path: "/rollselection",
+        element: <RollSelection />,
       },
       {
-        path: "/dashboard/schedule",
-        element: <ScheduledInterview />,
+        path: "/login",
+        element: <Login />,
       },
       {
-        path: "/dashboard/task-library",
-        element: <TaskLibraryList />,
-      },
-      {
-        path: "/dashboard/task-create",
-        element: <TaskLibraryEdit />,
-      },
-      {
-        path: "/dashboard/task-edit/:id",
-        element: <TaskLibraryEdit />,
-      },
-      {
-        path: "/dashboard/task-preview/:id",
-        element: <TaskPreview />,
-      },
-      {
-        path: "/dashboard/settings",
-        element: <Settings />,
-      },
-      {
-        path: "/dashboard/devFullDetails/:id",
-        element: <DeveloperTotalDetails />,
-      },
-      {
-        path: "/dashboard/upgrade",
-        element: <UpgradePage />,
+        path: "/devLogin",
+        element: <DevLogin />,
       },
     ],
   },
   {
-    path: "/dashboard/HrInterviewRoom/:interviewId",
-    element: <InterviewRoom />,
+    element: <HrProtectedRoute />,
+    children: [
+      {
+        path: "/dashboard",
+        element: <DashboardLayout />,
+        children: [
+          {
+            index: true,
+            element: <Dashboard />,
+          },
+          {
+            path: "/dashboard/create-interview",
+            element: <CreateInterview />,
+          },
+          {
+            path: "/dashboard/developers",
+            element: <DeveloperList />,
+          },
+          {
+            path: "/dashboard/schedule",
+            element: <ScheduledInterview />,
+          },
+          {
+            path: "/dashboard/task-library",
+            element: <TaskLibraryList />,
+          },
+          {
+            path: "/dashboard/task-create",
+            element: <TaskLibraryEdit />,
+          },
+          {
+            path: "/dashboard/task-edit/:id",
+            element: <TaskLibraryEdit />,
+          },
+          {
+            path: "/dashboard/task-preview/:id",
+            element: <TaskPreview />,
+          },
+          {
+            path: "/dashboard/settings",
+            element: <Settings />,
+          },
+          {
+            path: "/dashboard/devFullDetails/:id",
+            element: <DeveloperTotalDetails />,
+          },
+          {
+            path: "/dashboard/upgrade",
+            element: <UpgradePage />,
+          },
+          {
+            path: "/dashboard/notifications",
+            element: <NotificationPage />,
+          },
+        ],
+      },
+      {
+        path: "/dashboard/HrInterviewRoom/:interviewId",
+        element: <InterviewRoom />,
+      },
+    ],
   },
   {
-    path: "/devLogin",
-    element: <DevLogin />,
-  },
-  {
-    path: "/devDashboard",
-    element: <DevDashBoard />,
-  },
-  {
+    element: <DevProtectedRoute />,
+    children: [
+      {
+        path: "/devDashboard",
+        element: <DevDashBoard />,
+      },
+      {
         path:"/DevInterviewRoom/:interviewId",
         element:<InterviewRoom/>
         // element:<InterviewRoom_Index/>
+      },
+    ],
   },
 
 ]);

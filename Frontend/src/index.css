@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+@layer utilities {
+  @keyframes shimmer-premium {
+    0% { transform: translateX(-150%) skewX(-20deg); opacity: 0; }
+    20% { opacity: 0.5; }
+    50% { opacity: 1; }
+    80% { opacity: 0.5; }
+    100% { transform: translateX(150%) skewX(-20deg); opacity: 0; }
+  }
+
+  @keyframes border-glow {
+    0%, 100% { border-color: rgba(59, 130, 246, 0.1); box-shadow: 0 0 0 rgba(59, 130, 246, 0); }
+    50% { border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+  }
+
+  .animate-shimmer-premium {
+    animation: shimmer-premium 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .animate-border-glow {
+    animation: border-glow 2s ease-in-out infinite;
+  }
+}

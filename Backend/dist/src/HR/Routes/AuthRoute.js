@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { HrloginController, HrLogoutController, HRregisterController, otpResend, otpValidation } from "../Controller/AuthController.js";
+import { getHrMeController, HrloginController, HrLogoutController, HRregisterController, otpResend, otpValidation } from "../Controller/AuthController.js";
+import isHr from "../Middleware/isHr.js";
 import Validate from "../Middleware/Validate.js";
 import { registerValidate } from "../Validator/Register.js";
 import { LoginValidate } from "../Validator/Login.js";
@@ -11,4 +12,5 @@ router.post('/hr/verify-otp', otpValidation);
 router.post('/hr/resent-otp', otpResend);
 router.post('/refresh', TokenRegenrator);
 router.post('/hr/logout', HrLogoutController);
+router.get('/hr/me', isHr, getHrMeController);
 export default router;
