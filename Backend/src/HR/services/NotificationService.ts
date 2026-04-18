@@ -11,7 +11,7 @@ export const createNotification = async (
   title: string,
   message: string,
   type: string,
- 
+  silent: boolean = false
 ) => {
   try {
     const notification = await prisma.notification.create({
@@ -26,7 +26,7 @@ export const createNotification = async (
     if (ioInstance) {
       ioInstance.to(hrId).emit("notification", {
         ...notification,
-       
+        silent,
       });
     }
 

@@ -64,6 +64,7 @@ export interface DevDetailsResponse {
 }
 
 export const STATUS_STYLES: Record<string, string> = {
+  Suspended:   "bg-yellow-50   text-yellow-600   border-yellow-100",
   SCHEDULED:   "bg-blue-50   text-blue-600   border-blue-100",
   COMPLETED:   "bg-green-50  text-green-600  border-green-100",
   CANCELLED:   "bg-red-50    text-red-500    border-red-100",

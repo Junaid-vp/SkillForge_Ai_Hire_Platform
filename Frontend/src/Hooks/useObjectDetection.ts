@@ -1,21 +1,22 @@
+// src/Hooks/useObjectDetection.ts
+// HARD: Phone, Extra device (laptop/tablet), Extra person
+// SOFT: Book/notes
+// No toasts — all goes to bell notification only
+// Only active when interviewStarted = true
+
 import { useEffect, useRef } from "react"
-import {
-  ObjectDetector,
-  FilesetResolver,
-} from "@mediapipe/tasks-vision"
+import { ObjectDetector, FilesetResolver } from "@mediapipe/tasks-vision"
 import { getSocket } from "../Service/socket"
-import toast from "react-hot-toast"
 
 export function useObjectDetection(
-  interviewId: string | undefined,
-  videoRef:     React.RefObject<HTMLVideoElement | null>,
-  isActive:    boolean
+  interviewId:      string | undefined,
+  videoRef:         React.RefObject<HTMLVideoElement | null>,
+  isActive:         boolean,
+  interviewStarted: boolean  // only detect when both joined
 ) {
-  const detectorRef = useRef<ObjectDetector | null>(null)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const isLoaded    = useRef(false)
-
-  // ── Cooldown ──────────────────────────
+  const detectorRef   = useRef<ObjectDetector | null>(null)
+  const intervalRef   = useRef<ReturnType<typeof setInterval> | null>(null)
+  const isLoaded      = useRef(false)
   const lastAlertTime = useRef<Record<string, number>>({})
 
   const canAlert = (type: string, cooldownMs = 10000): boolean => {
@@ -26,7 +27,7 @@ export function useObjectDetection(
     return true
   }
 
-  // ── Load MediaPipe Object Detector ────
+  // ── Load MediaPipe Object Detector ─────────────────────────────────────────
   useEffect(() => {
     if (!isActive) return
 
@@ -35,21 +36,16 @@ export function useObjectDetection(
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
         )
-
-        detectorRef.current = await ObjectDetector.createFromOptions(
-          vision,
-          {
-            baseOptions: {
-              modelAssetPath:
-                "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite",
-              delegate: "GPU"
-            },
-            runningMode:         "VIDEO",
-            scoreThreshold:      0.5,
-            maxResults:          10,
-          }
-        )
-
+        detectorRef.current = await ObjectDetector.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath:
+              "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite",
+            delegate: "GPU",
+          },
+          runningMode:    "VIDEO",
+          scoreThreshold: 0.6,  // Higher threshold = fewer false positives
+          maxResults:     10,
+        })
         isLoaded.current = true
         console.log("✅ MediaPipe Object Detector loaded")
       } catch (e) {
@@ -58,56 +54,36 @@ export function useObjectDetection(
     }
 
     load()
-
-    return () => {
-      detectorRef.current?.close()
-    }
+    return () => { detectorRef.current?.close() }
   }, [isActive])
 
-  // ── Detection loop ────────────────────
+  // ── Detection loop ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!isActive || !interviewId) return
+    // ✅ Only start when interview STARTED
+    if (!isActive || !interviewId || !interviewStarted) return
 
     const socket = getSocket()
 
-    const emit = (
-      type:     string,
-      message:  string,
-      severity: "LOW" | "MEDIUM" | "HIGH"
-    ) => {
-      if (!canAlert(type)) return
-
-      socket.emit("malpractice", {
-        interviewId,
-        type,
-        message,
-        severity,
-        timestamp: new Date().toISOString()
+    // HARD violation — counts toward warning threshold
+    const emitHard = (type: string, message: string) => {
+      if (!canAlert(type, 10000)) return
+      socket.emit("malpractice-hard", {
+        interviewId, type, message,
+        severity:  "HIGH",
+        timestamp: new Date().toISOString(),
       })
-
-      if (severity === "HIGH") {
-        toast(`🚨 ${message}`, {
-          style: {
-            background: "#fef2f2",
-            color:      "#991b1b",
-            border:     "1px solid #fecaca",
-          },
-          duration: 5000
-        })
-      } else if (severity === "MEDIUM") {
-        toast(`⚠️ ${message}`, {
-          style: {
-            background: "#fffbeb",
-            color:      "#92400e",
-            border:     "1px solid #fde68a",
-          },
-          duration: 4000
-        })
-      }
     }
 
-    // ── Run every 2 seconds ───────────
-    // MediaPipe is fast enough for 2s
+    // SOFT violation — only bell log
+    const emitSoft = (type: string, message: string) => {
+      if (!canAlert(type, 15000)) return
+      socket.emit("malpractice-soft", {
+        interviewId, type, message,
+        severity:  "MEDIUM",
+        timestamp: new Date().toISOString(),
+      })
+    }
+
     intervalRef.current = setInterval(() => {
       if (!isLoaded.current || !detectorRef.current) return
 
@@ -115,69 +91,39 @@ export function useObjectDetection(
       if (!video || video.readyState !== 4) return
 
       try {
-        const result = detectorRef.current
-          .detectForVideo(video, performance.now())
+        const result = detectorRef.current.detectForVideo(video, performance.now())
 
-        result.detections.forEach((detection) => {
+        result.detections.forEach(detection => {
           const label = detection.categories[0]?.categoryName ?? ""
-          const score = detection.categories[0]?.score ?? 0
+          const score = detection.categories[0]?.score         ?? 0
 
-          // ── Phone detected ──────────
-          if (
-            label === "cell phone" &&
-            score > 0.5
-          ) {
-            emit(
-              "PHONE_DETECTED",
-              "Phone detected in camera frame",
-              "HIGH"
-            )
+          // ── HARD: Phone ──────────────────────────────────────────────
+          if (label === "cell phone" && score > 0.6) {
+            emitHard("PHONE_DETECTED", "Phone detected in camera frame")
           }
 
-          // ── Book / notes ─────────────
-          if (
-            label === "book" &&
-            score > 0.5
-          ) {
-            emit(
-              "BOOK_DETECTED",
-              "Book or reference material detected",
-              "MEDIUM"
-            )
+          // ── HARD: Extra device ───────────────────────────────────────
+          if ((label === "laptop" || label === "tablet") && score > 0.6) {
+            emitHard("EXTRA_DEVICE", "Extra device detected — possible cheating tool")
           }
 
-          // ── Extra laptop / tablet ────
-          if (
-            (label === "laptop" || label === "tablet") &&
-            score > 0.5
-          ) {
-            emit(
-              "EXTRA_DEVICE",
-              "Extra device detected — possible cheating tool",
-              "HIGH"
-            )
+          // ── HARD: Extra person ───────────────────────────────────────
+          if (label === "person" && score > 0.65) {
+            emitHard("EXTRA_PERSON", "Additional person detected near developer")
           }
 
-          // ── Extra person ─────────────
-          if (
-            label === "person" &&
-            score > 0.6
-          ) {
-            emit(
-              "EXTRA_PERSON",
-              "Additional person detected near developer",
-              "HIGH"
-            )
+          // ── SOFT: Book / notes ───────────────────────────────────────
+          if (label === "book" && score > 0.6) {
+            emitSoft("BOOK_DETECTED", "Book or reference material detected")
           }
-
         })
       } catch {
-        // silent
+        // Silent
       }
-    }, 1000)
+    }, 2000) // 2s interval for object detection
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [isActive, interviewId])
+  }, [isActive, interviewId, interviewStarted])
 }

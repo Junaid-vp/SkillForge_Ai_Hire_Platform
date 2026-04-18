@@ -64,7 +64,7 @@ export default function ChatPanel({
               </div>
               <span className="text-[9px] text-gray-300 mt-1 px-1">
                 {new Date(msg.timestamp).toLocaleTimeString("en-US", {
-                  hour: "2-digit", minute: "2-digit"
+                  hour: "numeric", minute: "2-digit", hour12: true
                 })}
               </span>
             </div>

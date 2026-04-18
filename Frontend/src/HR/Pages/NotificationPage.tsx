@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api } from "../../Api/Axios";
 import toast from "react-hot-toast";
+import ClearAllNotifModal from "../Components/Mod/ClearAllNotifModal";
 
 interface Notification {
   id: string;
@@ -31,6 +32,8 @@ export default function NotificationPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
@@ -68,14 +71,17 @@ export default function NotificationPage() {
   };
 
   const clearAll = async () => {
-    if (!window.confirm("Are you sure you want to clear all notifications?")) return;
+    setIsClearing(true);
     try {
       await api.delete("/notification/clear-all");
       setNotifications([]);
       window.dispatchEvent(new Event('notifications_updated'));
       toast.success("Notification history cleared");
+      setIsClearModalOpen(false);
     } catch (err) {
       toast.error("Failed to clear history");
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -131,13 +137,20 @@ export default function NotificationPage() {
             <CheckCircle2 size={13} /> Mark all read
           </button>
           <button
-            onClick={clearAll}
+            onClick={() => setIsClearModalOpen(true)}
             className="flex items-center gap-1.5 px-4 py-2 bg-white border border-red-50 hover:bg-red-50 text-red-500 text-xs font-semibold rounded-xl transition-all shadow-sm"
           >
             <Trash2 size={13} /> Clear all
           </button>
         </div>
       </div>
+
+      <ClearAllNotifModal 
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={clearAll}
+        isLoading={isClearing}
+      />
 
       <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
         {/* Filters */}
@@ -194,7 +207,7 @@ export default function NotificationPage() {
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
                         <Clock size={11} />
-                        {new Date(notif.createdAt).toLocaleDateString()} at {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(notif.createdAt).toLocaleDateString()} at {new Date(notif.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
                       </div>
                       <button 
                         onClick={(e) => {

@@ -1,6 +1,7 @@
 import { api } from "../../Api/Axios";
 import toast from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "../../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
@@ -109,6 +110,7 @@ const statusConfig: Record<
     text: "text-red-500",
     icon: <Circle size={9} />,
   },
+ 
 };
 
 const difficultyColors: Record<
@@ -140,16 +142,13 @@ const formatDate = (date: string) =>
     year: "numeric",
   });
 
-const formatTime = (t: string) => {
-  if (!t?.includes(":")) return t;
-  const [h, m] = t.split(":").map(Number);
-  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
-};
+
 
 function DevDashBoard() {
   const navigate = useNavigate();
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { clearAuth } = useAuth();
   const { data, isLoading, error } = useQuery<DevData>({
     queryKey: ["DevDashboard"],
     queryFn: fetchDashBoard,
@@ -157,18 +156,19 @@ function DevDashBoard() {
   const handleLogout = async () => {
     try {
       await api.post("/dev/logout");
+      clearAuth();
       toast.success("Logged out successfully.");
     } catch (e) {
       console.log(e);
+      clearAuth();
     } finally {
       navigate("/devLogin");
     }
   };
 
-  const isJoinable = (interviewDate: string, interviewTime: string) => {
-    if (!interviewDate || !interviewTime) return false;
-    const dateStr = String(interviewDate).split("T")[0];
-    const scheduledTime = new Date(`${dateStr}T${interviewTime}`);
+  const isJoinable = (scheduledAt: string) => {
+    if (!scheduledAt) return false;
+    const scheduledTime = new Date(scheduledAt);
     const now = new Date();
 
     // Allow join 10 minutes before scheduled time
@@ -180,11 +180,11 @@ function DevDashBoard() {
   const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
-    if (!data?.interviewDate || !data?.interviewTime) return;
+    const interview = data?.interviews?.[0];
+    if (!interview?.scheduledAt) return;
 
     const interval = setInterval(() => {
-      const dateStr = String(data.interviewDate).split("T")[0];
-      const scheduledTime = new Date(`${dateStr}T${data.interviewTime}`);
+      const scheduledTime = new Date(interview.scheduledAt as string);
       const now = new Date();
 
       const diff = scheduledTime.getTime() - now.getTime();
@@ -391,7 +391,7 @@ function DevDashBoard() {
                           </p>
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700">
                             <CalendarDays size={11} className="text-blue-400" />
-                            {formatDate(data.interviewDate)}
+                            {interview.scheduledAt ? formatDate(interview.scheduledAt) : "N/A"}
                           </span>
                         </div>
                         <div>
@@ -400,7 +400,7 @@ function DevDashBoard() {
                           </p>
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700">
                             <Clock size={11} className="text-blue-400" />
-                            {formatTime(data.interviewTime)}
+                            {interview.scheduledAt ? new Date(interview.scheduledAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true }) : "N/A"}
                           </span>
                         </div>
                         <div>
@@ -430,8 +430,7 @@ function DevDashBoard() {
                               Status
                             </span>
                             {isJoinable(
-                              data.interviewDate,
-                              data.interviewTime,
+                               interview.scheduledAt || ""
                             ) ? (
                               <div className="flex items-center gap-2">
                                 <span className="relative flex h-2 w-2">
@@ -453,10 +452,7 @@ function DevDashBoard() {
                           {/* RIGHT: Button */}
                           <button
                             disabled={
-                              !isJoinable(
-                                data.interviewDate,
-                                data.interviewTime,
-                              )
+                              !isJoinable(interview.scheduledAt || "")
                             }
                             onClick={() =>
                               navigate(
@@ -465,13 +461,13 @@ function DevDashBoard() {
                             }
                             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all duration-300
                           ${
-                            isJoinable(data.interviewDate, data.interviewTime)
+                            isJoinable(interview.scheduledAt || "")
                               ? "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-[0_4px_12px_rgba(37,99,235,0.2)] hover:-translate-y-0.5 active:translate-y-0"
                               : "bg-gray-100/80 text-gray-400 cursor-not-allowed border border-gray-200"
                           }`}
                           >
                             <Video size={14} />
-                            {!isJoinable(data.interviewDate, data.interviewTime)
+                            {!isJoinable(interview.scheduledAt || "")
                               ? "You Can Join Before 10m"
                               : isStarted
                                 ? "Rejoin Interview"

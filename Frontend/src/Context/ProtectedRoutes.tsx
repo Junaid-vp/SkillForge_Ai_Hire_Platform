@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useSearchParams } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 function FullScreenLoader() {
@@ -37,7 +37,14 @@ export function DevProtectedRoute() {
 
 export function PublicOnlyRoute() {
   const { status, role } = useAuth();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+
   if (status === "loading") return <FullScreenLoader />;
+  
+ 
+  if (token) return <Outlet />;
+
   if (role === "hr") return <Navigate to="/dashboard" replace />;
   if (role === "dev") return <Navigate to="/devDashboard" replace />;
   return <Outlet />;

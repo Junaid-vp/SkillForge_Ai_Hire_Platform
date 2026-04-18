@@ -14,6 +14,8 @@ import {
   Trash2,
   Plus,
   Eye,
+  ChevronDown,
+  Filter,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -53,19 +55,37 @@ const difficultyConfig: Record<
   },
 };
 
-const fetchLibraryData = async () => {
-  const res = await api.get("/tasklibary/alltask");
+const fetchLibraryData = async (category: string) => {
+  let url = "/tasklibary/alltask";
+  if (category === "Defaults") {
+    url += "?isDefault=true";
+  } else if (category !== "ALL") {
+    url += `?category=${encodeURIComponent(category)}`;
+  }
+  const res = await api.get(url);
   return res.data.data;
+};
+
+const fetchCategories = async () => {
+  const res = await api.get("/tasklibary/categories");
+  return res.data.data || [];
 };
 
 function TaskLibraryList() {
   const navigate = useNavigate();
+  const [activeCategory, setActiveCategory] = useState("ALL");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-const queryClient = useQueryClient();
-const {data,isLoading,error} = useQuery<TaskLibrary[]>({
-    queryKey: ["TaskLibary"],
-    queryFn: fetchLibraryData,
-  })
+  const queryClient = useQueryClient();
+  const { data, isLoading, error } = useQuery<TaskLibrary[]>({
+    queryKey: ["TaskLibary", activeCategory],
+    queryFn: () => fetchLibraryData(activeCategory),
+  });
+
+  const { data: categories = [] } = useQuery<string[]>({
+    queryKey: ["TaskCategories"],
+    queryFn: fetchCategories,
+  });
 
   const [taskToDelete, setTaskToDelete] = useState<{ id: string; title: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -125,6 +145,55 @@ const {data,isLoading,error} = useQuery<TaskLibrary[]>({
             <Plus size={13} />
             Create Task
           </button>
+        </div>
+      </div>
+
+      {/* Filters Dropdown */}
+      <div className="mb-6 flex justify-end">
+        <div className="relative w-full max-w-[240px]">
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-blue-200 transition-all text-xs font-semibold text-gray-700"
+          >
+            <div className="flex items-center gap-2">
+              <Filter size={13} className="text-blue-500" />
+              <span className="text-gray-400 font-medium">Category:</span>
+              <span className="text-gray-900">{activeCategory.toUpperCase()}</span>
+            </div>
+            <ChevronDown 
+              size={14} 
+              className={`text-gray-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} 
+            />
+          </button>
+
+          {isDropdownOpen && (
+            <>
+              {/* Overlay to close dropdown */}
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setIsDropdownOpen(false)}
+              />
+              
+              <div className="absolute right-0 top-full mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl z-20 py-2 animate-in fade-in zoom-in-95 duration-200">
+                {["ALL", "Defaults", ...categories].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setActiveCategory(cat);
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-[11px] font-bold transition-colors ${
+                      activeCategory === cat
+                        ? "text-blue-600 bg-blue-50/50"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    {cat.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

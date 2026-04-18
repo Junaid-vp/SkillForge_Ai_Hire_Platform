@@ -1,25 +1,25 @@
+// src/Hooks/useMalpracticeDetection.ts
+// HARD: No face, Multiple faces, Phone, Extra device, Extra person
+// SOFT: Head rotation, Eye movement (no false suspensions)
+// No toasts — all goes to bell notification only
+// Only active when interviewStarted = true
+
 import { useEffect, useRef } from "react"
-import {
-  FaceLandmarker,
-  FilesetResolver,
-} from "@mediapipe/tasks-vision"
+import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision"
 import { getSocket } from "../Service/socket"
-import toast from "react-hot-toast"
 
 export function useMalpracticeDetection(
-  interviewId: string | undefined,
-  videoRef:    React.RefObject<HTMLVideoElement | null>,
-  isActive:    boolean
+  interviewId:      string | undefined,
+  videoRef:         React.RefObject<HTMLVideoElement | null>,
+  isActive:         boolean,
+  interviewStarted: boolean  // only detect when both joined
 ) {
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null)
   const intervalRef       = useRef<ReturnType<typeof setInterval> | null>(null)
   const modelsLoaded      = useRef(false)
+  const lastAlertTime     = useRef<Record<string, number>>({})
 
-  // ── Cooldown to avoid spam alerts ────
-  // Same alert won't fire more than once per 5 seconds
-  const lastAlertTime = useRef<Record<string, number>>({})
-
-  const canAlert = (type: string, cooldownMs = 5000): boolean => {
+  const canAlert = (type: string, cooldownMs = 8000): boolean => {
     const now  = Date.now()
     const last = lastAlertTime.current[type] ?? 0
     if (now - last < cooldownMs) return false
@@ -27,7 +27,7 @@ export function useMalpracticeDetection(
     return true
   }
 
-  // ── Load MediaPipe models ─────────────
+  // ── Load MediaPipe ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isActive) return
 
@@ -36,85 +36,57 @@ export function useMalpracticeDetection(
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
         )
-
-        // ── Face Landmarker ─────────────
-        faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(
-          vision,
-          {
-            baseOptions: {
-              modelAssetPath:
-                "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-              delegate: "GPU"
-            },
-            runningMode:         "VIDEO",
-            numFaces:            3,    // detect up to 3 faces
-            minFaceDetectionConfidence: 0.5,
-            minTrackingConfidence:      0.5,
-            outputFaceBlendshapes:      true, // for expression detection
-            outputFacialTransformationMatrixes: true // for head pose
-          }
-        )
-
+        faceLandmarkerRef.current = await FaceLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath:
+              "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+            delegate: "GPU",
+          },
+          runningMode:   "VIDEO",
+          numFaces:      3,
+          minFaceDetectionConfidence:         0.5,
+          minTrackingConfidence:              0.5,
+          outputFaceBlendshapes:              true,
+          outputFacialTransformationMatrixes: true,
+        })
         modelsLoaded.current = true
         console.log("✅ MediaPipe Face Landmarker loaded")
-
       } catch (e) {
         console.error("MediaPipe failed to load:", e)
       }
     }
 
     loadModels()
-
-    return () => {
-      faceLandmarkerRef.current?.close()
-    }
+    return () => { faceLandmarkerRef.current?.close() }
   }, [isActive])
 
-  // ── Detection loop ────────────────────
+  // ── Detection loop ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!isActive || !interviewId) return
+    // ✅ Only start when interview STARTED
+    if (!isActive || !interviewId || !interviewStarted) return
 
     const socket = getSocket()
 
-    const emit = (
-      type:     string,
-      message:  string,
-      severity: "LOW" | "MEDIUM" | "HIGH"
-    ) => {
-      if (!canAlert(type)) return // cooldown check
-
-      socket.emit("malpractice", {
-        interviewId,
-        type,
-        message,
-        severity,
-        timestamp: new Date().toISOString()
+    // HARD violation — counts toward warning threshold
+    const emitHard = (type: string, message: string) => {
+      if (!canAlert(type, 8000)) return
+      socket.emit("malpractice-hard", {
+        interviewId, type, message,
+        severity:  "HIGH",
+        timestamp: new Date().toISOString(),
       })
-
-      if (severity === "HIGH") {
-        toast(`🚨 ${message}`, {
-          id: type,
-          style: {
-            background: "#fef2f2",
-            color:      "#991b1b",
-            border:     "1px solid #fecaca",
-          },
-          duration: 5000
-        })
-      } else if (severity === "MEDIUM") {
-        toast(`⚠️ ${message}`, {
-          id: type,
-          style: {
-            background: "#fffbeb",
-            color:      "#92400e",
-            border:     "1px solid #fde68a",
-          },
-          duration: 4000
-        })
-      }
     }
 
-    // ── Run every 1 second ───────────
+    // SOFT violation — only goes to bell log, no warning count
+    const emitSoft = (type: string, message: string) => {
+      if (!canAlert(type, 10000)) return // longer cooldown for soft
+      socket.emit("malpractice-soft", {
+        interviewId, type, message,
+        severity:  "LOW",
+        timestamp: new Date().toISOString(),
+      })
+    }
+
     intervalRef.current = setInterval(async () => {
       if (!modelsLoaded.current) return
 
@@ -124,130 +96,67 @@ export function useMalpracticeDetection(
       const now = performance.now()
 
       try {
-        // ════════════════════════════════
-        // FACE DETECTION
-        // ════════════════════════════════
-        const faceResult = faceLandmarkerRef.current
-          ?.detectForVideo(video, now)
+        const faceResult = faceLandmarkerRef.current?.detectForVideo(video, now)
+        const faceCount  = faceResult?.faceLandmarks?.length ?? 0
 
-        const faceCount = faceResult?.faceLandmarks?.length ?? 0
-
-        // ── No face detected ────────────
+        // ── HARD: No face ──────────────────────────────────────────────
         if (faceCount === 0) {
-          emit(
-            "NO_FACE",
-            "No face detected — developer may have left seat",
-            "HIGH"
-          )
+          emitHard("NO_FACE", "No face detected — developer may have left seat")
           return
         }
 
-        // ── Multiple faces ──────────────
+        // ── HARD: Multiple faces ───────────────────────────────────────
         if (faceCount > 1) {
-          emit(
-            "MULTIPLE_FACES",
-            `${faceCount} faces detected — possible assistance`,
-            "HIGH"
-          )
+          emitHard("MULTIPLE_FACES", `${faceCount} faces detected — possible assistance`)
         }
 
-        // ── Head pose using transformation matrix ──
+        // ── SOFT: Head pose ────────────────────────────────────────────
+        // Head rotation is SOFT — developer might just be thinking
         const matrices = faceResult?.facialTransformationMatrixes
         if (matrices && matrices.length > 0) {
-          const matrix = matrices[0].data
-
-          // Extract rotation from 4x4 transformation matrix
-          // matrix[0], matrix[4], matrix[8] = first 3 values of each row
-          const rotationX = Math.asin(-matrix[9]) * (180 / Math.PI)
+          const matrix    = matrices[0].data
+          const rotationX = Math.asin(-matrix[9])  * (180 / Math.PI)
           const rotationY = Math.atan2(matrix[8], matrix[10]) * (180 / Math.PI)
 
-          // Looking left or right
-          if (Math.abs(rotationY) > 25) {
-            emit(
+          // Higher threshold (35°) to reduce false positives
+          if (Math.abs(rotationY) > 35) {
+            emitSoft(
               "HEAD_TURN",
-              `Developer looking ${rotationY > 0 ? "left" : "right"} — possible distraction`,
-              "MEDIUM"
+              `Developer looking ${rotationY > 0 ? "left" : "right"}`
             )
           }
-
-          // Looking up (at another screen above?)
-          if (rotationX < -20) {
-            emit(
-              "HEAD_UP",
-              "Developer looking up — possible second monitor",
-              "MEDIUM"
-            )
+          if (rotationX < -25) {
+            emitSoft("HEAD_UP",   "Developer looking up — possible second monitor")
           }
-
-          // Looking down (at phone or notes?)
-          if (rotationX > 20) {
-            emit(
-              "HEAD_DOWN",
-              "Developer looking down — possible phone or notes",
-              "MEDIUM"
-            )
+          if (rotationX > 25) {
+            emitSoft("HEAD_DOWN", "Developer looking down — possible notes")
           }
         }
 
-        // ── Eye gaze using blendshapes ──
+        // ── SOFT: Eye gaze ─────────────────────────────────────────────
+        // Eye movement is SOFT — normal during thinking
         const blendshapes = faceResult?.faceBlendshapes
         if (blendshapes && blendshapes.length > 0) {
-          const shapes = blendshapes[0].categories
-
+          const shapes   = blendshapes[0].categories
           const getScore = (name: string) =>
-            shapes.find((s) => s.categoryName === name)?.score ?? 0
+            shapes.find(s => s.categoryName === name)?.score ?? 0
 
-          const eyeLookLeft  = getScore("eyeLookOutLeft") + getScore("eyeLookInRight")
+          const eyeLookLeft  = getScore("eyeLookOutLeft")  + getScore("eyeLookInRight")
           const eyeLookRight = getScore("eyeLookOutRight") + getScore("eyeLookInLeft")
-          const eyeLookUp    = getScore("eyeLookUpLeft") + getScore("eyeLookUpRight")
-          const eyeLookDown  = getScore("eyeLookDownLeft") + getScore("eyeLookDownRight")
 
-          // Eyes looking far left or right
-          if (eyeLookLeft > 0.7 || eyeLookRight > 0.7) {
-            emit(
-              "GAZE_SIDEWAYS",
-              "Developer eyes looking sideways — possible distraction",
-              "LOW"
-            )
-          }
-
-          // Eyes looking up — possible second monitor
-          if (eyeLookUp > 0.6) {
-            emit(
-              "GAZE_UP",
-              "Developer eyes looking up — possible second screen",
-              "LOW"
-            )
-          }
-
-          // Eyes looking down too much — possible notes or phone
-          if (eyeLookDown > 0.7) {
-            emit(
-              "GAZE_DOWN",
-              "Developer eyes looking down — possible notes or phone",
-              "LOW"
-            )
-          }
-
-          // Eyes closed too long — possible reading something?
-          const eyesClosed =
-            getScore("eyeBlinkLeft") + getScore("eyeBlinkRight")
-          if (eyesClosed > 1.5) {
-            emit(
-              "EYES_CLOSED",
-              "Developer eyes closed",
-              "LOW"
-            )
+          // Higher threshold (0.8) to reduce false positives
+          if (eyeLookLeft > 0.8 || eyeLookRight > 0.8) {
+            emitSoft("GAZE_SIDEWAYS", "Developer eyes looking sideways")
           }
         }
 
       } catch {
-        // silent — never break interview
+        // Silent — never break interview
       }
-    }, 1000)
+    }, 1500) // 1.5s interval — slightly slower to reduce false positives
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [isActive, interviewId])
+  }, [isActive, interviewId, interviewStarted])
 }

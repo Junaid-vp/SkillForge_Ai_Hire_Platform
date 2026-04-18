@@ -17,6 +17,7 @@ enum InterviewStatus {
   STARTED
   COMPLETED
   CANCELLED
+  SUSPENDED
 }
 
 enum TaskStatus {

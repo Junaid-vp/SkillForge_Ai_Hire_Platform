@@ -22,53 +22,62 @@ export const isDeveloper = async (
 
     const decode = jwt.verify(token, accessKey) as JwtPayloadDev
 
-   
+
     const interview = await prisma.interview.findFirst({
-      where: { developerId: decode.Id }
+      where: { developerId: decode.Id },
+      orderBy: { createdAt: "desc" }
     })
 
     if (!interview) {
       return res.status(400).json({ Message: "No interview found" })
     }
 
- 
+
     const task = await prisma.task.findFirst({
       where: { developerId: decode.Id }
     })
 
     req.devId = decode.Id
-     
-    if(!task){
+
+    if (!task) {
       return next()
     }
-   
+
+
+
+    if (interview.status === "SUSPENDED") {
+      return res.status(403).json({
+        Message: "Interview Suspended"
+      })
+    }
+
     if (interview.status === "CANCELLED") {
-    return res.status(403).json({
-      Message: "Interview cancelled"
-    })
-    }
-
-   if (interview.status === "COMPLETED") {
-    if (task && task.status === "PENDING") {
-      return next()
-    }
-
-    if (task?.status === "SUBMITTED") {
       return res.status(403).json({
-        Message: "Task already submitted"
+        Message: "Interview cancelled"
       })
     }
 
-    if (task?.status === "EXPIRED") {
+    if (interview.status === "COMPLETED") {
+      if (task && task.status === "PENDING") {
+        return next()
+      }
+
+      if (task?.status === "SUBMITTED") {
+        return res.status(403).json({
+          Message: "Task already submitted"
+        })
+      }
+
+      if (task?.status === "EXPIRED") {
+        return res.status(403).json({
+          Message: "Task deadline passed"
+        })
+      }
+
       return res.status(403).json({
-        Message: "Task deadline passed"
+        Message: "Interview completed. No task assigned yet.",
       })
     }
-
-    return res.status(403).json({
-      Message: "Interview completed. No task assigned yet.",
-    })
-  }
 
     next()
 

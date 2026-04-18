@@ -81,8 +81,8 @@ export const sheduleInterview = async (req: Request, res: Response) => {
     if (Code !== uniqueCode) {
       return res.status(400).json({ Message: "Invalid uniqueCode" });
     }
-      
-       
+
+
 
     await redis.del(`Unique:${uniqueCode}`);
 
@@ -98,15 +98,15 @@ export const sheduleInterview = async (req: Request, res: Response) => {
         interviewDate: new Date(interviewDate),
         interviewTime,
         uniqueCode,
-        resumeUrl:  resumeUrl  ?? null,  
-        aiSummary:  aiSummary  ?? null,  
-        skills:     skills  ? JSON.stringify(skills) : null,                   
+        resumeUrl: resumeUrl ?? null,
+        aiSummary: aiSummary ?? null,
+        skills: skills ? JSON.stringify(skills) : null,
       },
     });
 
     const scheduledAt = new Date(`${interviewDate}T${interviewTime}:00`);
 
-  await prisma.interview.create({
+    await prisma.interview.create({
       data: {
         hrId: id,
         developerId: dev.id,
@@ -114,25 +114,25 @@ export const sheduleInterview = async (req: Request, res: Response) => {
       },
     });
 
-  await prisma.hR.update({
+    await prisma.hR.update({
       where: { id },
       data: { interviewCount: { increment: 1 } },
     });
 
 
 
-  const magicLink = `${process.env.FRONTEND_URL}/devLogin?token=${uniqueCode}`;
+    const magicLink = `${process.env.FRONTEND_URL}/devLogin?token=${uniqueCode}`;
 
-  const today = new Date()
-  const secondsUntilExpired = Math.floor((scheduledAt.getTime() - today.getTime()) / 1000) + 604800;
+    const today = new Date()
+    const secondsUntilExpired = Math.floor((scheduledAt.getTime() - today.getTime()) / 1000) + 604800;
 
-  await redis.set(`magic:${uniqueCode}`,dev.id,{ EX: secondsUntilExpired });
+    await redis.set(`magic:${uniqueCode}`, dev.id, { EX: secondsUntilExpired });
 
 
-  await sendUniqueCode(
+    await sendUniqueCode(
       developerName, developerEmail, position,
       uniqueCode, interviewDate, interviewTime,
-      user.email, user.companyName, user.name,magicLink
+      user.email, user.companyName, user.name, magicLink
     );
 
     await createNotification(
@@ -140,7 +140,7 @@ export const sheduleInterview = async (req: Request, res: Response) => {
       "Interview Scheduled",
       `${developerName} interview is scheduled for ${new Date(interviewDate).toLocaleDateString()} at ${interviewTime}.`,
       "INTERVIEW_SCHEDULED",
-      
+      true
     );
 
     res.status(201).json({
@@ -162,29 +162,36 @@ export const sheduledInterviewDetails = async (req: Request, res: Response) => {
       return res.status(401).json({ Message: "HR is not logged in" });
     }
 
-const details = await prisma.interview.findMany({
-  where: { hrId: id },
-  include: {
-    developer: {
-      select: {
-        id: true,
-        developerName: true,
-        developerEmail: true,
-        position: true,
-        experience: true,
-        interviewDate: true,
-        interviewTime: true,
-        uniqueCode: true,
-      }
-    },
-    hr: {
-      select: {
-        name: true
-      }
+    const { status } = req.query;
+
+    const where: any = { hrId: id };
+    if (status && status !== "ALL") {
+      where.status = status;
     }
-  },
-  orderBy: { createdAt: "desc" },
-});
+
+    const details = await prisma.interview.findMany({
+      where,
+      include: {
+        developer: {
+          select: {
+            id: true,
+            developerName: true,
+            developerEmail: true,
+            position: true,
+            experience: true,
+            interviewDate: true,
+            interviewTime: true,
+            uniqueCode: true,
+          }
+        },
+        hr: {
+          select: {
+            name: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
     if (details.length === 0) {
       return res.status(200).json({
@@ -211,8 +218,19 @@ export const getDevelopers = async (req: Request, res: Response) => {
       return res.status(401).json({ Message: "HR is not logged in" });
     }
 
+    const { search } = req.query;
+
+    const where: any = { hrId: id };
+
+    if (search) {
+      where.developerName = {
+        contains: search as string,
+        mode: "insensitive",
+      };
+    }
+
     const developers = await prisma.developer.findMany({
-      where: { hrId: id },
+      where,
       orderBy: { createdAt: "desc" }
     });
 
@@ -291,12 +309,12 @@ export const rescheduleInterview = async (req: Request, res: Response) => {
     });
 
 
-  const magicLink = `${process.env.FRONTEND_URL}/devLogin?token=${interview.developer.uniqueCode}`;
+    const magicLink = `${process.env.FRONTEND_URL}/devLogin?token=${interview.developer.uniqueCode}`;
 
-  const today = new Date()
-  const secondsUntilExpired = Math.floor((scheduledAt.getTime() - today.getTime()) / 1000) + 604800;
+    const today = new Date()
+    const secondsUntilExpired = Math.floor((scheduledAt.getTime() - today.getTime()) / 1000) + 604800;
 
-  await redis.set(`magic:${interview.developer.uniqueCode}`,interview.developerId,{ EX: secondsUntilExpired });
+    await redis.set(`magic:${interview.developer.uniqueCode}`, interview.developerId, { EX: secondsUntilExpired });
 
 
     await sendResheduledTime(
@@ -317,7 +335,7 @@ export const rescheduleInterview = async (req: Request, res: Response) => {
       "Interview Rescheduled",
       `${interview.developer.developerName} interview moved to ${new Date(newDate).toLocaleDateString()} at ${newTime}.`,
       "INTERVIEW_RESCHEDULED",
-      
+      true
     );
 
     res.status(200).json({
@@ -379,7 +397,7 @@ export const cancelInterview = async (req: Request, res: Response) => {
       "Interview Cancelled",
       `Interview with ${developer?.developerName ?? "developer"} has been cancelled.`,
       "INTERVIEW_CANCELLED",
-      
+      true
     );
 
     res.status(200).json({
@@ -427,15 +445,15 @@ export const generateInterviewFeedback = async (req: Request, res: Response) => 
 
     // ── Task Persistence Check ─────────────────────────────────────────────
     if (!interview.task) {
-      return res.status(400).json({ 
-        Message: "Cannot generate feedback. Please assign a task to the developer first and wait for its evaluation." 
+      return res.status(400).json({
+        Message: "Cannot generate feedback. Please assign a task to the developer first and wait for its evaluation."
       });
     }
 
     const taskStatus = interview.task.status;
     if (taskStatus !== "EVALUATED" && taskStatus !== "EXPIRED") {
-      return res.status(400).json({ 
-        Message: `Cannot generate feedback yet. Task is currently ${taskStatus}. Please wait for it to be EVALUATED or EXPIRED.` 
+      return res.status(400).json({
+        Message: `Cannot generate feedback yet. Task is currently ${taskStatus}. Please wait for it to be EVALUATED or EXPIRED.`
       });
     }
 
@@ -448,21 +466,21 @@ export const generateInterviewFeedback = async (req: Request, res: Response) => 
     // Q&A section
     const qaSection = interview.answers.length > 0
       ? interview.answers.map((a, i) =>
-          `Q${i + 1} [${a.question.difficulty}]: ${a.question.questionText}\n` +
-          `Expected: ${a.question.expectedAnswer}\n` +
-          `Developer Answer: ${a.answerText}\n` +
-          `Score: ${a.score ?? "N/A"}/10 | AI Feedback: ${a.feedback ?? "N/A"}`
-        ).join("\n\n")
+        `Q${i + 1} [${a.question.difficulty}]: ${a.question.questionText}\n` +
+        `Expected: ${a.question.expectedAnswer}\n` +
+        `Developer Answer: ${a.answerText}\n` +
+        `Score: ${a.score ?? "N/A"}/10 | AI Feedback: ${a.feedback ?? "N/A"}`
+      ).join("\n\n")
       : "No Q&A answers recorded.";
 
     // Code section
     const codeSection = interview.codeAnswers.length > 0
       ? interview.codeAnswers.map((c, i) =>
-          `Problem ${i + 1}: ${c.question.questionText}\n` +
-          `Language: ${c.language}\n` +
-          `Code:\n${c.code}\n` +
-          `Output: ${c.output ?? "N/A"} | Status: ${c.codeStatus ?? "N/A"}`
-        ).join("\n\n")
+        `Problem ${i + 1}: ${c.question.questionText}\n` +
+        `Language: ${c.language}\n` +
+        `Code:\n${c.code}\n` +
+        `Output: ${c.output ?? "N/A"} | Status: ${c.codeStatus ?? "N/A"}`
+      ).join("\n\n")
       : "No code submissions recorded.";
 
     // HR Notes
@@ -471,9 +489,9 @@ export const generateInterviewFeedback = async (req: Request, res: Response) => 
     // Task evaluation
     const taskSection = interview.task
       ? `Task: ${interview.task.taskLibrary.title} (${interview.task.taskLibrary.techStack})\n` +
-        `Description: ${interview.task.taskLibrary.description}\n` +
-        `AI Score: ${interview.task.aiScore ?? "N/A"}/100\n` +
-        `AI Report: ${JSON.stringify(interview.task.aiReport ?? {})}`
+      `Description: ${interview.task.taskLibrary.description}\n` +
+      `AI Score: ${interview.task.aiScore ?? "N/A"}/100\n` +
+      `AI Report: ${JSON.stringify(interview.task.aiReport ?? {})}`
       : "No task assigned.";
 
     const prompt = `You are an expert technical interviewer generating a comprehensive candidate feedback report.

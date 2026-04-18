@@ -1,327 +1,272 @@
-import { Server } from "socket.io";
-import { prisma } from "../src/HR/Lib/prisma.js";
-import { setIoInstance } from "../src/HR/services/NotificationService.js";
+// socketHandler.ts — Complete with malpractice warning system
+// FIX: After suspension, no more warning modals fire for HR ──────────────────
 
-const roomStates = new Map<string, any>();
-// Track who is in each room: { interviewId -> Set<"HR" | "Developer"> }
-const roomMembers = new Map<string, Map<string, string>>();
+import { Server } from "socket.io"
+import { prisma }  from "../src/HR/Lib/prisma.js"
+import { setIoInstance } from "../src/HR/services/NotificationService.js"
+
+// ─── In-memory room state ─────────────────────────────────────────────────────
+const roomStates   = new Map<string, any>()
+const roomMembers  = new Map<string, Map<string, string>>()
+
+// ─── Malpractice tracking ─────────────────────────────────────────────────────
+const hardViolationCount = new Map<string, number>()
+
+// ─── ✅ FIX: Track suspended rooms so no modals fire after suspension ─────────
+const suspendedRooms = new Set<string>()
+
+// ─── Warning thresholds ───────────────────────────────────────────────────────
+const WARN_1  = 3
+const WARN_2  = 5
+const WARN_3  = 7
+const SUSPEND = 8
 
 export const socketHandler = (io: Server) => {
-  setIoInstance(io);
-  //Connected
+  setIoInstance(io)
 
   io.on("connection", (socket) => {
-    console.log("User Connected", socket.id);
+    console.log("✅ User Connected:", socket.id)
 
-    // HR joins their private notification room
     socket.on("join-hr-notification", (hrId: string) => {
-      socket.join(hrId);
-      console.log(`🔔 HR ${hrId} joined their notification room`);
-    });
+      socket.join(hrId)
+    })
 
-    // Join-Interview
+    socket.on("join-room", async (data: { interviewId: string; role: string }) => {
+      const { interviewId, role } = data
+      socket.join(interviewId)
+      socket.to(interviewId).emit("User-Joined")
 
-    socket.on(
-      "join-room",
-      async (data: string | { interviewId: string; role: string }) => {
-        
-        const { interviewId, role } = data as {
-          interviewId: string;
-          role: string;
-        };
+      if (role) {
+        if (!roomMembers.has(interviewId)) roomMembers.set(interviewId, new Map())
+        roomMembers.get(interviewId)!.set(socket.id, role)
+        ;(socket as any)._interviewId = interviewId
 
-        socket.join(interviewId);
-        socket.to(interviewId).emit("User-Joined");
+        const members = roomMembers.get(interviewId)!
+        const roles   = new Set(Array.from(members.values()))
 
-        console.log(
-          `User ${socket.id} joined room: ${interviewId} as ${role ?? "unknown"}`,
-        );
-
-        // Track room members by role
-        if (role) {
-          if (!roomMembers.has(interviewId))
-            roomMembers.set(interviewId, new Map());
-          roomMembers.get(interviewId)!.set(socket.id, role);
-
-          // Store the interviewId on the socket for disconnect cleanup
-          (socket as any)._interviewId = interviewId;
-
-          // Check if both HR and Developer are now in the room
-          const members = roomMembers.get(interviewId)!;
-          const roles = new Set(Array.from(members.values()));
-          if (roles.has("HR") && roles.has("Developer")) {
-            try {
-              const interview = await prisma.interview.findUnique({
-                where: { id: interviewId },
-              });
-              if (interview && interview.status === "SCHEDULED") {
-                await prisma.interview.update({
-                  where: { id: interviewId },
-                  data: { status: "STARTED" },
-                });
-                io.to(interviewId).emit("interview-status-changed", {
-                  status: "STARTED",
-                });
-                console.log(`✅ Interview ${interviewId} marked as STARTED`);
-              }
-            } catch (err) {
-              console.error(
-                "Failed to update interview status to STARTED:",
-                err,
-              );
+        if (roles.has("HR") && roles.has("Developer")) {
+          try {
+            const interview = await prisma.interview.findUnique({ where: { id: interviewId } })
+            if (interview?.status === "SCHEDULED") {
+              await prisma.interview.update({ where: { id: interviewId }, data: { status: "STARTED" } })
+              io.to(interviewId).emit("interview-status-changed", { status: "STARTED" })
+              console.log(`✅ Interview ${interviewId} → STARTED`)
             }
-          }
+          } catch (err) { console.error("Failed to update status:", err) }
         }
+      }
 
-        // Send the current room state back to the joining user immediately
-        const state = roomStates.get(interviewId);
-        if (state) {
-          const sentState = { ...state };
-          if (state.questionStartTime && state.timeLimit !== undefined) {
-            const elapsedSec = Math.floor(
-              (Date.now() - state.questionStartTime) / 1000,
-            );
-            const remaining = Math.max(0, state.timeLimit - elapsedSec);
-            sentState.timeLeft = remaining;
-          }
-          socket.emit("init-room-state", sentState);
+      const state = roomStates.get(interviewId)
+      if (state) {
+        const sentState = { ...state }
+        if (state.questionStartTime && state.timeLimit !== undefined) {
+          const elapsedSec    = Math.floor((Date.now() - state.questionStartTime) / 1000)
+          sentState.timeLeft  = Math.max(0, state.timeLimit - elapsedSec)
         }
-      },
-    );
+        socket.emit("init-room-state", sentState)
+      }
+    })
 
-    // Share PeerJS ID For Video
-    socket.on(
-      "send-peer-id",
-      (data: { interviewId: string; peerId: string }) => {
-        socket.to(data.interviewId).emit("receive-peer-id", data.peerId);
-        console.log(`Peer ID shared in room: ${data.interviewId}`);
-      },
-    );
+    socket.on("send-peer-id", (data: { interviewId: string; peerId: string }) => {
+      socket.to(data.interviewId).emit("receive-peer-id", data.peerId)
+    })
 
-    //Send Message
-
-    socket.on(
-      "send-message",
-      (data: {
-        interviewId: string;
-        message: string;
-        senderName: string;
-        senderRole: string;
-      }) => {
-        const msg = {
-          message: data.message,
-          senderName: data.senderName,
-          senderRole: data.senderRole,
-          timestamp: new Date().toISOString(),
-        };
-
-        if (!roomStates.has(data.interviewId))
-          roomStates.set(data.interviewId, {});
-        const state = roomStates.get(data.interviewId);
-        if (!state.messages) state.messages = [];
-        state.messages.push(msg);
-
-        io.to(data.interviewId).emit("receive-message", msg);
-      },
-    );
-
-    //Screen Share
-
-    socket.on("screen-share-on", (interviewId: string) => {
-      socket.to(interviewId).emit("screen-share-on");
-    });
-
-    socket.on("screen-share-off", (interviewId: string) => {
-      socket.to(interviewId).emit("screen-share-off");
-    });
-
-    // Share PeerJS ID For Screen share
-
-    socket.on(
-      "send-screen-peer-id",
-      (data: { interviewId: string; screenPeerId: string }) => {
-        socket
-          .to(data.interviewId)
-          .emit("receive-screen-peer-id", data.screenPeerId);
-      },
-    );
-
-    // Screen share stopped
+    socket.on("screen-share-on",  (interviewId: string) => socket.to(interviewId).emit("screen-share-on"))
+    socket.on("screen-share-off", (interviewId: string) => socket.to(interviewId).emit("screen-share-off"))
+    socket.on("send-screen-peer-id", (data: { interviewId: string; screenPeerId: string }) => {
+      socket.to(data.interviewId).emit("receive-screen-peer-id", data.screenPeerId)
+    })
     socket.on("screen-share-stopped", (interviewId: string) => {
-      socket.to(interviewId).emit("screen-share-stopped");
-    });
+      socket.to(interviewId).emit("screen-share-stopped")
+    })
 
-    // ── Q&A Events ────────────────────
+    socket.on("send-message", (data: {
+      interviewId: string; message: string; senderName: string; senderRole: string
+    }) => {
+      const msg = {
+        message:    data.message,
+        senderName: data.senderName,
+        senderRole: data.senderRole,
+        timestamp:  new Date().toISOString()
+      }
+      if (!roomStates.has(data.interviewId)) roomStates.set(data.interviewId, {})
+      const state = roomStates.get(data.interviewId)
+      if (!state.messages) state.messages = []
+      state.messages.push(msg)
+      io.to(data.interviewId).emit("receive-message", msg)
+    })
 
-    // HR starts Q&A session
     socket.on("start-qa", (interviewId: string) => {
-      if (!roomStates.has(interviewId)) roomStates.set(interviewId, {});
-      const state = roomStates.get(interviewId);
-      state.qaStarted = true;
-      state.activePanel = "qa";
+      if (!roomStates.has(interviewId)) roomStates.set(interviewId, {})
+      const state       = roomStates.get(interviewId)
+      state.qaStarted   = true
+      state.activePanel = "qa"
+      socket.to(interviewId).emit("qa-started")
+    })
 
-      socket.to(interviewId).emit("qa-started");
-    });
+    socket.on("send-question", (data: {
+      interviewId: string; questionId: string; questionText: string;
+      orderIndex: number; total: number; timeLimit: number
+    }) => {
+      if (!roomStates.has(data.interviewId)) roomStates.set(data.interviewId, {})
+      const state             = roomStates.get(data.interviewId)
+      state.currentQuestion   = data
+      state.timeLimit         = data.timeLimit
+      state.questionStartTime = Date.now()
+      socket.to(data.interviewId).emit("receive-question", data)
+    })
 
-    // HR sends one question to developer
-    socket.on(
-      "send-question",
-      (data: {
-        interviewId: string;
-        questionId: string;
-        questionText: string;
-        orderIndex: number;
-        total: number;
-        timeLimit: number; // seconds
-      }) => {
-        if (!roomStates.has(data.interviewId))
-          roomStates.set(data.interviewId, {});
-        const state = roomStates.get(data.interviewId);
-        state.currentQuestion = data;
-        state.timeLimit = data.timeLimit;
-        state.questionStartTime = Date.now();
+    socket.on("answer-submitted", (data: { interviewId: string; questionId: string }) => {
+      if (!roomStates.has(data.interviewId)) roomStates.set(data.interviewId, {})
+      const state              = roomStates.get(data.interviewId)
+      state.answeredQuestionId = data.questionId
+      socket.to(data.interviewId).emit("answer-submitted", data)
+    })
 
-        socket.to(data.interviewId).emit("receive-question", data);
-      },
-    );
+    socket.on("open-code-editor", (data: {
+      interviewId: string
+      questions: { id: string; questionText: string; estimatedTime: number | null;
+                   inputExample: string | null; outputExample: string | null; constraints: string | null }[]
+    }) => {
+      if (!roomStates.has(data.interviewId)) roomStates.set(data.interviewId, {})
+      const state             = roomStates.get(data.interviewId)
+      state.showCodeEditor    = true
+      state.activePanel       = "qa"
+      state.leetcodeData      = data.questions
+      state.leetcodeStartTime = Date.now()
+      socket.to(data.interviewId).emit("open-code-editor", data)
+    })
 
-    // Developer submitted answer
-    socket.on(
-      "answer-submitted",
-      (data: { interviewId: string; questionId: string }) => {
-        if (!roomStates.has(data.interviewId))
-          roomStates.set(data.interviewId, {});
-        const state = roomStates.get(data.interviewId);
-        state.answeredQuestionId = data.questionId;
-
-        // Tell HR dev submitted — AI evaluating
-        socket.to(data.interviewId).emit("answer-submitted", data);
-      },
-    );
-
-    // ── Code Editor Events ────────────────────────────────────────────────────
-
-    // HR opens code editor for developer — sends full LeetCode question data
-    socket.on(
-      "open-code-editor",
-      (data: {
-        interviewId: string;
-        questions: {
-          id: string;
-          questionText: string;
-          estimatedTime: number | null;
-          inputExample: string | null;
-          outputExample: string | null;
-          constraints: string | null;
-        }[];
-      }) => {
-        if (!roomStates.has(data.interviewId))
-          roomStates.set(data.interviewId, {});
-        const state = roomStates.get(data.interviewId);
-        state.showCodeEditor = true;
-        state.activePanel = "qa";
-        state.leetcodeData = data.questions;
-        state.leetcodeStartTime = Date.now();
-
-        socket.to(data.interviewId).emit("open-code-editor", data);
-        console.log(`💻 Code editor opened for room: ${data.interviewId}`);
-      },
-    );
-
-    // Developer runs code — result sent to HR in real-time
-    socket.on(
-      "code-result",
-      (data: {
-        interviewId: string;
-        questionId: string;
-        output: string;
-        status: string;
-        language: string;
-        time?: string;
-        memory?: string;
-        code?: string;
-      }) => {
-        // Send to everyone in room so HR sees result live
-        io.to(data.interviewId).emit("code-result", data);
-        console.log(
-          `💡 Code result [${data.status}] from room: ${data.interviewId}`,
-        );
-      },
-    );
+    socket.on("code-result", (data: {
+      interviewId: string; questionId: string; output: string;
+      status: string; language: string; time?: string; memory?: string; code?: string
+    }) => { io.to(data.interviewId).emit("code-result", data) })
 
     socket.on("coding-complete", (data: { interviewId: string }) => {
       if (roomStates.has(data.interviewId)) {
-        const state = roomStates.get(data.interviewId);
-        state.showCodeEditor = false;
-        state.codingComplete = true;
+        const state          = roomStates.get(data.interviewId)
+        state.showCodeEditor = false
+        state.codingComplete = true
       }
-      socket.to(data.interviewId).emit("coding-complete", data);
-      console.log(`✅ Coding complete in room: ${data.interviewId}`);
-    });
+      socket.to(data.interviewId).emit("coding-complete", data)
+    })
 
-    // Malpractice detection
-    socket.on(
-      "malpractice",
-      (data: {
-        interviewId: string;
-        type: string;
-        message: string;
-        severity: string;
-        timestamp: string;
-      }) => {
-        // Forward to HR
-        socket.to(data.interviewId).emit("malpractice-alert", data);
-        console.log(
-          `⚠️ Malpractice [${data.severity}]: ${data.type} in room ${data.interviewId}`,
-        );
-      },
-    );
+    // ── MALPRACTICE SYSTEM ────────────────────────────────────────────────────
 
-    //Leave Room
+    // SOFT → bell log only, no warning count, no modals
+    socket.on("malpractice-soft", (data: {
+      interviewId: string; type: string; message: string; severity: string; timestamp: string
+    }) => {
+      // HR bell log
+      socket.to(data.interviewId).emit("malpractice-log", { ...data, isHard: false })
+      // Dev own bell log
+      socket.emit("malpractice-log", { ...data, isHard: false })
+      console.log(`📋 Soft [${data.severity}]: ${data.type}`)
+    })
+
+    // HARD → counts toward warnings → possible modals and suspension
+    socket.on("malpractice-hard", (data: {
+      interviewId: string; type: string; message: string; severity: string; timestamp: string
+    }) => {
+
+      // ✅ FIX: If this room is already suspended, silently ignore
+      // No more modals fire for HR after suspension
+      if (suspendedRooms.has(data.interviewId)) {
+        console.log(`🔇 Ignoring malpractice for suspended room: ${data.interviewId}`)
+        return
+      }
+
+      const current = hardViolationCount.get(data.interviewId) ?? 0
+      const count   = current + 1
+      hardViolationCount.set(data.interviewId, count)
+
+      // Everyone sees it in bell log
+      io.to(data.interviewId).emit("malpractice-log", {
+        ...data, isHard: true, warningCount: count
+      })
+
+      console.log(`🚨 Hard #${count}: ${data.type} in ${data.interviewId}`)
+
+      // Warning modals at thresholds — both HR and Dev see them
+      if (count === WARN_1) {
+        io.to(data.interviewId).emit("malpractice-warning", {
+          level: 1, warningCount: count, timestamp: data.timestamp
+        })
+      } else if (count === WARN_2) {
+        io.to(data.interviewId).emit("malpractice-warning", {
+          level: 2, warningCount: count, timestamp: data.timestamp
+        })
+      } else if (count === WARN_3) {
+        io.to(data.interviewId).emit("malpractice-warning", {
+          level: 3, warningCount: count, timestamp: data.timestamp
+        })
+      } else if (count >= SUSPEND) {
+        // Show suspend button to HR only (socket.to = everyone else in room = HR)
+        socket.to(data.interviewId).emit("show-suspend-button", { warningCount: count })
+      }
+    })
+
+    // HR manually clicks Suspend Interview button
+    socket.on("suspend-interview", async (interviewId: string) => {
+
+      // ✅ FIX: Mark room as suspended FIRST
+      // Any late malpractice-hard events that arrive after this will be ignored
+      suspendedRooms.add(interviewId)
+
+      // Update DB status
+      try {
+        await prisma.interview.update({
+          where: { id: interviewId },
+          data:  { status: "SUSPENDED" as any }
+        })
+        console.log(`🚫 Interview ${interviewId} SUSPENDED`)
+      } catch (err) {
+        console.error("Failed to suspend:", err)
+      }
+
+      // Send suspended event to developer (socket.to = everyone except HR who clicked)
+      socket.to(interviewId).emit("interview-suspended")
+
+      // Confirm back to HR
+      socket.emit("interview-suspension-confirmed", { interviewId })
+
+      // Clear violation count
+      hardViolationCount.delete(interviewId)
+
+      console.log(`✅ Room ${interviewId} marked as suspended — no more modals will fire`)
+    })
+
     socket.on("leave-room", (interviewId: string) => {
-      socket.leave(interviewId);
-      socket.to(interviewId).emit("user-left");
-      console.log(`User left room: ${interviewId}`);
-    });
+      socket.leave(interviewId)
+      socket.to(interviewId).emit("user-left")
+    })
 
     socket.on("end-call-explicitly", async (interviewId: string) => {
-      socket.to(interviewId).emit("end-call-explicitly");
-      roomStates.delete(interviewId); // Clear session memory
-      roomMembers.delete(interviewId); // Clear member tracking
+      socket.to(interviewId).emit("end-call-explicitly")
+      roomStates.delete(interviewId)
+      roomMembers.delete(interviewId)
+      hardViolationCount.delete(interviewId)
+      suspendedRooms.delete(interviewId)  // ✅ cleanup suspended set too
 
-      // Mark interview as COMPLETED only if it was STARTED
       try {
-        const interview = await prisma.interview.findUnique({
-          where: { id: interviewId },
-        });
-        if (interview && interview.status === "STARTED") {
+        const interview = await prisma.interview.findUnique({ where: { id: interviewId } })
+        // Don't overwrite SUSPENDED status
+        if (interview?.status === "STARTED") {
           await prisma.interview.update({
             where: { id: interviewId },
-            data: { status: "COMPLETED" },
-          });
-          console.log(`✅ Interview ${interviewId} marked as COMPLETED`);
-        } else {
-           console.log(`ℹ️ Interview ${interviewId} not updated to COMPLETED (status was ${interview?.status})`);
+            data:  { status: "COMPLETED" }
+          })
+          console.log(`✅ Interview ${interviewId} → COMPLETED`)
         }
-      } catch (err) {
-        console.error("Failed to update interview status to COMPLETED:", err);
-      }
-
-      console.log(`Call explicitly ended: ${interviewId}`);
-    });
-
-    //    Disconnect
+      } catch (err) { console.error("Failed to complete:", err) }
+    })
 
     socket.on("disconnect", () => {
-      console.log("❌ User disconnected:", socket.id);
-      // Clean up room member tracking
-      const interviewId = (socket as any)._interviewId;
+      const interviewId = (socket as any)._interviewId
       if (interviewId && roomMembers.has(interviewId)) {
-        roomMembers.get(interviewId)!.delete(socket.id);
-        if (roomMembers.get(interviewId)!.size === 0) {
-          roomMembers.delete(interviewId);
-        }
+        roomMembers.get(interviewId)!.delete(socket.id)
+        if (roomMembers.get(interviewId)!.size === 0) roomMembers.delete(interviewId)
       }
-    });
-  });
-};
+    })
+  })
+}

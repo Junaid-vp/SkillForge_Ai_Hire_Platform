@@ -50,22 +50,13 @@ export default function NotificationBell({ hrId }: Props) {
     // Join HR personal socket room
     socket.emit("join-hr-notification", hrId)
 
-    const noToastTypes = [
-      "INTERVIEW_SCHEDULED",
-      "INTERVIEW_RESCHEDULED",
-      "INTERVIEW_CANCELLED"
-    ]
 
-    socket.on("notification", (notification: Notification) => {
+
+    socket.on("notification", (notification: Notification & { silent?: boolean }) => {
       setNotifications(prev => [notification, ...prev])
       setUnreadCount(prev => prev + 1)
 
-      
-      const notifType = notification.type.trim().toUpperCase();
-   console.log(notification.type);
-   
-      if (noToastTypes.includes(notifType)) return
-
+    if (notification.silent) return
       toast(() => (
         <div className="flex flex-col gap-1">
           <p className="font-bold text-xs">{notification.title}</p>

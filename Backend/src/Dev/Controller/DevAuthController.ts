@@ -43,6 +43,9 @@ export const DevLoginController = async (req: Request, res: Response) => {
       return res.status(400).json({ Message: "No interview found" })
     }
 
+    if (interview.status === "SUSPENDED") {
+      return res.status(403).json({ Message: "Interview Suspended" })
+    }
 
     if (interview.status === "CANCELLED") {
       return res.status(403).json({ Message: "Interview cancelled" })
@@ -197,6 +200,13 @@ export const MaginLinkVarification = async (req: Request, res: Response) => {
     const interview = await prisma.interview.findFirst({
       where: { developerId: developer.id }
     });
+
+
+   
+    if (interview?.status === "SUSPENDED") {
+      return res.status(403).json({ Message: "Interview Suspended" });
+    }
+
 
     if (interview?.status === "CANCELLED") {
       return res.status(403).json({ Message: "Interview cancelled" });

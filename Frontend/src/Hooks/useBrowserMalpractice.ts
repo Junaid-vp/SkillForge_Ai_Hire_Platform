@@ -1,11 +1,15 @@
+// src/Hooks/useBrowserMalpractice.ts
+// HARD violations only — tab switch, window blur
+// No toasts — goes to bell notification only
+// Only active when interviewStarted = true
 
 import { useEffect, useRef } from "react"
 import { getSocket } from "../Service/socket"
-import toast from "react-hot-toast"
 
 export function useBrowserMalpractice(
-  interviewId: string | undefined,
-  isActive:    boolean  // pass !isHR from the component
+  interviewId:      string | undefined,
+  isActive:         boolean,  // pass !isHR
+  interviewStarted: boolean   // only detect when both joined
 ) {
   const lastAlertTime = useRef<Record<string, number>>({})
 
@@ -18,95 +22,76 @@ export function useBrowserMalpractice(
   }
 
   useEffect(() => {
-    if (!isActive || !interviewId) return
+    // ✅ Only start when interview is STARTED and user is developer
+    if (!isActive || !interviewId || !interviewStarted) return
 
     const socket = getSocket()
 
-    const emit = (
-      type:      string,
-      message:   string,
-      severity:  "LOW" | "MEDIUM" | "HIGH",
+    // Emit HARD violation — counts toward warning system
+    const emitHard = (
+      type:     string,
+      message:  string,
       cooldownMs: number
     ) => {
       if (!canAlert(type, cooldownMs)) return
 
-      socket.emit("malpractice", {
+      socket.emit("malpractice-hard", {
         interviewId,
         type,
         message,
-        severity,
+        severity:  "HIGH",
         timestamp: new Date().toISOString(),
       })
-
-      if (severity === "HIGH") {
-        toast(`🚨 ${message}`, {
-          id: type,
-          style: {
-            background: "#fef2f2",
-            color:      "#991b1b",
-            border:     "1px solid #fecaca",
-          },
-          duration: 5000,
-        })
-      } else if (severity === "MEDIUM") {
-        toast(`⚠️ ${message}`, {
-          id: type,
-          style: {
-            background: "#fffbeb",
-            color:      "#92400e",
-            border:     "1px solid #fde68a",
-          },
-          duration: 4000,
-        })
-      } else {
-        toast(`⚠️ ${message}`, {
-          id: type,
-          style: {
-            background: "#fffbeb",
-            color:      "#92400e",
-            border:     "1px solid #fde68a",
-          },
-          duration: 3000,
-        })
-      }
     }
 
-    // ── 1. Tab switch ─────────────────────────────────────────────────────
-    // Cooldown: 5s — user can rapidly alt-tab, only alert once
+    // ── 1. Tab switch — HARD ─────────────────────────────────────────────
     const handleVisibilityChange = () => {
       if (!document.hidden) return
-      emit("TAB_SWITCH", "Developer switched to another tab", "HIGH", 5000)
+      emitHard("TAB_SWITCH", "Developer switched to another tab", 5000)
     }
 
-    // ── 2. Window blur ─────────────────────────────────────────────────────
-    // Cooldown: 5s — blur fires frequently (e.g. clicking other app)
+    // ── 2. Window blur — HARD ────────────────────────────────────────────
+    // Small cooldown — blur fires when clicking other apps
     const handleWindowBlur = () => {
-      emit("WINDOW_BLUR", "Developer left the interview window", "MEDIUM", 5000)
+      emitHard("WINDOW_BLUR", "Developer left the interview window", 5000)
     }
 
-    // ── 3. Copy attempt ────────────────────────────────────────────────────
-    // Cooldown: 3s — each copy is meaningful, shorter window
+    // ── 3. Copy attempt — log only (soft) ───────────────────────────────
+    // Not a hard violation — just logged to bell
     const handleCopy = () => {
-      emit("COPY_ATTEMPT", "Developer attempted to copy content", "LOW", 3000)
+      if (!canAlert("COPY_ATTEMPT", 3000)) return
+      socket.emit("malpractice-soft", {
+        interviewId,
+        type:      "COPY_ATTEMPT",
+        message:   "Developer attempted to copy content",
+        severity:  "LOW",
+        timestamp: new Date().toISOString(),
+      })
     }
 
-    // ── 4. Right-click attempt ─────────────────────────────────────────────
-    // Cooldown: 3s — right-clicks can spam fast
+    // ── 4. Right click — log only (soft) ────────────────────────────────
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault()
-      emit("RIGHT_CLICK", "Developer attempted right click", "LOW", 3000)
+      if (!canAlert("RIGHT_CLICK", 3000)) return
+      socket.emit("malpractice-soft", {
+        interviewId,
+        type:      "RIGHT_CLICK",
+        message:   "Developer attempted right click",
+        severity:  "LOW",
+        timestamp: new Date().toISOString(),
+      })
     }
 
     document.addEventListener("visibilitychange", handleVisibilityChange)
-    window.addEventListener("blur",               handleWindowBlur)
-    document.addEventListener("copy",             handleCopy)
-    document.addEventListener("contextmenu",      handleContextMenu)
+    window.addEventListener("blur",              handleWindowBlur)
+    document.addEventListener("copy",            handleCopy)
+    document.addEventListener("contextmenu",     handleContextMenu)
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange)
-      window.removeEventListener("blur",               handleWindowBlur)
-      document.removeEventListener("copy",             handleCopy)
-      document.removeEventListener("contextmenu",      handleContextMenu)
+      window.removeEventListener("blur",              handleWindowBlur)
+      document.removeEventListener("copy",            handleCopy)
+      document.removeEventListener("contextmenu",     handleContextMenu)
     }
-  }, [isActive, interviewId])
+  }, [isActive, interviewId, interviewStarted])
 }

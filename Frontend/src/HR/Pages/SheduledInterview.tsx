@@ -17,10 +17,11 @@ import {
 } from "lucide-react";
 
 import RescheduleModal from "../Components/Mod/ResheduledModal";
+import CancelInterviewModal from "../Components/Mod/CancelInterviewModal";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-type InterviewStatus = "SCHEDULED" | "STARTED" | "COMPLETED" | "CANCELLED";
+type InterviewStatus = "SCHEDULED" | "STARTED" | "COMPLETED" | "CANCELLED" | "SUSPENDED"
 
 interface ScheduledDetails {
   id: string;
@@ -46,8 +47,9 @@ interface ScheduledDetails {
   }
 }
 
-const fetchScheduledInterview = async () => {
-  const res = await api.get("/interview/interviews");
+const fetchScheduledInterview = async (status: string) => {
+  const url = status === "ALL" ? "/interview/interviews" : `/interview/interviews?status=${status}`;
+  const res = await api.get(url);
   return res.data.data ?? [];
 };
 
@@ -91,9 +93,9 @@ const statusConfig: Record<
   },
   COMPLETED: {
     label: "Completed",
-    bg: "bg-gray-50",
-    border: "border-gray-200",
-    text: "text-gray-500",
+    bg: "bg-green-50",
+    border: "border-green-200",
+    text: "text-green-500",
     icon: <CheckCircle2 size={9} />,
   },
   CANCELLED: {
@@ -103,20 +105,32 @@ const statusConfig: Record<
     text: "text-red-500",
     icon: <Circle size={9} />,
   },
+   SUSPENDED: {
+    label: "Suspended",
+    bg: "bg-yellow-50",
+    border: "border-yellow-200",
+    text: "text-yellow-500",
+    icon: <XCircle size={9} />,
+  },
 };
 
 function ScheduledInterview() {
   const navigate = useNavigate()
   const queryClient = useQueryClient();
+  const [activeStatus, setActiveStatus] = useState<string>("ALL");
+
   const { data, isLoading, error } = useQuery<ScheduledDetails[]>({
-    queryKey: ["ScheduledInterview"],
-    queryFn: fetchScheduledInterview,
+    queryKey: ["ScheduledInterview", activeStatus],
+    queryFn: () => fetchScheduledInterview(activeStatus),
   });
   const [openModal, setOpenModal] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copiedInterviewId, setCopiedInterviewId] = useState<string | null>(
     null,
   );
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [interviewToCancel, setInterviewToCancel] = useState<string | null>(null);
 
   const isJoinable = (interviewDate: Date | string, interviewTime: string) => {
     if (!interviewDate || !interviewTime) return false;
@@ -147,14 +161,23 @@ function ScheduledInterview() {
     }
   };
 
-  const handleCancel = async (interviewId: string) => {
-    if (!window.confirm("Are you sure you want to cancel this interview? This action cannot be undone.")) return;
+  const handleCancelClick = (interviewId: string) => {
+    setInterviewToCancel(interviewId);
+    setIsCancelModalOpen(true);
+  };
+
+  const confirmCancel = async () => {
+    if (!interviewToCancel) return;
+    setIsCancelling(true);
     try {
-      await api.put("/interview/cancel", { interviewId });
+      await api.put("/interview/cancel", { interviewId: interviewToCancel });
       toast.success("Interview cancelled successfully");
       queryClient.invalidateQueries({ queryKey: ["ScheduledInterview"] });
+      setIsCancelModalOpen(false);
     } catch (err: any) {
       toast.error(err.response?.data?.Message || "Failed to cancel interview");
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -167,6 +190,12 @@ function ScheduledInterview() {
         refetch={() =>
           queryClient.invalidateQueries({ queryKey: ["ScheduledInterview"] })
         }
+      />
+      <CancelInterviewModal 
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={confirmCancel}
+        isLoading={isCancelling}
       />
       {/* Page Header */}
       <div className="mb-8">
@@ -203,6 +232,25 @@ function ScheduledInterview() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Status Filters Bar */}
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-6 overflow-hidden">
+        <div className="flex items-center gap-6 px-6 py-4 overflow-x-auto no-scrollbar bg-gray-50/30">
+          {["ALL", "SCHEDULED", "STARTED", "COMPLETED", "CANCELLED", "SUSPENDED"].map((status) => (
+            <button
+              key={status}
+              onClick={() => setActiveStatus(status)}
+              className={`text-[11px] font-bold transition-all px-1 py-1.5 border-b-2 whitespace-nowrap ${
+                activeStatus === status
+                  ? "text-blue-600 border-blue-600"
+                  : "text-gray-400 border-transparent hover:text-gray-600"
+              }`}
+            >
+              {status}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -262,22 +310,22 @@ function ScheduledInterview() {
         <div className="space-y-3">
           {data.map((interview) => {
             const s = statusConfig[interview.status] || statusConfig.SCHEDULED;
-            const isCompleted = interview.status === "COMPLETED";
+            const isCompleted = interview.status === "COMPLETED" ;
             const isCancelled = interview.status === "CANCELLED";
             const isStarted = interview.status === "STARTED";
-
+            const isSUSPENDED = interview.status ==="SUSPENDED"
             return (
               <div
                 key={interview.id}
                 className={`bg-white border rounded-2xl shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md
-                  ${isCompleted || isCancelled ? "border-gray-100 opacity-70" : "border-gray-100 hover:border-gray-200"}`}
+                  ${isCompleted || isCancelled || isSUSPENDED ? "border-gray-100 opacity-70" : "border-gray-100 hover:border-gray-200"}`}
               >
                 <div className="flex items-center justify-between px-6 py-5">
                   {/* Left */}
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0
-                      ${isCompleted || isCancelled ? "bg-gray-200" : isStarted ? "bg-green-500" : "bg-blue-600"}`}
+                      ${isCompleted || isCancelled || isSUSPENDED ? "bg-gray-200" : isStarted ? "bg-green-500" : "bg-blue-600"}`}
                     >
                       <span className="text-white text-sm font-bold">
                         {interview.developer.developerName
@@ -388,7 +436,7 @@ function ScheduledInterview() {
                           Reschedule
                         </button>
                         <button
-                          onClick={() => handleCancel(interview.id)}
+                          onClick={() => handleCancelClick(interview.id)}
                           className="flex items-center gap-1.5 bg-white border border-red-200 hover:bg-red-50 text-red-600 text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
                         >
                           <XCircle size={12} />
@@ -417,10 +465,19 @@ function ScheduledInterview() {
                     )}
 
                     {isCancelled && (
-                      <span className="text-xs text-red-400 font-medium">
-                        Cancelled
+                       <span className="flex items-center gap-1.5 text-xs text-red-400 font-medium">
+                         <CheckCircle2 size={14} className="text-red-500" />
+                      Interview Cancelled
                       </span>
                     )}
+
+                    {isSUSPENDED && (
+                       <span className="flex items-center gap-1.5 text-xs text-yellow-400 font-medium">
+                         <CheckCircle2 size={14} className="text-yellow-500" />
+                      Interview Suspended
+                      </span>
+                    )}
+
                   </div>
                 </div>
               </div>

@@ -10,10 +10,22 @@ export const getAllTask = async (req: Request, res: Response) => {
       return res.status(401).json({ Message: "HR not logged in" });
     }
 
+    const { category, isDefault } = req.query;
+
+    const where: any = {
+      OR: [{ isDefault: true }, { hrId: id }],
+    };
+
+    if (category && category !== "ALL") {
+      where.category = category;
+    }
+
+    if (isDefault !== undefined) {
+      where.isDefault = isDefault === "true";
+    }
+
     const data = await prisma.taskLibrary.findMany({
-      where: {
-        OR: [{ isDefault: true }, { hrId: id }],
-      },
+      where,
       orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
     });
 
@@ -195,6 +207,36 @@ export const DeleteTaskLibary = async (req: Request, res: Response) => {
 
     res.status(200).json({
       Message: "Task deleted successfully",
+      status: "success",
+    });
+  } catch (e: any) {
+    res.status(500).json({ Message: "Server Error", Error: e.message });
+  }
+};
+
+export const getTaskCategories = async (req: Request, res: Response) => {
+  try {
+    const id = req.userId;
+
+    if (!id) {
+      return res.status(401).json({ Message: "HR not logged in" });
+    }
+
+    // Get unique categories for default tasks and tasks belonging to this HR
+    const categories = await prisma.taskLibrary.findMany({
+      where: {
+        OR: [{ isDefault: true }, { hrId: id }],
+      },
+      select: {
+        category: true,
+      },
+      distinct: ["category"],
+    });
+
+    const uniqueCategories = categories.map((c) => c.category).filter(Boolean);
+
+    res.status(200).json({
+      data: uniqueCategories,
       status: "success",
     });
   } catch (e: any) {

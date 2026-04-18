@@ -1,7 +1,8 @@
 
+import { useState, useEffect } from "react";
+import { Search, Users, Calendar, Clock, Briefcase, ChevronRight, Inbox } from 'lucide-react';
 import { api } from "../../Api/Axios";
 import { useQuery } from '@tanstack/react-query';
-import { Users, Calendar, Clock, Briefcase, ChevronRight } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 
 interface DevDetails {
@@ -17,8 +18,9 @@ interface DevDetails {
   hrId: string;
 }
 
-const fetchDevDatas = async () => {
-  const res = await api.get("/interview/developers");
+const fetchDevDatas = async (search: string) => {
+  const url = search ? `/interview/developers?search=${encodeURIComponent(search)}` : "/interview/developers";
+  const res = await api.get(url);
   return res.data.data;
 };
 
@@ -32,12 +34,19 @@ const formatTime = (t: string) => {
 };
 
 function DeveloperList() {
-  const { data: devList, isLoading, error } = useQuery<DevDetails[]>({
-    queryKey: ['Developers'],
-    queryFn: fetchDevDatas,
-  });
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-const navigate = useNavigate()
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const { data: devList, isLoading, error } = useQuery<DevDetails[]>({
+    queryKey: ['Developers', debouncedSearch],
+    queryFn: () => fetchDevDatas(debouncedSearch),
+  });
 
   return (
     <div className="max-w-6xl mx-auto pb-10">
@@ -50,16 +59,31 @@ const navigate = useNavigate()
           </div>
           <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">HR Portal</span>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Developers</h1>
             <p className="text-sm text-gray-400 mt-1">Manage invited developers and view their progress</p>
           </div>
-          {devList && devList.length > 0 && (
-            <div className="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
-              <span className="text-xs font-semibold text-blue-600">{devList.length} Invited</span>
-            </div>
-          )}
+          
+          <div className="flex items-center gap-3 flex-1 max-w-md">
+             <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                <input 
+                  type="text"
+                  placeholder="Search developers by name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-white border border-gray-200 rounded-xl py-2 pl-9 pr-4 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+             </div>
+             {devList && (
+               <div className="bg-blue-50 border border-blue-100 px-3 py-2 rounded-xl shrink-0">
+                 <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                   {devList.length} Found
+                 </span>
+               </div>
+             )}
+          </div>
         </div>
       </div>
 
@@ -92,11 +116,23 @@ const navigate = useNavigate()
       {/* Empty */}
       {!isLoading && !error && devList && devList.length === 0 && (
         <div className="bg-white border border-gray-100 rounded-2xl p-14 text-center">
-          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Users size={20} className="text-blue-400" />
+          <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-4 text-gray-300">
+            {searchTerm ? <Search size={32} /> : <Users size={32} />}
           </div>
-          <p className="text-sm font-semibold text-gray-700">No developers invited yet</p>
-          <p className="text-xs text-gray-400 mt-1">Create an interview to get started</p>
+          <p className="text-sm font-semibold text-gray-700">
+            {searchTerm ? "No developers found" : "No developers invited yet"}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {searchTerm ? `No results match "${searchTerm}"` : "Create an interview to get started"}
+          </p>
+          {searchTerm && (
+            <button 
+              onClick={() => setSearchTerm("")}
+              className="mt-4 text-xs font-bold text-blue-600 hover:text-blue-700"
+            >
+              Clear search
+            </button>
+          )}
         </div>
       )}
 

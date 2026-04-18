@@ -4,11 +4,12 @@ import { useNavigate } from "react-router-dom"
 import { CheckCircle2, Sparkles } from "lucide-react"
 import toast from "react-hot-toast"
 import { api } from "../../Api/Axios"
+import { useAuth } from "../../Context/AuthContext"
 
 export default function ThankYouScreen() {
 const navigate = useNavigate();
 const [count, setCount] = useState(10);
-
+const {clearAuth} = useAuth()
 useEffect(() => {
   const timer = setInterval(() => {
     setCount(prev => prev - 1);
@@ -22,6 +23,7 @@ useEffect(() => {
     const logout = async () => {
       try {
         await api.post("/dev/logout");
+        clearAuth()
         toast.success("Logged out successfully.");
         navigate("/devLogin");
       } catch (err) {

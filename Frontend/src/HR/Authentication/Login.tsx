@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../Context/AuthContext';
 import { Formik, Form, Field, type FormikHelpers } from "formik";
 import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
@@ -14,6 +15,7 @@ const initialValues = {
 
 function Login() {
   const navigate = useNavigate();
+  const { refreshAuth } = useAuth();
   const [showOTP, setShowOTP] = useState<boolean>(false);
   const [Email, setEmail] = useState<string>("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -60,6 +62,7 @@ function Login() {
         setShowOTP(false);
         setEmail("");
         setIsInvalid(null);
+        await refreshAuth();
         toast.success('Login successful! Welcome back.');
         navigate("/dashboard");
       } else {

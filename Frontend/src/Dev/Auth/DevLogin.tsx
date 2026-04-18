@@ -1,6 +1,8 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useAuth } from "../../Context/AuthContext";
 import { Formik, Form, Field, type FormikHelpers } from "formik";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Sparkles, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
 import toast from 'react-hot-toast';
 import { api } from "../../Api/Axios";
@@ -14,6 +16,8 @@ const initialValues = {
 
 function DevLogin() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { refreshAuth } = useAuth();
   const [searchParams] = useSearchParams();
   const [showOTP, setShowOTP] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
@@ -21,18 +25,22 @@ function DevLogin() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isInvalid, setIsInvalid] = useState<null | string>(null);
   const [showUniqueCode, setShowUniqueCode] = useState(false);
+  const loginAttempted = useRef(false);
   const token  = searchParams.get("token");
 
 
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || loginAttempted.current) return;
+    loginAttempted.current = true;
 
     const MagicLogin = async () => {
       try {
         const res = await api.post("/dev/magicLink", { token });
 
         if (res.data.Status === "success") {
+          await queryClient.invalidateQueries({ queryKey: ["DevDashboard"] });
+          await refreshAuth();
           navigate("/devDashboard");
         } else {
           setIsInvalid(res.data?.Message || "Magic link login failed");
@@ -47,7 +55,7 @@ function DevLogin() {
     };
 
     MagicLogin();
-  }, [token, navigate]);
+  }, [token, navigate, queryClient, refreshAuth]);
 
 
   const HandleLogin = async (
@@ -95,6 +103,8 @@ console.log(res);
         setEmail("");
         setUniqueCode("")
         setIsInvalid(null);
+        await queryClient.invalidateQueries({ queryKey: ["DevDashboard"] });
+        await refreshAuth();
         toast.success('Login successful! Welcome.');
         navigate("/devDashboard");
       } else {

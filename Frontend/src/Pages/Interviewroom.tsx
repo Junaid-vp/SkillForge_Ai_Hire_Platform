@@ -1,683 +1,686 @@
 // src/Pages/InterviewRoom.tsx
+// ── Complete with: Bell icon, AI Monitoring badge, Warning modals,
+//    Suspend button (HR), Suspended screen (Dev), No spam toasts
+//    FIX: Detection stops immediately when interview is suspended ─────────────
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import Peer from "peerjs";
+import { useEffect, useRef, useState, useCallback } from "react"
+import { useParams, useNavigate, useSearchParams } from "react-router-dom"
+import Peer from "peerjs"
 import {
-  Mic, MicOff, Video, VideoOff,
-  Monitor, PhoneOff, Send, MessageSquare,
-  Sparkles, Brain, Code2, FileText,
-  ChevronRight, CheckCircle2, Loader2,
-  Star, Timer, AlertTriangle,
-} from "lucide-react";
-import toast from "react-hot-toast";
-import { disconnectSocket, getSocket } from "../Service/socket";
-import { api } from "../Api/Axios";
-import EmbeddedCodeEditor from "../Dev/Components/Codeeditor";
+  Mic, MicOff, Video, VideoOff, Monitor, PhoneOff,
+  Send, MessageSquare, Sparkles, Brain, Code2, FileText,
+  ChevronRight, CheckCircle2, Loader2, Star, Timer,
+  AlertTriangle, ShieldX,
+} from "lucide-react"
+import toast from "react-hot-toast"
+import { disconnectSocket, getSocket } from "../Service/socket"
+import { api } from "../Api/Axios"
+import EmbeddedCodeEditor from "../Dev/Components/Codeeditor"
 
-import { useBrowserMalpractice } from "../Hooks/useBrowserMalpractice";
-import { useObjectDetection } from "../Hooks/useObjectDetection";
-import { useMalpracticeDetection } from "../Hooks/useMalpracticeDetection";
+import { useBrowserMalpractice }   from "../Hooks/useBrowserMalpractice"
+import { useObjectDetection }      from "../Hooks/useObjectDetection"
+import { useMalpracticeDetection } from "../Hooks/useMalpracticeDetection"
+import type { MalpracticeLog }     from "./components/MalpracticeNotificationBell"
+import type { WarningLevel }       from "./components/Malpracticewarningmodal"
+import SuspendedScreen             from "./components/Suspendedscreen"
+import MalpracticeWarningModal     from "./components/Malpracticewarningmodal"
+import MalpracticeNotificationBell from "./components/MalpracticeNotificationBell"
+import AIMonitoringBadge           from "./components/Aimonitoringbadge"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
-  message:    string;
-  senderName: string;
-  senderRole: string;
-  timestamp:  string;
+  message:    string
+  senderName: string
+  senderRole: string
+  timestamp:  string
 }
 
 interface Question {
-  id:            string;
-  questionText:  string;
-  difficulty:    string;
-  orderIndex:    number;
-  isLeetcode:    boolean;
-  estimatedTime: number | null;
-  inputExample:  string | null;
-  outputExample: string | null;
-  constraints:   string | null;
+  id:            string
+  questionText:  string
+  difficulty:    string
+  orderIndex:    number
+  isLeetcode:    boolean
+  estimatedTime: number | null
+  inputExample:  string | null
+  outputExample: string | null
+  constraints:   string | null
 }
 
 interface Evaluation {
-  questionId:     string;
-  score:          number;
-  feedback:       string;
-  missing:        string;
-  recommendation: string;
+  questionId:     string
+  score:          number
+  feedback:       string
+  missing:        string
+  recommendation: string
 }
 
 interface LeetCodeQuestion {
-  id:            string;
-  questionText:  string;
-  estimatedTime: number | null;
-  inputExample:  string | null;
-  outputExample: string | null;
-  constraints:   string | null;
+  id:            string
+  questionText:  string
+  estimatedTime: number | null
+  inputExample:  string | null
+  outputExample: string | null
+  constraints:   string | null
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function InterviewRoom() {
-  const { interviewId } = useParams();
-  const navigate        = useNavigate();
-  const [searchParams]  = useSearchParams();
+  const { interviewId } = useParams()
+  const navigate        = useNavigate()
+  const [searchParams]  = useSearchParams()
 
-  const role     = searchParams.get("role") ?? "Developer";
-  const userName = searchParams.get("name") ?? (role === "HR" ? "HR Manager" : "Developer");
-  const isHR     = role === "HR";
+  const role     = searchParams.get("role") ?? "Developer"
+  const userName = searchParams.get("name") ?? (role === "HR" ? "HR Manager" : "Developer")
+  const isHR     = role === "HR"
 
   // ── Refs ───────────────────────────────────────────────────────────────────
-  const localVideoRef           = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef          = useRef<HTMLVideoElement>(null);
-  const remoteScreenRef         = useRef<HTMLVideoElement>(null);
-  const peerRef                 = useRef<Peer | null>(null);
-  const screenPeerRef           = useRef<Peer | null>(null);
-  const streamRef               = useRef<MediaStream | null>(null);
-  const incomingVideoStreamRef  = useRef<MediaStream | null>(null);
-  const screenStreamRef         = useRef<MediaStream | null>(null);
-  const incomingScreenStreamRef = useRef<MediaStream | null>(null);
-  const timerRef                = useRef<number | null>(null);
-  const leetcodeTimerRef        = useRef<number | null>(null);
-  const devAnswerRef            = useRef("");
-  const chatEndRef              = useRef<HTMLDivElement>(null);
+  const localVideoRef           = useRef<HTMLVideoElement>(null)
+  const remoteVideoRef          = useRef<HTMLVideoElement>(null)
+  const remoteScreenRef         = useRef<HTMLVideoElement>(null)
+  const peerRef                 = useRef<Peer | null>(null)
+  const screenPeerRef           = useRef<Peer | null>(null)
+  const streamRef               = useRef<MediaStream | null>(null)
+  const incomingVideoStreamRef  = useRef<MediaStream | null>(null)
+  const screenStreamRef         = useRef<MediaStream | null>(null)
+  const incomingScreenStreamRef = useRef<MediaStream | null>(null)
+  const timerRef                = useRef<number | null>(null)
+  const leetcodeTimerRef        = useRef<number | null>(null)
+  const devAnswerRef            = useRef("")
+  const chatEndRef              = useRef<HTMLDivElement>(null)
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  const [messages,        setMessages]        = useState<ChatMessage[]>([]);
-  const [newMessage,      setNewMessage]      = useState("");
-  const [isMuted,         setIsMuted]         = useState(false);
-  const [isVideoOff,      setIsVideoOff]      = useState(false);
-  const [isSharing,       setIsSharing]       = useState(false);
-  const [connected,       setConnected]       = useState(false);
-  const [showChat,        setShowChat]        = useState(true);
-  const [remoteSharing,   setRemoteSharing]   = useState(false);
-  const [camError,        setCamError]        = useState(false);
-  const [activePanel,     setActivePanel]     = useState<"chat" | "qa" | "notes">("chat");
+  // ── WebRTC State ───────────────────────────────────────────────────────────
+  const [messages,      setMessages]      = useState<ChatMessage[]>([])
+  const [newMessage,    setNewMessage]    = useState("")
+  const [isMuted,       setIsMuted]       = useState(false)
+  const [isVideoOff,    setIsVideoOff]    = useState(false)
+  const [isSharing,     setIsSharing]     = useState(false)
+  const [connected,     setConnected]     = useState(false)
+  const [showChat,      setShowChat]      = useState(true)
+  const [remoteSharing, setRemoteSharing] = useState(false)
+  const [camError,      setCamError]      = useState(false)
+  const [activePanel,   setActivePanel]   = useState<"chat" | "qa" | "notes">("chat")
 
-  const [questions,     setQuestions]     = useState<Question[]>([]);
-  const [techQuestions, setTechQuestions] = useState<Question[]>([]);
-  const [leetcodeQs,    setLeetcodeQs]    = useState<Question[]>([]);
+  // ── Q&A State ──────────────────────────────────────────────────────────────
+  const [questions,       setQuestions]       = useState<Question[]>([])
+  const [techQuestions,   setTechQuestions]   = useState<Question[]>([])
+  const [leetcodeQs,      setLeetcodeQs]      = useState<Question[]>([])
+  const [currentQIndex,   setCurrentQIndex]   = useState(0)
+  const [qaStarted,       setQaStarted]       = useState(false)
+  const [evaluations,     setEvaluations]     = useState<Evaluation[]>([])
+  const [isGenerating,    setIsGenerating]    = useState(false)
+  const [currentQuestion, setCurrentQuestion] = useState<any>(null)
+  const [devAnswer,       setDevAnswer]       = useState("")
+  const [isSubmitting,    setIsSubmitting]    = useState(false)
+  const [awaitingAnswer,  setAwaitingAnswer]  = useState(false)
+  const [timeLeft,        setTimeLeft]        = useState(0)
 
-  const [currentQIndex,   setCurrentQIndex]   = useState(0);
-  const [qaStarted,       setQaStarted]       = useState(false);
-  const [evaluations,     setEvaluations]     = useState<Evaluation[]>([]);
-  const [isGenerating,    setIsGenerating]    = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState<any>(null);
-  const [devAnswer,       setDevAnswer]       = useState("");
-  const [isSubmitting,    setIsSubmitting]    = useState(false);
-  const [awaitingAnswer,  setAwaitingAnswer]  = useState(false);
-  const [timeLeft,        setTimeLeft]        = useState(0);
+  // ── Notes State ────────────────────────────────────────────────────────────
+  const [notes,     setNotes]     = useState("")
+  const [isSaving,  setIsSaving]  = useState(false)
+  const [savedNote, setSavedNote] = useState(false)
 
-  const [notes,     setNotes]     = useState("");
-  const [isSaving,  setIsSaving]  = useState(false);
-  const [savedNote, setSavedNote] = useState(false);
+  // ── LeetCode State ─────────────────────────────────────────────────────────
+  const [leetcodeStartTime, setLeetcodeStartTime] = useState<Date | null>(null)
+  const [leetcodeElapsed,   setLeetcodeElapsed]   = useState(0)
+  const [codeResults,       setCodeResults]       = useState<any[]>([])
+  const [showCodeEditor,    setShowCodeEditor]    = useState(false)
+  const [leetcodeData,      setLeetcodeData]      = useState<LeetCodeQuestion[]>([])
+  const [codingComplete,    setCodingComplete]    = useState(false)
 
-  const [leetcodeStartTime, setLeetcodeStartTime] = useState<Date | null>(null);
-  const [leetcodeElapsed,   setLeetcodeElapsed]   = useState(0);
-  const [codeResults,       setCodeResults]       = useState<any[]>([]);
+  // ── UI State ───────────────────────────────────────────────────────────────
+  const [showEndConfirm, setShowEndConfirm] = useState(false)
 
-  // ── FIX: Embedded editor state ────────────────────────────────────────────
-  const [showCodeEditor, setShowCodeEditor] = useState(false);
-  const [leetcodeData,   setLeetcodeData]   = useState<LeetCodeQuestion[]>([]);
-  const [codingComplete, setCodingComplete] = useState(false);
+  // ── Malpractice State ──────────────────────────────────────────────────────
+  const [interviewStarted,   setInterviewStarted]   = useState(false)
+  const [malpracticeLogs,    setMalpracticeLogs]    = useState<MalpracticeLog[]>([])
+  const [hardViolationCount, setHardViolationCount] = useState(0)
+  const [warningModal,       setWarningModal]       = useState<WarningLevel | null>(null)
+  const [showSuspendButton,  setShowSuspendButton]  = useState(false)
+  const [isSuspended,        setIsSuspended]        = useState(false)
 
-  // End call confirmation
-  const [showEndConfirm, setShowEndConfirm] = useState(false);
-  
+  // ── ✅ FIX: Detection hooks stop when isSuspended = true ──────────────────
+  // isActive = !isHR AND not suspended
+  // This stops all 3 detection hooks the moment HR suspends
+  const detectionActive = !isHR && !isSuspended
 
-  // useMalpracticeDetection(interviewId,remoteVideoRef,!isHR)
-  // useBrowserMalpractice(interviewId,!isHR)
-  // useObjectDetection(interviewId,remoteVideoRef,!isHR)
-
-
+  useMalpracticeDetection(interviewId, localVideoRef, detectionActive, interviewStarted)
+  useBrowserMalpractice(interviewId,   detectionActive, interviewStarted)
+  useObjectDetection(interviewId,      localVideoRef, detectionActive, interviewStarted)
 
   // ── Keep devAnswerRef in sync ──────────────────────────────────────────────
-  useEffect(() => { devAnswerRef.current = devAnswer; }, [devAnswer]);
+  useEffect(() => { devAnswerRef.current = devAnswer }, [devAnswer])
 
   // ── Auto-scroll chat ───────────────────────────────────────────────────────
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
 
-  // ── LeetCode HR elapsed timer ──────────────────────────────────────────────
+  // ── LeetCode elapsed timer (HR) ────────────────────────────────────────────
   useEffect(() => {
-    if (!leetcodeStartTime || !isHR) return;
+    if (!leetcodeStartTime || !isHR) return
     leetcodeTimerRef.current = setInterval(() => {
-      setLeetcodeElapsed(Math.floor((Date.now() - leetcodeStartTime.getTime()) / 1000));
-    }, 1000) as unknown as number;
-    return () => { if (leetcodeTimerRef.current) clearInterval(leetcodeTimerRef.current); };
-  }, [leetcodeStartTime, isHR]);
+      setLeetcodeElapsed(Math.floor((Date.now() - leetcodeStartTime.getTime()) / 1000))
+    }, 1000) as unknown as number
+    return () => { if (leetcodeTimerRef.current) clearInterval(leetcodeTimerRef.current) }
+  }, [leetcodeStartTime, isHR])
 
+  // ── Load questions ─────────────────────────────────────────────────────────
   const loadQuestions = useCallback((all: Question[]) => {
-    setQuestions(all);
-    setTechQuestions(all.filter((q) => !q.isLeetcode));
-    setLeetcodeQs(all.filter((q) => q.isLeetcode));
+    setQuestions(all)
+    setTechQuestions(all.filter(q => !q.isLeetcode))
+    setLeetcodeQs(all.filter(q => q.isLeetcode))
 
-    // Extract already evaluated answers for HR
-    const loadedEvals: Evaluation[] = [];
+    const loadedEvals: Evaluation[] = []
     all.forEach((q: any) => {
-      if (q.answer && q.answer.score !== undefined && q.answer.score !== null) {
-        let parsedVal: any = {};
-        try { parsedVal = JSON.parse(q.answer.feedback); } catch { parsedVal = { feedback: q.answer.feedback }; }
+      if (q.answer && q.answer.score != null) {
+        let parsed: any = {}
+        try { parsed = JSON.parse(q.answer.feedback) } catch { parsed = { feedback: q.answer.feedback } }
         loadedEvals.push({
-          questionId: q.id,
-          score: q.answer.score,
-          feedback: parsedVal.feedback || "",
-          missing: parsedVal.missing || "",
-          recommendation: parsedVal.recommendation || "",
-        });
+          questionId:     q.id,
+          score:          q.answer.score,
+          feedback:       parsed.feedback       || "",
+          missing:        parsed.missing        || "",
+          recommendation: parsed.recommendation || "",
+        })
       }
-    });
-    setEvaluations(loadedEvals);
-    
-    // Resume Q-index pointer for HR UI immediately
+    })
+    setEvaluations(loadedEvals)
     if (loadedEvals.length > 0) {
-      setCurrentQIndex(loadedEvals.length - 1);
-      setQaStarted(true); // Inherently true if answers already exist!
+      setCurrentQIndex(loadedEvals.length - 1)
+      setQaStarted(true)
     }
-  }, []);
+  }, [])
 
-  // ── FIX: Re-assign video streams after returning from code editor ──────────
+  // ── Reattach streams after code editor closes ──────────────────────────────
   const reattachStreams = useCallback(() => {
-    if (localVideoRef.current && streamRef.current) {
-      localVideoRef.current.srcObject = streamRef.current;
-      localVideoRef.current.play().catch(() => {});
-    }
-    if (remoteVideoRef.current && incomingVideoStreamRef.current) {
-      remoteVideoRef.current.srcObject = incomingVideoStreamRef.current;
-      remoteVideoRef.current.play().catch(() => {});
-    }
-    if (remoteScreenRef.current && incomingScreenStreamRef.current) {
-      remoteScreenRef.current.srcObject = incomingScreenStreamRef.current;
-      remoteScreenRef.current.play().catch(() => {});
-    }
-  }, []);
+    setTimeout(() => {
+      if (localVideoRef.current  && streamRef.current)
+        localVideoRef.current.srcObject = streamRef.current
+      if (remoteVideoRef.current && incomingVideoStreamRef.current)
+        remoteVideoRef.current.srcObject = incomingVideoStreamRef.current
+      if (remoteScreenRef.current && incomingScreenStreamRef.current)
+        remoteScreenRef.current.srcObject = incomingScreenStreamRef.current
+    }, 100)
+  }, [])
+
+  useEffect(() => {
+    if (!showCodeEditor) reattachStreams()
+  }, [showCodeEditor, reattachStreams])
 
   // ── Main setup ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!interviewId) return;
-    const socket = getSocket();
+    if (!interviewId) return
+    const socket = getSocket()
 
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
-        streamRef.current = stream;
-        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+        streamRef.current = stream
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream
 
-        const peer = new Peer();
-        peerRef.current = peer;
+        const peer = new Peer()
+        peerRef.current = peer
 
         peer.on("open", (myPeerId) => {
           socket.emit("join-room", { interviewId, role: isHR ? "HR" : "Developer" })
-          socket.emit("send-peer-id", { interviewId, peerId: myPeerId });
-        });
+          socket.emit("send-peer-id", { interviewId, peerId: myPeerId })
+        })
 
         peer.on("call", (call) => {
-          call.answer(streamRef.current || stream);
+          call.answer(streamRef.current || stream)
           call.on("stream", (remoteStream) => {
-            incomingVideoStreamRef.current = remoteStream;
+            incomingVideoStreamRef.current = remoteStream
             if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = remoteStream;
-              setTimeout(() => remoteVideoRef.current?.play().catch(() => {}), 100);
+              remoteVideoRef.current.srcObject = remoteStream
+              setTimeout(() => remoteVideoRef.current?.play().catch(() => {}), 100)
             }
-            setConnected(true);
-          });
-        });
+            setConnected(true)
+          })
+        })
 
         socket.on("receive-peer-id", (remotePeerId: string) => {
-          const call = peer.call(remotePeerId, streamRef.current || stream);
+          const call = peer.call(remotePeerId, streamRef.current || stream)
           call.on("stream", (remoteStream) => {
-            incomingVideoStreamRef.current = remoteStream;
+            incomingVideoStreamRef.current = remoteStream
             if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = remoteStream;
-              setTimeout(() => remoteVideoRef.current?.play().catch(() => {}), 100);
+              remoteVideoRef.current.srcObject = remoteStream
+              setTimeout(() => remoteVideoRef.current?.play().catch(() => {}), 100)
             }
-            setConnected(true);
-          });
-        });
+            setConnected(true)
+          })
+        })
 
         socket.on("receive-screen-peer-id", (screenPeerId: string) => {
-          const screenCall = peer.call(screenPeerId, stream);
+          const screenCall = peer.call(screenPeerId, stream)
           screenCall.on("stream", (incomingScreenStream) => {
-            incomingScreenStreamRef.current = incomingScreenStream;
-            setRemoteSharing(true);
-          });
-          screenCall.on("error", (err) => console.error("Screen call error:", err));
-        });
+            incomingScreenStreamRef.current = incomingScreenStream
+            setRemoteSharing(true)
+          })
+          screenCall.on("error", (err) => console.error("Screen call error:", err))
+        })
 
         socket.on("screen-share-stopped", () => {
-          setRemoteSharing(false);
-          incomingScreenStreamRef.current = null;
-          if (remoteScreenRef.current) remoteScreenRef.current.srcObject = null;
-        });
+          setRemoteSharing(false)
+          incomingScreenStreamRef.current = null
+          if (remoteScreenRef.current) remoteScreenRef.current.srcObject = null
+        })
 
         socket.on("receive-message", (data: ChatMessage) => {
-          setMessages((prev) => [...prev, data]);
-        });
+          setMessages(prev => [...prev, data])
+        })
 
         socket.on("user-left", () => {
-          setConnected(false);
-          setRemoteSharing(false);
-          if (remoteVideoRef.current)  remoteVideoRef.current.srcObject  = null;
-          if (remoteScreenRef.current) remoteScreenRef.current.srcObject = null;
-          
-          toast(isHR ? "The developer has disconnected." : "HR has disconnected.", { icon: "⚠️" });
-          // NO AUTO-KICK. We wait for them to rejoin.
-        });
+          setConnected(false)
+          setRemoteSharing(false)
+          if (remoteVideoRef.current)  remoteVideoRef.current.srcObject  = null
+          if (remoteScreenRef.current) remoteScreenRef.current.srcObject = null
+          toast(isHR ? "Developer has disconnected." : "HR has disconnected.", { icon: "⚠️" })
+        })
 
         socket.on("end-call-explicitly", () => {
-          toast(isHR ? "Developer ended the call." : "HR has ended the interview. Redirecting...", { icon: "👋", duration: 3000 });
+          toast(isHR ? "Developer ended the call." : "HR has ended the interview. Redirecting...", {
+            icon: "👋", duration: 3000,
+          })
           setTimeout(() => {
-            streamRef.current?.getTracks().forEach((t) => t.stop());
-            screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-            peerRef.current?.destroy();
-            screenPeerRef.current?.destroy();
-            disconnectSocket();
-            navigate(isHR ? "/dashboard" : "/devDashboard");
-          }, 3000);
-        });
+            streamRef.current?.getTracks().forEach(t => t.stop())
+            screenStreamRef.current?.getTracks().forEach(t => t.stop())
+            peerRef.current?.destroy()
+            screenPeerRef.current?.destroy()
+            disconnectSocket()
+            navigate(isHR ? "/dashboard" : "/devDashboard")
+          }, 3000)
+        })
 
-        // Hydration Logic
+        // ✅ Detection starts only when BOTH joined
+        socket.on("interview-status-changed", (data: { status: string }) => {
+          if (data.status === "STARTED") setInterviewStarted(true)
+        })
+
         socket.on("init-room-state", (state: any) => {
-          if (state.qaStarted || state.currentQuestion) setQaStarted(true);
-          if (state.activePanel) setActivePanel(state.activePanel);
-          if (state.showCodeEditor) setShowCodeEditor(true);
-          
+          if (state.qaStarted || state.currentQuestion) setQaStarted(true)
+          if (state.activePanel)    setActivePanel(state.activePanel)
+          if (state.showCodeEditor) setShowCodeEditor(true)
           if (state.currentQuestion) {
             if (state.answeredQuestionId === state.currentQuestion.questionId) {
-              setCurrentQuestion(null);
+              setCurrentQuestion(null)
             } else {
-              setCurrentQuestion(state.currentQuestion);
+              setCurrentQuestion(state.currentQuestion)
               if (isHR) {
-                setCurrentQIndex(state.currentQuestion.orderIndex - 1);
-                setAwaitingAnswer(true);
+                setCurrentQIndex(state.currentQuestion.orderIndex - 1)
+                setAwaitingAnswer(true)
               }
             }
           }
-          if (state.timeLeft !== undefined) setTimeLeft(state.timeLeft);
-          if (state.leetcodeStartTime) setLeetcodeStartTime(new Date(state.leetcodeStartTime));
-          if (state.codingComplete) setCodingComplete(true);
-          if (state.messages) setMessages(state.messages);
-        });
-
+          if (state.timeLeft !== undefined) setTimeLeft(state.timeLeft)
+          if (state.leetcodeStartTime)      setLeetcodeStartTime(new Date(state.leetcodeStartTime))
+          if (state.codingComplete)         setCodingComplete(true)
+          if (state.messages)               setMessages(state.messages)
+        })
       })
       .catch((err) => {
-        console.error("Camera error:", err);
-        setCamError(true);
-        toast.error("Camera or microphone access was denied.");
-      });
+        console.error("Camera error:", err)
+        setCamError(true)
+        toast.error("Camera or microphone access was denied.")
+      })
 
-    // ── Q&A socket events ──────────────────────────────────────────────────
-
+    // ── Q&A events ──────────────────────────────────────────────────────────
     socket.on("qa-started", () => {
-      setQaStarted(true);
-      setActivePanel("qa");
-      toast("📋 Q&A session has started!", {
+      setQaStarted(true)
+      setActivePanel("qa")
+      toast("📋 Q&A session started!", {
         style: { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" },
-      });
-    });
+      })
+    })
 
     socket.on("receive-question", (data: {
-      questionId:   string;
-      questionText: string;
-      orderIndex:   number;
-      total:        number;
-      timeLimit:    number;
+      questionId: string; questionText: string
+      orderIndex: number; total: number; timeLimit: number
     }) => {
-      setQaStarted(true);
-      setCurrentQuestion(data);
-      setDevAnswer("");
-      devAnswerRef.current = "";
-      setActivePanel("qa");
-      setTimeLeft(data.timeLimit);
-    });
+      setQaStarted(true)
+      setCurrentQuestion(data)
+      setDevAnswer("")
+      devAnswerRef.current = ""
+      setActivePanel("qa")
+      setTimeLeft(data.timeLimit)
+    })
 
     socket.on("answer-submitted", () => {
-      toast(" Developer submitted — AI evaluating...", {
+      toast("✅ Developer submitted — AI evaluating...", {
         style: { background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" },
-      });
-    });
+      })
+    })
 
     socket.on("answer-evaluated", (data: Evaluation) => {
-      setEvaluations((prev) => {
-        const filtered = prev.filter((e) => e.questionId !== data.questionId);
-        return [...filtered, data];
-      });
-      setAwaitingAnswer(false);
-    });
+      setEvaluations(prev => {
+        const filtered = prev.filter(e => e.questionId !== data.questionId)
+        return [...filtered, data]
+      })
+      setAwaitingAnswer(false)
+    })
 
-    // ── FIX: Show embedded editor — video refs stay alive ──────────────────
     socket.on("open-code-editor", (data: { questions: LeetCodeQuestion[] }) => {
-      setLeetcodeData(data.questions);
-      setShowCodeEditor(true);
-      setActivePanel("qa");
-    });
+      setLeetcodeData(data.questions)
+      setShowCodeEditor(true)
+      setActivePanel("qa")
+    })
 
     socket.on("coding-complete", () => {
-      setCodingComplete(true);
+      setCodingComplete(true)
       if (isHR) {
-        toast(" Developer finished all coding problems!", { icon: "💻", duration: 5000 });
-        if (leetcodeTimerRef.current) clearInterval(leetcodeTimerRef.current);
-        setLeetcodeStartTime(null);
+        toast("💻 Developer finished all coding problems!", { icon: "💻", duration: 5000 })
+        if (leetcodeTimerRef.current) clearInterval(leetcodeTimerRef.current)
+        setLeetcodeStartTime(null)
       }
-    });
+    })
 
     socket.on("code-result", (data: any) => {
-      if (isHR) {
-        setCodeResults((prev) => [data, ...prev].slice(0, 10));
-      }
+      if (isHR) setCodeResults(prev => [data, ...prev].slice(0, 10))
       toast(`💻 ${data.language}: ${data.status}`, {
         icon:     data.status === "Accepted" ? "✅" : "❌",
-        duration: 5000,
-      });
-    });
+        duration: 4000,
+      })
+    })
+
+    // ── MALPRACTICE EVENTS ───────────────────────────────────────────────────
+
+    socket.on("malpractice-log", (data: {
+      type: string; message: string; severity: string
+      timestamp: string; isHard: boolean; warningCount?: number
+    }) => {
+      setMalpracticeLogs(prev => [...prev, {
+        type:      data.type,
+        message:   data.message,
+        severity:  data.severity as "LOW" | "MEDIUM" | "HIGH",
+        timestamp: data.timestamp,
+        isHard:    data.isHard,
+      }])
+      if (data.isHard && data.warningCount) {
+        setHardViolationCount(data.warningCount)
+      }
+    })
+
+    socket.on("malpractice-warning", (data: {
+      level: WarningLevel; warningCount: number; timestamp: string
+    }) => {
+      setWarningModal(data.level)
+      setHardViolationCount(data.warningCount)
+    })
+
+    socket.on("show-suspend-button", (data: { warningCount: number }) => {
+      if (isHR) {
+        setShowSuspendButton(true)
+        setHardViolationCount(data.warningCount)
+      }
+    })
+
+    // ✅ FIX: When suspended fires → isSuspended = true
+    // This causes detectionActive = false → all 3 hooks stop immediately
+    socket.on("interview-suspended", () => {
+      if (!isHR) {
+        setIsSuspended(true)
+        // SuspendedScreen component handles cookie clear + 10s countdown + redirect
+      }
+    })
+
+    socket.on("interview-suspension-confirmed", () => {
+      if (isHR) {
+        setShowSuspendButton(false)
+        toast.success("Interview suspended. Developer is being logged out.", { duration: 5000 })
+      }
+    })
 
     if (isHR) {
       api.get(`/questions/note/${interviewId}`)
-        .then((res) => setNotes(res.data.data?.content ?? ""))
-        .catch(() => {});
+        .then(res => setNotes(res.data.data?.content ?? ""))
+        .catch(() => {})
       api.get(`/questions/${interviewId}`)
-        .then((res) => loadQuestions(res.data.data ?? []))
-        .catch(() => {});
+        .then(res => loadQuestions(res.data.data ?? []))
+        .catch(() => {})
     }
 
     return () => {
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-      peerRef.current?.destroy();
-      screenPeerRef.current?.destroy();
-      socket.emit("leave-room", interviewId);
-      socket.off("receive-peer-id");
-      socket.off("receive-screen-peer-id");
-      socket.off("screen-share-stopped");
-      socket.off("receive-message");
-      socket.off("user-left");
-      socket.off("qa-started");
-      socket.off("receive-question");
-      socket.off("answer-submitted");
-      socket.off("answer-evaluated");
-      socket.off("open-code-editor");
-      socket.off("coding-complete");
-      socket.off("code-result");
-      disconnectSocket();
-    };
-  }, [interviewId, isHR, navigate, loadQuestions]);
+      streamRef.current?.getTracks().forEach(t => t.stop())
+      screenStreamRef.current?.getTracks().forEach(t => t.stop())
+      peerRef.current?.destroy()
+      screenPeerRef.current?.destroy()
+      socket.emit("leave-room", interviewId)
+      socket.off("receive-peer-id")
+      socket.off("receive-screen-peer-id")
+      socket.off("screen-share-stopped")
+      socket.off("receive-message")
+      socket.off("user-left")
+      socket.off("end-call-explicitly")
+      socket.off("interview-status-changed")
+      socket.off("init-room-state")
+      socket.off("qa-started")
+      socket.off("receive-question")
+      socket.off("answer-submitted")
+      socket.off("answer-evaluated")
+      socket.off("open-code-editor")
+      socket.off("coding-complete")
+      socket.off("code-result")
+      socket.off("malpractice-log")
+      socket.off("malpractice-warning")
+      socket.off("show-suspend-button")
+      socket.off("interview-suspended")
+      socket.off("interview-suspension-confirmed")
+      disconnectSocket()
+    }
+  }, [interviewId, isHR, navigate, loadQuestions])
 
-  // ── Dev Q&A countdown timer ────────────────────────────────────────────────
+  // ── Developer countdown timer ──────────────────────────────────────────────
   useEffect(() => {
-    if (!currentQuestion || timeLeft <= 0 || isHR) return;
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (!currentQuestion || timeLeft <= 0 || isHR) return
+    if (timerRef.current) clearInterval(timerRef.current)
 
     timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          timerRef.current = null;
+          clearInterval(timerRef.current!)
+          timerRef.current = null
           if (devAnswerRef.current.trim()) {
-            submitAnswer();
+            submitAnswer()
           } else {
-            devAnswerRef.current = "No answer provided";
-            submitAnswer();
+            devAnswerRef.current = "No answer provided"
+            submitAnswer()
             toast("⏰ Time's up!", {
               style: { background: "#fef2f2", color: "#991b1b", border: "1px solid #fecaca" },
-            });
+            })
           }
-          return 0;
+          return 0
         }
-        return prev - 1;
-      });
-    }, 1000) as unknown as number;
+        return prev - 1
+      })
+    }, 1000) as unknown as number
 
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [currentQuestion]); // eslint-disable-line
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [currentQuestion]) // eslint-disable-line
 
-  // ── Assign incoming screen stream ──────────────────────────────────────────
   useEffect(() => {
     if (remoteSharing && remoteScreenRef.current && incomingScreenStreamRef.current) {
-      remoteScreenRef.current.srcObject = incomingScreenStreamRef.current;
+      remoteScreenRef.current.srcObject = incomingScreenStreamRef.current
     }
-  }, [remoteSharing]);
+  }, [remoteSharing])
 
-  // ── FIX: Re-attach streams when returning from code editor ────────────────
-  useEffect(() => {
-    if (!showCodeEditor) {
-      // Small delay to let DOM re-render first
-      setTimeout(() => {
-        reattachStreams();
-      }, 100);
-    }
-  }, [showCodeEditor, reattachStreams]);
+  // ── Functions ──────────────────────────────────────────────────────────────
 
-  // ── Malpractice alerts (HR only) ───────────────────────────────────────────
-  useEffect(() => {
-    if (!isHR || !interviewId) return;
-    const socket = getSocket();
-    socket.on("malpractice-alert", (data: {
-      type: string; message: string; severity: string; timestamp: string;
-    }) => {
-      if (data.severity === "HIGH") {
-        toast(`🚨 ${data.message}`, {
-          id: data.type,
-          style: { background: "#fef2f2", color: "#991b1b", border: "1px solid #fecaca" },
-          duration: 8000,
-        });
-      } else {
-        toast(`⚠️ ${data.message}`, {
-          id: data.type,
-          style: { background: "#fffbeb", color: "#92400e", border: "1px solid #fde68a" },
-          duration: 5000,
-        });
-      }
-    });
-    return () => { socket.off("malpractice-alert"); };
-  }, [interviewId, isHR]);
-
-  // ── HR: Generate questions ─────────────────────────────────────────────────
   const generateQuestions = async () => {
-    setIsGenerating(true);
+    setIsGenerating(true)
     try {
-      const interviewRes = await api.get("/interview/interviews");
-      const interview    = interviewRes.data.data?.find((i: any) => i.id === interviewId);
+      const interviewRes = await api.get("/interview/interviews")
+      const interview    = interviewRes.data.data?.find((i: any) => i.id === interviewId)
       const skills       = interview?.developer?.skills
-        ? interview.developer.skills.split("|")
-        : [];
+        ? interview.developer.skills.split("|") : []
       const res = await api.post("/questions/generate", {
         interviewId,
         position: interview?.developer?.position ?? "Software Developer",
         skills,
-      });
-      loadQuestions(res.data.data ?? []);
-      toast.success(`${res.data.data?.length ?? 0} questions generated!`);
+      })
+      loadQuestions(res.data.data ?? [])
+      toast.success(`${res.data.data?.length ?? 0} questions generated!`)
     } catch (e: any) {
-      toast.error(e?.response?.data?.Message ?? "Failed to generate questions");
+      toast.error(e?.response?.data?.Message ?? "Failed to generate questions")
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(false)
     }
-  };
+  }
 
-  // ── HR: Start Q&A ──────────────────────────────────────────────────────────
   const startQA = () => {
-    getSocket().emit("start-qa", interviewId);
-    setQaStarted(true);
-    setActivePanel("qa");
-    sendQuestion(0);
-  };
+    getSocket().emit("start-qa", interviewId)
+    setQaStarted(true)
+    setActivePanel("qa")
+    sendQuestion(0)
+  }
 
-  // ── HR: Send one question ──────────────────────────────────────────────────
   const sendQuestion = (index: number) => {
-    const q = techQuestions[index];
-    if (!q) return;
-
+    const q = techQuestions[index]
+    if (!q) return
     if (index > currentQIndex && qaStarted && awaitingAnswer) {
-      toast("⏳ Wait for the developer to answer the current question first", {
+      toast("⏳ Wait for developer to answer first", {
         style: { background: "#fffbeb", color: "#92400e", border: "1px solid #fde68a" },
-      });
-      return;
+      })
+      return
     }
-
-    setCurrentQIndex(index);
-    setAwaitingAnswer(true);
+    setCurrentQIndex(index)
+    setAwaitingAnswer(true)
     getSocket().emit("send-question", {
-      interviewId,
-      questionId:   q.id,
-      questionText: q.questionText,
-      orderIndex:   index + 1,
-      total:        techQuestions.length,
-      timeLimit:    180,
-    });
-  };
+      interviewId, questionId: q.id, questionText: q.questionText,
+      orderIndex: index + 1, total: techQuestions.length, timeLimit: 180,
+    })
+  }
 
-  // ── Developer: Submit text answer ──────────────────────────────────────────
   const submitAnswer = async () => {
-    if (!devAnswerRef.current.trim() || !currentQuestion) return;
-    setIsSubmitting(true);
-    if (timerRef.current) clearInterval(timerRef.current);
-
+    if (!devAnswerRef.current.trim() || !currentQuestion) return
+    setIsSubmitting(true)
+    if (timerRef.current) clearInterval(timerRef.current)
     try {
-      getSocket().emit("answer-submitted", {
-        interviewId,
-        questionId: currentQuestion.questionId,
-      });
+      getSocket().emit("answer-submitted", { interviewId, questionId: currentQuestion.questionId })
       await api.post("/questions/answer/submit", {
-        questionId:  currentQuestion.questionId,
-        interviewId,
-        answerText:  devAnswerRef.current,
-      });
-      setDevAnswer("");
-      devAnswerRef.current = "";
-      setCurrentQuestion(null);
-      setTimeLeft(0);
-      toast.success("Answer submitted!");
+        questionId: currentQuestion.questionId, interviewId, answerText: devAnswerRef.current,
+      })
+      setDevAnswer("")
+      devAnswerRef.current = ""
+      setCurrentQuestion(null)
+      setTimeLeft(0)
+      toast.success("Answer submitted!")
     } catch {
-      toast.error("Failed to submit answer");
+      toast.error("Failed to submit answer")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
-  // ── HR: Open embedded code editor ─────────────────────────────────────────
   const openCodeEditor = () => {
-    const questionsPayload = leetcodeQs.map((q) => ({
-      id:            q.id,
-      questionText:  q.questionText,
-      estimatedTime: q.estimatedTime ?? null,
-      inputExample:  q.inputExample  ?? null,
-      outputExample: q.outputExample ?? null,
-      constraints:   q.constraints   ?? null,
-    }));
-    getSocket().emit("open-code-editor", { interviewId, questions: questionsPayload });
-    setLeetcodeStartTime(new Date());
-    setLeetcodeElapsed(0);
-    toast("Code editor opened for developer", { icon: "💻" });
-  };
+    const questionsPayload = leetcodeQs.map(q => ({
+      id: q.id, questionText: q.questionText,
+      estimatedTime: q.estimatedTime ?? null, inputExample: q.inputExample ?? null,
+      outputExample: q.outputExample ?? null, constraints: q.constraints ?? null,
+    }))
+    getSocket().emit("open-code-editor", { interviewId, questions: questionsPayload })
+    setLeetcodeStartTime(new Date())
+    setLeetcodeElapsed(0)
+    toast("💻 Code editor opened for developer", { icon: "💻" })
+  }
 
-  // ── FIX: Called when dev submits all problems — re-attach streams ─────────
   const handleCodingComplete = useCallback(() => {
-    setShowCodeEditor(false);
-    setCodingComplete(true);
-    getSocket().emit("coding-complete", { interviewId });
-    toast.success("All problems submitted! Returning to interview...");
-    // streams re-attach via the useEffect watching showCodeEditor
-  }, [interviewId]);
+    setShowCodeEditor(false)
+    setCodingComplete(true)
+    getSocket().emit("coding-complete", { interviewId })
+    toast.success("All problems submitted! Returning to interview...")
+  }, [interviewId])
 
-  // ── HR: Save notes ─────────────────────────────────────────────────────────
   const saveNotes = async () => {
-    setIsSaving(true);
+    setIsSaving(true)
     try {
-      await api.post("/questions/note/save", { interviewId, content: notes });
-      setSavedNote(true);
-      setTimeout(() => setSavedNote(false), 2000);
-    } catch {
-      toast.error("Failed to save notes");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+      await api.post("/questions/note/save", { interviewId, content: notes })
+      setSavedNote(true)
+      setTimeout(() => setSavedNote(false), 2000)
+    } catch { toast.error("Failed to save notes") }
+    finally { setIsSaving(false) }
+  }
 
-  // ── Media controls ─────────────────────────────────────────────────────────
   const toggleMute = () => {
-    const track = streamRef.current?.getAudioTracks()[0];
-    if (track) { track.enabled = !track.enabled; setIsMuted((p) => !p); }
-  };
+    const track = streamRef.current?.getAudioTracks()[0]
+    if (track) { track.enabled = !track.enabled; setIsMuted(p => !p) }
+  }
 
   const toggleVideo = () => {
-    const track = streamRef.current?.getVideoTracks()[0];
-    if (track) { track.enabled = !track.enabled; setIsVideoOff((p) => !p); }
-  };
+    const track = streamRef.current?.getVideoTracks()[0]
+    if (track) { track.enabled = !track.enabled; setIsVideoOff(p => !p) }
+  }
 
   const startScreenShare = async () => {
     try {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-      screenStreamRef.current = screenStream;
-      const screenPeer = new Peer();
-      screenPeerRef.current = screenPeer;
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false })
+      screenStreamRef.current = screenStream
+      const screenPeer = new Peer()
+      screenPeerRef.current = screenPeer
       screenPeer.on("open", (screenPeerId) => {
-        getSocket().emit("send-screen-peer-id", { interviewId, screenPeerId });
-      });
-      screenPeer.on("call", (call) => { call.answer(screenStream); });
-      if (localVideoRef.current) localVideoRef.current.srcObject = screenStream;
-      screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
-      setIsSharing(true);
-    } catch {
-      console.log("Screen share cancelled or denied");
-    }
-  };
+        getSocket().emit("send-screen-peer-id", { interviewId, screenPeerId })
+      })
+      screenPeer.on("call", (call) => { call.answer(screenStream) })
+      if (localVideoRef.current) localVideoRef.current.srcObject = screenStream
+      screenStream.getVideoTracks()[0].onended = () => stopScreenShare()
+      setIsSharing(true)
+    } catch { console.log("Screen share cancelled") }
+  }
 
   const stopScreenShare = () => {
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current = null;
-    screenPeerRef.current?.destroy();
-    screenPeerRef.current = null;
-    if (localVideoRef.current && streamRef.current) {
-      localVideoRef.current.srcObject = streamRef.current;
-    }
-    getSocket().emit("screen-share-stopped", interviewId);
-    setIsSharing(false);
-  };
+    screenStreamRef.current?.getTracks().forEach(t => t.stop())
+    screenStreamRef.current = null
+    screenPeerRef.current?.destroy()
+    screenPeerRef.current = null
+    if (localVideoRef.current && streamRef.current)
+      localVideoRef.current.srcObject = streamRef.current
+    getSocket().emit("screen-share-stopped", interviewId)
+    setIsSharing(false)
+  }
 
-  const toggleScreenShare = () => isSharing ? stopScreenShare() : startScreenShare();
+  const toggleScreenShare = () => isSharing ? stopScreenShare() : startScreenShare()
 
   const sendMessage = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim()) return
     getSocket().emit("send-message", {
-      interviewId,
-      message:    newMessage.trim(),
-      senderName: userName,
-      senderRole: role,
-    });
-    setNewMessage("");
-  };
+      interviewId, message: newMessage.trim(), senderName: userName, senderRole: role,
+    })
+    setNewMessage("")
+  }
 
   const handleEndCallClick = () => {
-    const qaInProgress = qaStarted && evaluations.length < techQuestions.length;
-    if (qaInProgress) setShowEndConfirm(true);
-    else endCall();
-  };
+    const qaInProgress = qaStarted && evaluations.length < techQuestions.length
+    if (qaInProgress) setShowEndConfirm(true)
+    else endCall()
+  }
 
   const endCall = () => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-    peerRef.current?.destroy();
-    screenPeerRef.current?.destroy();
-    getSocket().emit("end-call-explicitly", interviewId); // Explicit end triggers kick
-    setTimeout(()=>{
-      disconnectSocket();
-    navigate(isHR ? "/dashboard" : "/devDashboard");
-    },800)
-  };
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    screenStreamRef.current?.getTracks().forEach(t => t.stop())
+    peerRef.current?.destroy()
+    screenPeerRef.current?.destroy()
+    getSocket().emit("end-call-explicitly", interviewId)
+    setTimeout(() => {
+      disconnectSocket()
+      navigate(isHR ? "/dashboard" : "/devDashboard")
+    }, 800)
+  }
+
+  const handleSuspendInterview = () => {
+    getSocket().emit("suspend-interview", interviewId)
+  }
 
   const scoreColor = (score: number) =>
-    score >= 8 ? "text-green-500" : score >= 5 ? "text-yellow-500" : "text-red-500";
+    score >= 8 ? "text-green-500" : score >= 5 ? "text-yellow-500" : "text-red-500"
 
   const formatElapsed = (sec: number) =>
-    `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+    `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`
 
   const avgScore = evaluations.length > 0
-    ? evaluations.reduce((a, e) => a + e.score, 0) / evaluations.length
-    : 0;
+    ? evaluations.reduce((a, e) => a + e.score, 0) / evaluations.length : 0
 
-  // ── Camera error ───────────────────────────────────────────────────────────
+  // ── Camera error ────────────────────────────────────────────────────────────
   if (camError) {
     return (
       <div className="h-screen bg-gray-50 flex items-center justify-center font-sans antialiased">
@@ -697,14 +700,26 @@ export default function InterviewRoom() {
           </button>
         </div>
       </div>
-    );
+    )
   }
 
-  // ── Main UI ────────────────────────────────────────────────────────────────
+  // ── Main UI ─────────────────────────────────────────────────────────────────
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden font-sans antialiased">
 
-      {/* End-call confirmation modal */}
+      {/* ── Developer suspended screen (fullscreen overlay) ── */}
+      {isSuspended && !isHR && <SuspendedScreen />}
+
+      {/* ── Warning modal (both HR and Dev) ── */}
+      {warningModal && (
+        <MalpracticeWarningModal
+          level={warningModal}
+          isHR={isHR}
+          onClose={() => setWarningModal(null)}
+        />
+      )}
+
+      {/* ── End call confirmation modal ── */}
       {showEndConfirm && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
@@ -746,23 +761,46 @@ export default function InterviewRoom() {
           </p>
           <span className="text-[10px] text-gray-300 font-mono">#{interviewId?.slice(0, 8)}</span>
         </div>
-        <div className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${
-          connected
-            ? "bg-green-50 text-green-600 border-green-200"
-            : "bg-yellow-50 text-yellow-600 border-yellow-200"
-        }`}>
-          {connected ? "● Connected" : isHR ? "● Waiting for developer..." : "● Waiting for HR..."}
+
+        <div className="flex items-center gap-2.5">
+
+          {/* Malpractice bell — both HR and Dev */}
+          <MalpracticeNotificationBell
+            logs={malpracticeLogs}
+            warningCount={hardViolationCount}
+            isHR={isHR}
+          />
+
+          {/* HR Suspend button — appears after 8 hard violations */}
+          {isHR && showSuspendButton && (
+            <button
+              onClick={handleSuspendInterview}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500
+              hover:bg-red-600 text-white text-xs font-bold rounded-xl
+              transition-colors shadow-sm shadow-red-200/50 animate-pulse"
+            >
+              <ShieldX size={13} />
+              Suspend Interview
+            </button>
+          )}
+
+          <div className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${
+            connected
+              ? "bg-green-50 text-green-600 border-green-200"
+              : "bg-yellow-50 text-yellow-600 border-yellow-200"
+          }`}>
+            {connected ? "● Connected" : isHR ? "● Waiting for developer..." : "● Waiting for HR..."}
+          </div>
         </div>
       </header>
 
-      {/* ── FIX: Embedded code editor — video refs passed from parent ── */}
+      {/* ── Embedded code editor (developer only) ── */}
       {showCodeEditor && !isHR && (
         <div className="flex-1 flex overflow-hidden">
           <EmbeddedCodeEditor
             interviewId={interviewId ?? ""}
             questions={leetcodeData}
             onAllSubmitted={handleCodingComplete}
-        
           />
         </div>
       )}
@@ -790,6 +828,14 @@ export default function InterviewRoom() {
               }`}
             />
 
+            {/* AI Monitoring badge — center top, developer only, hides when suspended */}
+            {!isHR && !isSuspended && (
+              <AIMonitoringBadge
+                warningCount={hardViolationCount}
+                interviewStarted={interviewStarted}
+              />
+            )}
+
             {!connected && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-20">
                 <div className="text-center">
@@ -809,7 +855,6 @@ export default function InterviewRoom() {
               </div>
             )}
 
-            {/* Local PiP — bottom-right, safe from buttons */}
             <div className="absolute bottom-3 right-3 w-40 h-28 rounded-xl overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800 z-10">
               <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               {isVideoOff && !isSharing && (
@@ -820,7 +865,9 @@ export default function InterviewRoom() {
               <div className="absolute bottom-1.5 left-2 right-2 flex items-center justify-between">
                 <span className="text-white text-[10px] font-medium truncate drop-shadow">{userName}</span>
                 {isSharing && (
-                  <span className="text-[9px] bg-green-500 text-white px-1.5 py-0.5 rounded-full shrink-0 font-medium">Screen</span>
+                  <span className="text-[9px] bg-green-500 text-white px-1.5 py-0.5 rounded-full shrink-0 font-medium">
+                    Screen
+                  </span>
                 )}
                 {isMuted && <MicOff size={9} className="text-red-400 shrink-0" />}
               </div>
@@ -852,8 +899,8 @@ export default function InterviewRoom() {
                   { id: "chat",  label: "Chat",  icon: <MessageSquare size={13} /> },
                   { id: "qa",    label: "Q&A",   icon: <Brain size={13} /> },
                   { id: "notes", label: "Notes", icon: <FileText size={13} />, hrOnly: true },
-                ].map((tab) => {
-                  if (tab.hrOnly && !isHR) return null;
+                ].map(tab => {
+                  if (tab.hrOnly && !isHR) return null
                   return (
                     <button
                       key={tab.id}
@@ -866,7 +913,7 @@ export default function InterviewRoom() {
                     >
                       {tab.icon} {tab.label}
                     </button>
-                  );
+                  )
                 })}
               </div>
 
@@ -883,7 +930,7 @@ export default function InterviewRoom() {
                       </div>
                     )}
                     {messages.map((msg, i) => {
-                      const isMe = msg.senderRole === role;
+                      const isMe = msg.senderRole === role
                       return (
                         <div key={i} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                           <span className="text-[10px] text-gray-400 mb-1 px-1">{msg.senderName}</span>
@@ -895,10 +942,10 @@ export default function InterviewRoom() {
                             {msg.message}
                           </div>
                           <span className="text-[9px] text-gray-300 mt-1 px-1">
-                            {new Date(msg.timestamp).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                            {new Date(msg.timestamp).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
                           </span>
                         </div>
-                      );
+                      )
                     })}
                     <div ref={chatEndRef} />
                   </div>
@@ -906,8 +953,8 @@ export default function InterviewRoom() {
                     <div className="flex gap-2">
                       <input
                         value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                        onChange={e => setNewMessage(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
                         placeholder="Type a message..."
                         className="flex-1 bg-gray-50 text-gray-800 text-xs placeholder-gray-400 rounded-xl px-3 py-2.5 outline-none border border-gray-100 focus:border-blue-300 focus:ring-1 focus:ring-blue-100"
                       />
@@ -929,7 +976,6 @@ export default function InterviewRoom() {
 
                   {isHR && (
                     <div className="flex flex-col flex-1 overflow-hidden">
-
                       {questions.length === 0 && (
                         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                           <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -954,7 +1000,6 @@ export default function InterviewRoom() {
 
                       {questions.length > 0 && (
                         <div className="flex flex-col flex-1 overflow-hidden">
-
                           {!qaStarted && (
                             <div className="p-4 border-b border-gray-100 shrink-0">
                               <button
@@ -968,7 +1013,6 @@ export default function InterviewRoom() {
                           )}
 
                           <div className="flex-1 overflow-y-auto">
-
                             <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
                               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                                 Technical Questions ({techQuestions.length})
@@ -977,16 +1021,16 @@ export default function InterviewRoom() {
 
                             <div className="p-3 space-y-2">
                               {techQuestions.map((q, index) => {
-                                const eval_      = evaluations.find((e) => e.questionId === q.id);
-                                const isCurrent  = index === currentQIndex && qaStarted;
-                                const isAnswered = !!eval_;
-                                const isNext     = qaStarted && index === currentQIndex + 1 && !isAnswered && !awaitingAnswer;
+                                const eval_      = evaluations.find(e => e.questionId === q.id)
+                                const isCurrent  = index === currentQIndex && qaStarted
+                                const isAnswered = !!eval_
+                                const isNext     = qaStarted && index === currentQIndex + 1 && !isAnswered && !awaitingAnswer
 
                                 return (
                                   <div
                                     key={q.id}
                                     className={`rounded-xl border p-3 transition-all ${
-                                      isCurrent   ? "border-blue-300 bg-blue-50"
+                                      isCurrent    ? "border-blue-300 bg-blue-50"
                                       : isAnswered ? "border-green-200 bg-green-50/50"
                                       : "border-gray-100 bg-white"
                                     }`}
@@ -996,14 +1040,20 @@ export default function InterviewRoom() {
                                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                                           <span className="text-[10px] font-bold text-gray-400">Q{q.orderIndex}</span>
                                           <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
-                                            q.difficulty === "Hard"   ? "bg-red-100 text-red-600"
-                                            : q.difficulty === "Medium" ? "bg-yellow-100 text-yellow-600"
+                                            q.difficulty === "Hard"    ? "bg-red-100 text-red-600"
+                                            : q.difficulty === "Medium"  ? "bg-yellow-100 text-yellow-600"
                                             : "bg-green-100 text-green-600"
                                           }`}>{q.difficulty}</span>
-                                          {isCurrent && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">Active</span>}
-                                          {isCurrent && awaitingAnswer && <span className="text-[9px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-semibold">Answering...</span>}
+                                          {isCurrent && (
+                                            <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">Active</span>
+                                          )}
+                                          {isCurrent && awaitingAnswer && (
+                                            <span className="text-[9px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-semibold">Answering...</span>
+                                          )}
                                         </div>
-                                        <p className="text-xs text-gray-700 leading-relaxed line-clamp-2">{q.questionText}</p>
+                                        <p className="text-xs text-gray-700 leading-relaxed line-clamp-2">
+                                          {q.questionText}
+                                        </p>
                                       </div>
 
                                       {isAnswered ? (
@@ -1026,14 +1076,14 @@ export default function InterviewRoom() {
                                         <p className="text-[10px] text-gray-600 leading-relaxed">{eval_.feedback}</p>
                                         {eval_.missing && <p className="text-[10px] text-red-500 mt-1">Missing: {eval_.missing}</p>}
                                         <span className={`text-[9px] font-bold mt-1 block ${
-                                          eval_.recommendation === "Strong"  ? "text-green-600"
+                                          eval_.recommendation === "Strong"   ? "text-green-600"
                                           : eval_.recommendation === "Average" ? "text-yellow-600"
                                           : "text-red-600"
                                         }`}>{eval_.recommendation}</span>
                                       </div>
                                     )}
                                   </div>
-                                );
+                                )
                               })}
                             </div>
 
@@ -1050,8 +1100,7 @@ export default function InterviewRoom() {
                                         : leetcodeElapsed > 600  ? "bg-yellow-100 text-yellow-600"
                                         : "bg-green-100 text-green-600"
                                       }`}>
-                                        <Timer size={9} />
-                                        {formatElapsed(leetcodeElapsed)}
+                                        <Timer size={9} /> {formatElapsed(leetcodeElapsed)}
                                       </div>
                                     )}
                                     {codingComplete && (
@@ -1063,7 +1112,7 @@ export default function InterviewRoom() {
                                 </div>
 
                                 <div className="p-3 space-y-2">
-                                  {leetcodeQs.map((q) => (
+                                  {leetcodeQs.map(q => (
                                     <div key={q.id} className="rounded-xl border border-orange-100 bg-orange-50/30 p-3">
                                       <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                                         <span className="text-[9px] font-bold bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full">LeetCode</span>
@@ -1084,8 +1133,7 @@ export default function InterviewRoom() {
                                       onClick={openCodeEditor}
                                       className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-2"
                                     >
-                                      <Code2 size={13} />
-                                      Open Code Editor for Developer
+                                      <Code2 size={13} /> Open Code Editor for Developer
                                     </button>
                                     <p className="text-[10px] text-gray-400 text-center mt-2">
                                       Embedded — video call stays active
@@ -1145,7 +1193,6 @@ export default function InterviewRoom() {
 
                   {!isHR && (
                     <div className="flex flex-col flex-1 overflow-hidden">
-
                       {!qaStarted && !currentQuestion && (
                         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                           <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -1164,7 +1211,7 @@ export default function InterviewRoom() {
                             </span>
                             {timeLeft > 0 && (
                               <div className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
-                                timeLeft <= 30  ? "bg-red-100 text-red-600"
+                                timeLeft <= 30   ? "bg-red-100 text-red-600"
                                 : timeLeft <= 60 ? "bg-yellow-100 text-yellow-600"
                                 : "bg-green-100 text-green-600"
                               }`}>
@@ -1173,18 +1220,15 @@ export default function InterviewRoom() {
                               </div>
                             )}
                           </div>
-
                           <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 mb-4">
                             <p className="text-sm text-gray-800 leading-relaxed">{currentQuestion.questionText}</p>
                           </div>
-
                           <textarea
                             value={devAnswer}
-                            onChange={(e) => setDevAnswer(e.target.value)}
+                            onChange={e => setDevAnswer(e.target.value)}
                             placeholder="Type your answer here..."
                             className="flex-1 bg-gray-50 text-gray-800 text-sm placeholder-gray-400 rounded-xl p-3 outline-none border border-gray-100 focus:border-blue-300 resize-none min-h-[120px]"
                           />
-
                           <button
                             onClick={submitAnswer}
                             disabled={!devAnswer.trim() || isSubmitting}
@@ -1210,6 +1254,7 @@ export default function InterviewRoom() {
                 </div>
               )}
 
+              {/* ── NOTES TAB (HR only) ── */}
               {activePanel === "notes" && isHR && (
                 <div className="flex flex-col flex-1 overflow-hidden p-4">
                   <div className="flex items-center justify-between mb-3 shrink-0">
@@ -1220,7 +1265,7 @@ export default function InterviewRoom() {
                       className="text-[10px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
                     >
                       {isSaving
-                        ? <>`<Loader2 size={10} className="animate-spin" /> Saving...</>
+                        ? <><Loader2 size={10} className="animate-spin" /> Saving...</>
                         : savedNote
                         ? <><CheckCircle2 size={10} className="text-green-500" /> Saved!</>
                         : "Save Notes"
@@ -1229,7 +1274,7 @@ export default function InterviewRoom() {
                   </div>
                   <textarea
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={e => setNotes(e.target.value)}
                     placeholder={`Write notes about developer performance...\n\nExamples:\n• Strong React knowledge\n• Struggled with async/await\n• Good communication`}
                     className="flex-1 bg-gray-50 text-gray-800 text-xs placeholder-gray-400 rounded-xl p-3 outline-none border border-gray-100 focus:border-blue-300 resize-none leading-relaxed"
                   />
@@ -1261,39 +1306,51 @@ export default function InterviewRoom() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button onClick={toggleMute} title={isMuted ? "Unmute" : "Mute"}
+          <button
+            onClick={toggleMute}
+            title={isMuted ? "Unmute" : "Mute"}
             className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 border ${
               isMuted ? "bg-red-50 border-red-200 text-red-500 hover:bg-red-100"
               : "bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100"
-            }`}>
+            }`}
+          >
             {isMuted ? <MicOff size={17} /> : <Mic size={17} />}
           </button>
 
-          <button onClick={toggleVideo} title={isVideoOff ? "Turn on camera" : "Turn off camera"}
+          <button
+            onClick={toggleVideo}
+            title={isVideoOff ? "Turn on camera" : "Turn off camera"}
             className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 border ${
               isVideoOff ? "bg-red-50 border-red-200 text-red-500 hover:bg-red-100"
               : "bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100"
-            }`}>
+            }`}
+          >
             {isVideoOff ? <VideoOff size={17} /> : <Video size={17} />}
           </button>
 
-          <button onClick={toggleScreenShare} title={isSharing ? "Stop sharing" : "Share screen"}
+          <button
+            onClick={toggleScreenShare}
+            title={isSharing ? "Stop sharing" : "Share screen"}
             className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 border ${
               isSharing ? "bg-green-50 border-green-200 text-green-600 hover:bg-green-100"
               : "bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100"
-            }`}>
+            }`}
+          >
             <Monitor size={17} />
           </button>
 
-          <button onClick={handleEndCallClick} title="End call"
-            className="w-11 h-11 bg-red-500 hover:bg-red-600 rounded-xl flex items-center justify-center transition-colors text-white shadow-sm shadow-red-200/50">
+          <button
+            onClick={handleEndCallClick}
+            title="End call"
+            className="w-11 h-11 bg-red-500 hover:bg-red-600 rounded-xl flex items-center justify-center transition-colors text-white shadow-sm shadow-red-200/50"
+          >
             <PhoneOff size={17} />
           </button>
         </div>
 
         <div className="w-48 flex justify-end">
           <button
-            onClick={() => setShowChat(!showChat)}
+            onClick={() => setShowChat(p => !p)}
             className={`flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all duration-200 border ${
               showChat
                 ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-200/50"
@@ -1306,5 +1363,5 @@ export default function InterviewRoom() {
         </div>
       </div>
     </div>
-  );
+  )
 }
