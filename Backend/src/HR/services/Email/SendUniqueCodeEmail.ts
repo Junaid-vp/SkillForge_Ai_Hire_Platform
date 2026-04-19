@@ -27,11 +27,11 @@ export const sendUniqueCode = async (
     const formattedDate = isNaN(dateObj.getTime())
       ? interviewDate
       : dateObj.toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
 
     const formatTime = (t: string) => {
       if (!t?.includes(":")) return t;

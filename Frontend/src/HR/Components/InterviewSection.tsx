@@ -217,7 +217,6 @@ export function InterviewSection({ interview, task }: { interview: Interview | n
       if (res.data.feedback) {
         setFeedback(res.data.feedback)
       } else {
-        toast("No feedback generated yet", { icon: "ℹ️" })
       }
     } catch {
       toast.error("Failed to load feedback")

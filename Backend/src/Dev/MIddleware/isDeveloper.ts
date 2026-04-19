@@ -39,12 +39,6 @@ export const isDeveloper = async (
 
     req.devId = decode.Id
 
-    if (!task) {
-      return next()
-    }
-
-
-
     if (interview.status === "SUSPENDED") {
       return res.status(403).json({
         Message: "Interview Suspended"
@@ -53,8 +47,12 @@ export const isDeveloper = async (
 
     if (interview.status === "CANCELLED") {
       return res.status(403).json({
-        Message: "Interview cancelled"
+        Message: "Interview Cancelled"
       })
+    }
+
+    if (!task) {
+      return next()
     }
 
     if (interview.status === "COMPLETED") {
@@ -64,13 +62,13 @@ export const isDeveloper = async (
 
       if (task?.status === "SUBMITTED") {
         return res.status(403).json({
-          Message: "Task already submitted"
+          Message: "Task already Submitted"
         })
       }
 
       if (task?.status === "EXPIRED") {
         return res.status(403).json({
-          Message: "Task deadline passed"
+          Message: "Task deadline Passed"
         })
       }
 

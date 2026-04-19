@@ -86,8 +86,9 @@ model Interview {
   scheduledAt          DateTime?
   createdAt            DateTime        @default(now())
   feedback             Json?
-  feedbackGeneratedAt  DateTime?
-   reminder10Sent       Boolean         @default(false)
+    feedbackGeneratedAt  DateTime?
+    reportSent           Boolean         @default(false)
+    reminder10Sent       Boolean         @default(false)
   // Relations
   hr        HR        @relation(fields: [hrId], references: [id])
   developer Developer @relation(fields: [developerId], references: [id])

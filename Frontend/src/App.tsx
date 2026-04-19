@@ -9,7 +9,7 @@ function App() {
   return (
     <>
   <Toaster
-  position="top-left"
+  position="top-right"
   reverseOrder={false}
   gutter={8}
   toastOptions={{

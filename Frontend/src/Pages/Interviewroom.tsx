@@ -10,7 +10,7 @@ import {
   Mic, MicOff, Video, VideoOff, Monitor, PhoneOff,
   Send, MessageSquare, Sparkles, Brain, Code2, FileText,
   ChevronRight, CheckCircle2, Loader2, Star, Timer,
-  AlertTriangle, ShieldX,
+  AlertTriangle, ShieldX, ClipboardList, XCircle, Hourglass, Hand, Circle,
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { disconnectSocket, getSocket } from "../Service/socket"
@@ -277,12 +277,14 @@ export default function InterviewRoom() {
           setRemoteSharing(false)
           if (remoteVideoRef.current)  remoteVideoRef.current.srcObject  = null
           if (remoteScreenRef.current) remoteScreenRef.current.srcObject = null
-          toast(isHR ? "Developer has disconnected." : "HR has disconnected.", { icon: "⚠️" })
+          toast(isHR ? "Developer has disconnected." : "HR has disconnected.", { 
+            icon: <AlertTriangle size={16} className="text-amber-500" /> 
+          })
         })
 
         socket.on("end-call-explicitly", () => {
           toast(isHR ? "Developer ended the call." : "HR has ended the interview. Redirecting...", {
-            icon: "👋", duration: 3000,
+            icon: <Hand size={16} className="text-blue-500" />, duration: 3000,
           })
           setTimeout(() => {
             streamRef.current?.getTracks().forEach(t => t.stop())
@@ -330,7 +332,8 @@ export default function InterviewRoom() {
     socket.on("qa-started", () => {
       setQaStarted(true)
       setActivePanel("qa")
-      toast("📋 Q&A session started!", {
+      toast("Q&A session started!", {
+        icon: <ClipboardList size={16} className="text-blue-500" />,
         style: { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" },
       })
     })
@@ -348,7 +351,8 @@ export default function InterviewRoom() {
     })
 
     socket.on("answer-submitted", () => {
-      toast("✅ Developer submitted — AI evaluating...", {
+      toast("Developer submitted — AI evaluating...", {
+        icon: <CheckCircle2 size={16} className="text-green-500" />,
         style: { background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" },
       })
     })
@@ -370,7 +374,10 @@ export default function InterviewRoom() {
     socket.on("coding-complete", () => {
       setCodingComplete(true)
       if (isHR) {
-        toast("💻 Developer finished all coding problems!", { icon: "💻", duration: 5000 })
+        toast("Developer finished all coding problems!", { 
+          icon: <Code2 size={16} className="text-purple-500" />, 
+          duration: 5000 
+        })
         if (leetcodeTimerRef.current) clearInterval(leetcodeTimerRef.current)
         setLeetcodeStartTime(null)
       }
@@ -378,9 +385,16 @@ export default function InterviewRoom() {
 
     socket.on("code-result", (data: any) => {
       if (isHR) setCodeResults(prev => [data, ...prev].slice(0, 10))
-      toast(`💻 ${data.language}: ${data.status}`, {
-        icon:     data.status === "Accepted" ? "✅" : "❌",
+      toast(`${data.language}: ${data.status}`, {
+        icon: data.status === "Accepted" 
+          ? <CheckCircle2 size={16} className="text-green-500" /> 
+          : <XCircle size={16} className="text-red-500" />,
         duration: 4000,
+        style: { 
+          background: data.status === "Accepted" ? "#f0fdf4" : "#fef2f2",
+          color: data.status === "Accepted" ? "#166534" : "#991b1b",
+          border: `1px solid ${data.status === "Accepted" ? "#bbf7d0" : "#fecaca"}`
+        },
       })
     })
 
@@ -486,7 +500,8 @@ export default function InterviewRoom() {
           } else {
             devAnswerRef.current = "No answer provided"
             submitAnswer()
-            toast("⏰ Time's up!", {
+            toast("Time's up!", {
+              icon: <Timer size={16} className="text-red-500" />,
               style: { background: "#fef2f2", color: "#991b1b", border: "1px solid #fecaca" },
             })
           }
@@ -539,7 +554,8 @@ export default function InterviewRoom() {
     const q = techQuestions[index]
     if (!q) return
     if (index > currentQIndex && qaStarted && awaitingAnswer) {
-      toast("⏳ Wait for developer to answer first", {
+      toast("Wait for developer to answer first", {
+        icon: <Hourglass size={16} className="text-amber-500" />,
         style: { background: "#fffbeb", color: "#92400e", border: "1px solid #fde68a" },
       })
       return
@@ -582,7 +598,7 @@ export default function InterviewRoom() {
     getSocket().emit("open-code-editor", { interviewId, questions: questionsPayload })
     setLeetcodeStartTime(new Date())
     setLeetcodeElapsed(0)
-    toast("💻 Code editor opened for developer", { icon: "💻" })
+    toast("Code editor opened for developer", { icon: <Monitor size={16} className="text-blue-500" /> })
   }
 
   const handleCodingComplete = useCallback(() => {
@@ -789,7 +805,10 @@ export default function InterviewRoom() {
               ? "bg-green-50 text-green-600 border-green-200"
               : "bg-yellow-50 text-yellow-600 border-yellow-200"
           }`}>
-            {connected ? "● Connected" : isHR ? "● Waiting for developer..." : "● Waiting for HR..."}
+            <span className="flex items-center gap-1.5 leading-none">
+              <Circle size={8} fill={connected ? "#10b981" : "#f59e0b"} className={connected ? "text-emerald-500" : "text-amber-500"} />
+              {connected ? "Connected" : isHR ? "Waiting for developer..." : "Waiting for HR..."}
+            </span>
           </div>
         </div>
       </header>
@@ -885,7 +904,8 @@ export default function InterviewRoom() {
             )}
             {connected && !remoteSharing && !isSharing && (
               <div className="absolute top-3 right-3 bg-green-50 border border-green-200 text-green-600 text-[11px] font-semibold px-3 py-1.5 rounded-full z-10">
-                ● Connected
+                <Circle size={8} fill="#10b981" className="text-emerald-500" />
+                Connected
               </div>
             )}
           </div>
@@ -1144,7 +1164,9 @@ export default function InterviewRoom() {
                                 {leetcodeStartTime && !codingComplete && (
                                   <div className="p-4 border-t border-gray-100">
                                     <div className="bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 text-center">
-                                      <p className="text-xs font-semibold text-purple-700">💻 Developer is coding</p>
+                                      <p className="text-xs font-semibold text-purple-700 flex items-center justify-center gap-2">
+                    <Monitor size={14} /> Developer is coding
+                  </p>
                                       <p className="text-[10px] text-purple-500 mt-0.5">Video stays connected</p>
                                     </div>
                                   </div>

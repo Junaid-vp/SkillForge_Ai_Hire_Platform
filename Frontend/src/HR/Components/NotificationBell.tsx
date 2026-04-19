@@ -50,20 +50,19 @@ export default function NotificationBell({ hrId }: Props) {
     // Join HR personal socket room
     socket.emit("join-hr-notification", hrId)
 
-
-
     socket.on("notification", (notification: Notification & { silent?: boolean }) => {
       setNotifications(prev => [notification, ...prev])
       setUnreadCount(prev => prev + 1)
 
-    if (notification.silent) return
+      if (notification.silent) return
       toast(() => (
         <div className="flex flex-col gap-1">
           <p className="font-bold text-xs">{notification.title}</p>
           <p className="text-[11px] text-gray-500">{notification.message}</p>
         </div>
-      ), { icon: '🔔' })
+      ))
     })
+
     return () => {
       socket.off("notification")
     }

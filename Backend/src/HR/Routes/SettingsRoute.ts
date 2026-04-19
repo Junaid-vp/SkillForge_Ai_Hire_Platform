@@ -1,12 +1,13 @@
 import express, { Router } from "express";
 import isHr from "../Middleware/isHr.js";
-import { changePassword, GetSpecificHrDetails, passCodeVarifyOtpResend, passwordCodeVarification, updateHrDetails } from "../Controller/SettingsController.js";
+import { changePassword, GetSpecificHrDetails, passCodeVarifyOtpResend, passwordCodeVarification, updateHrDetails, updateNotificationSettings } from "../Controller/SettingsController.js";
 import Validate from "../Middleware/Validate.js";
 import { HrUpdationValidation } from "../Validator/HrUpdateValidation.js";
 
 const route :Router = express.Router()
 
 route.get("/hrSpecificDetails",isHr,GetSpecificHrDetails)
+route.patch("/notifications", isHr, updateNotificationSettings)
 route.post('/update',Validate(HrUpdationValidation),isHr,updateHrDetails)
 route.post('/passChange',isHr,changePassword)
 route.post('/validationChangepass',isHr,passwordCodeVarification)

@@ -4,7 +4,7 @@ import SignUp from "./HR/Authentication/SignUp";
 import RollSelection from "./Pages/RollSelection";
 import Login from "./HR/Authentication/Login";
 import Dashboard from "./HR/Pages/Dashboard";
-import DashboardLayout from "./HR/Components/DashBoardLayort";
+import DashboardLayout from "./HR/Components/DashboardLayout";
 import CreateInterview from "./HR/Pages/CreateInterview";
 import DeveloperList from "./HR/Pages/DeveloperList";
 import ScheduledInterview from "./HR/Pages/SheduledInterview";
@@ -18,7 +18,13 @@ import DeveloperTotalDetails from "./HR/Pages/DeveloperTotalDetails";
 import UpgradePage from "./HR/Pages/Upgradepage";
 import InterviewRoom from "./Pages/Interviewroom";
 import NotificationPage from "./HR/Pages/NotificationPage";
-import { DevProtectedRoute, HrProtectedRoute, PublicOnlyRoute } from "./Context/ProtectedRoutes";
+import {
+  DevProtectedRoute,
+  HrProtectedRoute,
+  PublicOnlyRoute,
+} from "./Context/ProtectedRoutes";
+import ReportPage from "./HR/Pages/ReportPage";
+
 
 
 export const router = createBrowserRouter([
@@ -102,6 +108,7 @@ export const router = createBrowserRouter([
             path: "/dashboard/notifications",
             element: <NotificationPage />,
           },
+          { path: "/dashboard/reports", element: <ReportPage /> },
         ],
       },
       {
@@ -118,11 +125,10 @@ export const router = createBrowserRouter([
         element: <DevDashBoard />,
       },
       {
-        path:"/DevInterviewRoom/:interviewId",
-        element:<InterviewRoom/>
+        path: "/DevInterviewRoom/:interviewId",
+        element: <InterviewRoom />,
         // element:<InterviewRoom_Index/>
       },
     ],
   },
-
 ]);

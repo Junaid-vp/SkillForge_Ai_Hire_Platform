@@ -39,8 +39,6 @@ export const sendResheduledTime = async (
   const info =   await transporter.sendMail({
       from: `"${companyName ?? 'SkillForge AI'}" <${process.env.EMAIL_USER}>`,
       to: developerEmail,
-      subject: `Interview Rescheduled — ${position} at ${companyName ?? 'SkillForge AI'}`,
-       text: `Your code: ${UniqueCode}`,
       html: `<!DOCTYPE html>
 <html>
 <head>

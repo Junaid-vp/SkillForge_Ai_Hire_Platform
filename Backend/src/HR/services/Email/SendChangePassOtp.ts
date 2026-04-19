@@ -15,7 +15,6 @@ export const sentChangePassOtp = async (email: string, otp: string) => {
    await transporter.sendMail({
   from: `"SkillForge AI" <${process.env.EMAIL_USER}>`,
   to: email,
-  subject: "Confirm Your Password Change — SkillForge AI",
   html: `
     <!DOCTYPE html>
     <html>

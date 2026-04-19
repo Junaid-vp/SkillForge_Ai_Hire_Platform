@@ -106,7 +106,8 @@ export default function EmbeddedCodeEditor({
         if (next <= 0) {
           clearInterval(timerRef.current!)
           setTimerActive(p => ({ ...p, [activeQ]: false }))
-          toast("⏰ Time's up for this problem!", {
+          toast("Time's up for this problem!", {
+            icon: <Timer size={16} className="text-red-500" />,
             style: { background: "#fef2f2", color: "#991b1b", border: "1px solid #fecaca" }
           })
           return { ...prev, [activeQ]: 0 }
@@ -527,7 +528,9 @@ export default function EmbeddedCodeEditor({
           <div className="bg-[#181825] border-t border-white/5 px-4 py-3 flex items-center justify-between shrink-0">
             <div className="text-xs text-white/30">
               {current?.submitted
-                ? "✅ Solution submitted"
+                ? <span className="flex items-center gap-1.5 text-green-400 font-medium">
+                    <CheckCircle2 size={12} /> Solution submitted
+                  </span>
                 : current?.output
                 ? `Last run: ${current.output.status}`
                 : "Run your code first, then submit"

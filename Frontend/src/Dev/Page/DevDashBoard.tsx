@@ -110,7 +110,6 @@ const statusConfig: Record<
     text: "text-red-500",
     icon: <Circle size={9} />,
   },
- 
 };
 
 const difficultyColors: Record<
@@ -510,20 +509,24 @@ function DevDashBoard() {
                               Requirements
                             </p>
                             <div className="space-y-2">
-                              {task.taskLibrary.requirements
-                                .split("|")
-                                .filter((r) => r.trim())
-                                .map((req, i) => (
-                                  <div
-                                    key={i}
-                                    className="flex items-start gap-2"
-                                  >
+                              {(() => {
+                                let reqs: string[] = [];
+                                try {
+                                  const parsed = JSON.parse(task.taskLibrary.requirements);
+                                  reqs = Array.isArray(parsed) ? parsed : [parsed.toString()];
+                                } catch {
+                                  reqs = task.taskLibrary.requirements.split("|").filter(r => r.trim());
+                                }
+                                
+                                return reqs.map((req, i) => (
+                                  <div key={i} className="flex items-start gap-2">
                                     <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
                                     <p className="text-xs text-gray-600 leading-relaxed">
                                       {req.trim()}
                                     </p>
                                   </div>
-                                ))}
+                                ));
+                              })()}
                             </div>
                           </div>
                         )}

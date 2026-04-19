@@ -4,7 +4,7 @@ import { Formik, Form, Field } from "formik";
 import {
   Sparkles, CheckCircle2, Send, User, Building2,
   Globe, Briefcase, X, CreditCard, CalendarDays,
-  Mail, Activity, ArrowUpCircle, XCircle, Loader2,
+  Mail, Activity, ArrowUpCircle, XCircle, Loader2, AlertCircle,
 } from "lucide-react";
 import { api } from "../../Api/Axios";
 import { SettingsValidation } from "../Validation/SettingValidation";
@@ -26,6 +26,9 @@ interface Profile {
   subscription?: {
     status: string;
   };
+  notifInterviews:  boolean;
+  notifSubmissions: boolean;
+  notifProgress:    boolean;
 }
 
 const initialValues = {
@@ -252,8 +255,10 @@ console.log(profile);
                       style={{ width: `${usagePercent}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1.5">
-                    {usagePercent > 80 ? "⚠ Approaching limit" : "Healthy usage"}
+                  <p className="text-[10px] text-gray-400 mt-1.5 flex items-center gap-1.5">
+                    {usagePercent > 80 ? (
+                      <><AlertCircle size={10} className="text-red-500" /> Approaching limit</>
+                    ) : "Healthy usage"}
                   </p>
                 </div>
 
@@ -392,7 +397,23 @@ console.log(profile);
         </Formik>
 
         <ChangePassForm />
-        <Notification />
+        {profile && (
+          <Notification 
+            initialSettings={{
+              interviews:  profile.notifInterviews,
+              submissions: profile.notifSubmissions,
+              progress:    profile.notifProgress
+            }}
+            onUpdate={(newSettings) => {
+              setProfile({
+                ...profile,
+                notifInterviews:  newSettings.interviews,
+                notifSubmissions: newSettings.submissions,
+                notifProgress:    newSettings.progress
+              });
+            }}
+          />
+        )}
       </div>
 
       <CancelSubscriptionModal

@@ -30,7 +30,10 @@ export const GetSpecificHrDetails = async (req: Request, res: Response) => {
       select: {
         status: true,
       }
-    }
+    },
+    notifInterviews: true,
+    notifSubmissions: true,
+    notifProgress: true
       },
     });
 
@@ -221,5 +224,35 @@ export const passCodeVarifyOtpResend = async (req: Request, res: Response) => {
     });
   } catch (e: any) {
     console.log(e.message);
+  }
+};
+
+export const updateNotificationSettings = async (req: Request, res: Response) => {
+  try {
+    const id = req.userId;
+    if (!id) {
+      return res.status(401).json({ Message: "HR not logged in" });
+    }
+
+    const { notifInterviews, notifSubmissions, notifProgress } = req.body;
+
+    await prisma.hR.update({
+      where: { id },
+      data: {
+        notifInterviews,
+        notifSubmissions,
+        notifProgress,
+      },
+    });
+
+    res.status(200).json({
+      Message: "Notification settings updated successfully",
+      Status: "Success",
+    });
+  } catch (e: any) {
+    res.status(500).json({
+      Message: "Server Error",
+      Error: e.message,
+    });
   }
 };

@@ -21,7 +21,7 @@ import { socketHandler } from "./Services/SocketHandle.js";
 import QuestionRoute from "./src/HR/Routes/QuestionRoute.js";
 import CodeRoute from "./src/HR/Routes/codeRoutes.js";
 import NotificationRoute from "./src/HR/Routes/NotificationRoute.js";
-
+import ReportRoute from "./src/HR/Routes/Reportroute.js";
 dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 3005;
@@ -69,6 +69,7 @@ app.use('/api/subscription', SubscriptonRoute)
 app.use('/api/questions', QuestionRoute)
 app.use('/api/code/', CodeRoute)
 app.use('/api/notification', NotificationRoute)
+app.use("/api/report", ReportRoute)
 startCronJobs()
 startRedisServer()
 

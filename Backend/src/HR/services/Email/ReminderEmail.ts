@@ -27,15 +27,15 @@ export const sendInterviewReminderEmail = async ({
   interviewId,
   startTime,
 }: {
-  to:            string;
-  hrName:        string;
+  to: string;
+  hrName: string;
   developerName: string;
   intervalLabel: string;
-  interviewId:   string;
-  startTime:     string;
+  interviewId: string;
+  startTime: string;
 }) => {
   const joinUrl = `${process.env.FRONTEND_URL}/HrInterviewRoom/${interviewId}?role=HR&name=${encodeURIComponent(hrName)}`;
-  const time    = formatTime(startTime);
+  const time = formatTime(startTime);
 
   const html = `
   <div style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
@@ -98,11 +98,11 @@ export const sendInterviewReminderEmail = async ({
                 <p style="margin:0 0 10px 0;font-size:12px;font-weight:700;color:#1e40af;letter-spacing:0.06em;text-transform:uppercase;">Before you join</p>
                 <table cellpadding="0" cellspacing="0">
                   ${[
-                    "Open the interview room a minute early",
-                    "Ensure your camera and microphone are working",
-                    "Questions are generated automatically from candidate's skills",
-                    "You can take notes and view AI scores in real time",
-                  ].map(tip => `
+      "Open the interview room a minute early",
+      "Ensure your camera and microphone are working",
+      "Questions are generated automatically from candidate's skills",
+      "You can take notes and view AI scores in real time",
+    ].map(tip => `
                   <tr>
                     <td style="padding:4px 0;vertical-align:top;">
                       <span style="color:#2563eb;font-size:13px;padding-right:10px;">→</span>
@@ -150,7 +150,7 @@ export const sendInterviewReminderEmail = async ({
 
   try {
     await transporter.sendMail({
-      from:    `"SkillForge AI" <${process.env.EMAIL_USER}>`,
+      from: `"SkillForge AI" <${process.env.EMAIL_USER}>`,
       to,
       subject: `Interview in ${intervalLabel} — ${developerName}`,
       html,
@@ -170,16 +170,16 @@ export const sendDeveloperReminderEmail = async ({
   intervalLabel,
   startTime,
 }: {
-  to:            string;
+  to: string;
   developerName: string;
-  hrName:        string;
-  companyName:   string;
+  hrName: string;
+  companyName: string;
   intervalLabel: string;
-  interviewId:   string;
-  startTime:     string;
+  interviewId: string;
+  startTime: string;
 }) => {
   const dashUrl = `${process.env.FRONTEND_URL}/devDashboard`;
-  const time    = formatTime(startTime);
+  const time = formatTime(startTime);
 
   const html = `
   <div style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
@@ -246,11 +246,11 @@ export const sendDeveloperReminderEmail = async ({
                 <p style="margin:0 0 10px 0;font-size:12px;font-weight:700;color:#15803d;letter-spacing:0.06em;text-transform:uppercase;">What to expect</p>
                 <table cellpadding="0" cellspacing="0">
                   ${[
-                    "Live video interview with camera + microphone",
-                    "AI-generated technical questions based on your skills",
-                    "A timed coding challenge in an embedded code editor",
-                    "Instant AI evaluation — results shared with HR",
-                  ].map(tip => `
+      "Live video interview with camera + microphone",
+      "AI-generated technical questions based on your skills",
+      "A timed coding challenge in an embedded code editor",
+      "Instant AI evaluation — results shared with HR",
+    ].map(tip => `
                   <tr>
                     <td style="padding:4px 0;vertical-align:top;">
                       <span style="color:#16a34a;font-size:13px;padding-right:10px;">✓</span>
@@ -267,11 +267,11 @@ export const sendDeveloperReminderEmail = async ({
                 <p style="margin:0 0 10px 0;font-size:12px;font-weight:700;color:#92400e;letter-spacing:0.06em;text-transform:uppercase;">Quick tips</p>
                 <table cellpadding="0" cellspacing="0">
                   ${[
-                    "Allow camera & microphone when prompted",
-                    "Use a stable internet connection",
-                    "Find a quiet space with good lighting",
-                    "Log in via your developer dashboard link",
-                  ].map(tip => `
+      "Allow camera & microphone when prompted",
+      "Use a stable internet connection",
+      "Find a quiet space with good lighting",
+      "Log in via your developer dashboard link",
+    ].map(tip => `
                   <tr>
                     <td style="padding:4px 0;vertical-align:top;">
                       <span style="color:#d97706;font-size:13px;padding-right:10px;">→</span>
@@ -319,7 +319,7 @@ export const sendDeveloperReminderEmail = async ({
 
   try {
     await transporter.sendMail({
-      from:    `"SkillForge AI" <${process.env.EMAIL_USER}>`,
+      from: `"SkillForge AI" <${process.env.EMAIL_USER}>`,
       to,
       subject: `⏰ Your interview with ${companyName} starts in ${intervalLabel}`,
       html,

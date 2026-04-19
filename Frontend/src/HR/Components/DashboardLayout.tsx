@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
-import { Sparkles, LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, Settings, ChevronLeft, AlignJustify, LogOut, Crown } from 'lucide-react'
+import { Sparkles, LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, Settings, ChevronLeft, AlignJustify, LogOut, Crown, BarChart2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { api } from '../../Api/Axios'
 
@@ -16,7 +16,7 @@ const navItems = [
   { label: 'Developers',         path: '/dashboard/developers',       group: 'Hiring', icon: <Code2 size={15} /> },
   { label: 'Task Library',       path: '/dashboard/task-library',     group: 'Hiring', icon: <BookOpen size={15} /> },
   { label: 'Interview Schedule', path: '/dashboard/schedule',         group: 'Hiring', icon: <CalendarDays size={15} /> },
-  // { label: 'Reports',            path: '/dashboard/reports',          group: 'System', icon: <BarChart2 size={15} /> },
+  { label: 'Reports',            path: '/dashboard/reports',          group: 'System', icon: <BarChart2 size={15} /> },
   { label: 'Settings',           path: '/dashboard/settings',         group: 'System', icon: <Settings size={15} /> },
 ]
 
