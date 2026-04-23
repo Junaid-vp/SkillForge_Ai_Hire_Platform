@@ -39,7 +39,7 @@ model HR {
   createdAt      DateTime @default(now())
   plan           String   @default("free")
   interviewCount Int      @default(0)
-  interviewLimit Int      @default(10)
+  interviewLimit Int      @default(5)
 
   // Relations
   developer   Developer[]
