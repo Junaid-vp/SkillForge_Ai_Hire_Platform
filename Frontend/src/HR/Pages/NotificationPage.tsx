@@ -25,7 +25,7 @@ interface Notification {
 const normalizeType = (type: string) => {
   if (type.startsWith("INTERVIEW")) return "INTERVIEW";
   if (type.startsWith("TASK")) return "TASK";
-  return "SYSTEM";
+ 
 };
 
 export default function NotificationPage() {
@@ -100,7 +100,7 @@ export default function NotificationPage() {
     switch (type) {
       case "INTERVIEW": return <CalendarDays size={14} className="text-blue-500" />;
       case "TASK": return <MessageSquare size={14} className="text-green-500" />;
-      case "SYSTEM": return <ShieldAlert size={14} className="text-yellow-500" />;
+     
       default: return <Bell size={14} className="text-gray-400" />;
     }
   };
@@ -155,7 +155,7 @@ export default function NotificationPage() {
       <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
         {/* Filters */}
         <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 bg-gray-50/30">
-          {["ALL", "INTERVIEW", "TASK", "SYSTEM"].map(filter => (
+          {["ALL", "INTERVIEW", "TASK"].map(filter => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}

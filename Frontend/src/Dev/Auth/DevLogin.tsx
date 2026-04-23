@@ -4,6 +4,7 @@ import { Formik, Form, Field, type FormikHelpers } from "formik";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Sparkles, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
+import { Logo, Bolt } from "../../HR/Components/Icons";
 import toast from 'react-hot-toast';
 import { api } from "../../Api/Axios";
 import DevOtpModal from "../Components/DevOtpModal";
@@ -147,17 +148,7 @@ console.log(res);
         {/* Navbar */}
         <nav className="border-b border-gray-100 bg-white/90 backdrop-blur-md z-50 shrink-0">
           <div className="container mx-auto px-6 h-14 max-w-7xl flex items-center justify-between">
-            <div
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => navigate("/")}
-            >
-              <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="font-bold text-sm tracking-tight">
-                SkillForge <span className="text-blue-600">AI</span>
-              </span>
-            </div>
+            <Logo className="cursor-pointer" onClick={() => navigate("/")} />
             <button
               onClick={() => navigate("/rollselection")}
               className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors"
@@ -177,7 +168,7 @@ console.log(res);
             {/* Header */}
             <div className="text-center mb-4">
               <div className="bg-blue-50 border border-blue-100 px-3 py-1 rounded-full inline-flex items-center gap-1.5 mb-3">
-                <Sparkles className="w-2.5 h-2.5 text-blue-600" />
+                <Bolt className="w-2.5 h-2.5 text-blue-600" />
                 <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-blue-600">
                   Developer
                 </span>

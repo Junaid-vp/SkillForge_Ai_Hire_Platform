@@ -14,6 +14,14 @@ export const createNotification = async (
   silent: boolean = false
 ) => {
   try {
+    // Automatically convert any 24h format times (like "16:03") to 12h format ("4:03 PM") in the message string
+    const formattedMessage = message.replace(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g, (match, h, m) => {
+      let hours = parseInt(h, 10);
+      const ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12 || 12;
+      return `${hours}:${m} ${ampm}`;
+    });
+
     // 1. Fetch HR notification preferences
     const hr = await prisma.hR.findUnique({
       where: { id: hrId },
@@ -46,7 +54,7 @@ export const createNotification = async (
       data: {
         hrId,
         title,
-        message,
+        message: formattedMessage,
         type,
       },
     });

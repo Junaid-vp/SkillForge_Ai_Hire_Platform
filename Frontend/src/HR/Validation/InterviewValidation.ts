@@ -28,4 +28,7 @@ export const InterviewValidation = Yup.object({
 
   interviewTime: Yup.string()
     .required('Interview time is required'),
+
+  skills: Yup.string()
+    .required('Skills are required to evaluate the candidate'),
 });

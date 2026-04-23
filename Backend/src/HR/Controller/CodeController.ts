@@ -124,9 +124,35 @@ export const runCode = async (req: Request, res: Response) => {
 export const submitCodeAnswer = async (req: Request, res: Response) => {
   try {
     const { questionId, interviewId, code, language, output, codeStatus, runCount } = req.body
+    const devId = req.devId
  
     if (!questionId || !interviewId || !code || !language) {
       return res.status(400).json({ Message: "questionId, interviewId, code, language required" })
+    }
+    if (!devId) {
+      return res.status(401).json({ Message: "Unauthorized" })
+    }
+
+    const question = await prisma.question.findUnique({
+      where: { id: questionId },
+      select: {
+        interviewId: true,
+        interview: {
+          select: {
+            developerId: true,
+          },
+        },
+      },
+    })
+
+    if (!question) {
+      return res.status(404).json({ Message: "Question not found" })
+    }
+    if (question.interview.developerId !== devId) {
+      return res.status(403).json({ Message: "Forbidden" })
+    }
+    if (question.interviewId !== interviewId) {
+      return res.status(400).json({ Message: "Invalid interviewId for question" })
     }
  
     // Upsert — update if exists, create if not

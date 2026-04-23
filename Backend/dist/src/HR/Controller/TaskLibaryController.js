@@ -5,11 +5,24 @@ export const getAllTask = async (req, res) => {
         if (!id) {
             return res.status(401).json({ Message: "HR not logged in" });
         }
+        const hr = await prisma.hR.findUnique({
+            where: { id }
+        });
+        const isPro = (hr?.interviewCount ?? 0) < (hr?.interviewLimit ?? 5);
+        const { category, isDefault } = req.query;
+        const where = {
+            OR: [{ isDefault: true }, { hrId: id }],
+        };
+        if (category && category !== "ALL") {
+            where.category = category;
+        }
+        if (isDefault !== undefined) {
+            where.isDefault = isDefault === "true";
+        }
         const data = await prisma.taskLibrary.findMany({
-            where: {
-                OR: [{ isDefault: true }, { hrId: id }],
-            },
+            where,
             orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+            ...(isPro ? {} : { take: 10 }),
         });
         if (data.length === 0) {
             return res.status(200).json({
@@ -146,6 +159,32 @@ export const DeleteTaskLibary = async (req, res) => {
         });
         res.status(200).json({
             Message: "Task deleted successfully",
+            status: "success",
+        });
+    }
+    catch (e) {
+        res.status(500).json({ Message: "Server Error", Error: e.message });
+    }
+};
+export const getTaskCategories = async (req, res) => {
+    try {
+        const id = req.userId;
+        if (!id) {
+            return res.status(401).json({ Message: "HR not logged in" });
+        }
+        // Get unique categories for default tasks and tasks belonging to this HR
+        const categories = await prisma.taskLibrary.findMany({
+            where: {
+                OR: [{ isDefault: true }, { hrId: id }],
+            },
+            select: {
+                category: true,
+            },
+            distinct: ["category"],
+        });
+        const uniqueCategories = categories.map((c) => c.category).filter(Boolean);
+        res.status(200).json({
+            data: uniqueCategories,
             status: "success",
         });
     }

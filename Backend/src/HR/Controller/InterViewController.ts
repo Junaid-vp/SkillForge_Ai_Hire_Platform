@@ -76,6 +76,10 @@ export const sheduleInterview = async (req: Request, res: Response) => {
 
     }: DeveloperDetails = req.body;
 
+    if (!skills || (typeof skills === "string" && skills.trim() === "") || (Array.isArray(skills) && skills.length === 0)) {
+      return res.status(400).json({ Message: "Skills are required" });
+    }
+
     const Code = await redis.get(`Unique:${uniqueCode}`);
 
     if (Code !== uniqueCode) {
@@ -85,6 +89,13 @@ export const sheduleInterview = async (req: Request, res: Response) => {
 
 
     await redis.del(`Unique:${uniqueCode}`);
+
+    let parsedSkills: string[] = [];
+    if (typeof skills === "string") {
+      parsedSkills = skills.split(",").map((s) => s.trim()).filter(Boolean);
+    } else if (Array.isArray(skills)) {
+      parsedSkills = skills.map((s) => String(s).trim()).filter(Boolean);
+    }
 
     const dev = await prisma.developer.create({
       data: {
@@ -100,7 +111,7 @@ export const sheduleInterview = async (req: Request, res: Response) => {
         uniqueCode,
         resumeUrl: resumeUrl ?? null,
         aiSummary: aiSummary ?? null,
-        skills: skills ? JSON.stringify(skills) : null,
+        skills: JSON.stringify(parsedSkills),
       },
     });
 

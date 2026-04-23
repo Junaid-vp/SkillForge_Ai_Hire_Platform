@@ -27,6 +27,12 @@ function PassConformationOtpModal({ isOpen, onConfirm, onClose, isVerifying, isI
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputs.current[index - 1]?.focus();
+    }
+  };
+
   useEffect(() => {
     const code = otp.join("");
     if (code.length === OTP_LENGTH && otp.every(d => d !== "")) onConfirm(code);
@@ -103,6 +109,7 @@ function PassConformationOtpModal({ isOpen, onConfirm, onClose, isVerifying, isI
                 maxLength={1}
                 value={digit}
                 onChange={(e) => handleChange(e.target.value, i)}
+                onKeyDown={(e) => handleKeyDown(e, i)}
                 className={`w-11 text-center rounded-xl border transition-all duration-150 focus:outline-none focus:ring-2
                   ${isInvalid
                     ? 'border-red-300 bg-red-50 text-red-500 focus:ring-red-200 focus:border-red-400'

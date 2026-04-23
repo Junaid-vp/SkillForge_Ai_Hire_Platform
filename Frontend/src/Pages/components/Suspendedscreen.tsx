@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ShieldX, Sparkles } from "lucide-react"
+import { ShieldX, Mail, MessageCircle, ArrowLeft, ExternalLink, Sparkles } from "lucide-react"
+import { Logo } from "../../HR/Components/Icons"
 import { api } from "../../Api/Axios"
 import { useAuth } from "../../Context/AuthContext"
 
@@ -50,14 +51,7 @@ const {clearAuth}= useAuth()
         </div>
 
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center">
-            <Sparkles size={10} className="text-white" />
-          </div>
-          <span className="text-xs font-bold text-gray-500 tracking-tight">
-            SkillForge AI
-          </span>
-        </div>
+        <Logo className="justify-center mb-6" />
 
         {/* Title */}
         <h1 className="text-2xl font-black text-white mb-3">

@@ -14,11 +14,17 @@ export const getNotifications = async (req, res) => {
 };
 export const markAsRead = async (req, res) => {
     try {
+        const hrId = req.userId;
+        if (!hrId)
+            return res.status(401).json({ Message: "Unauthorized" });
         const { id } = req.params;
-        await prisma.notification.update({
-            where: { id: id },
+        const result = await prisma.notification.updateMany({
+            where: { id: id, hrId },
             data: { isRead: true },
         });
+        if (result.count === 0) {
+            return res.status(404).json({ Message: "Notification not found" });
+        }
         res.status(200).json({ Message: "Notification marked as read" });
     }
     catch (error) {
@@ -39,10 +45,16 @@ export const markAllAsRead = async (req, res) => {
 };
 export const deleteNotification = async (req, res) => {
     try {
+        const hrId = req.userId;
+        if (!hrId)
+            return res.status(401).json({ Message: "Unauthorized" });
         const { id } = req.params;
-        await prisma.notification.delete({
-            where: { id: id },
+        const result = await prisma.notification.deleteMany({
+            where: { id: id, hrId },
         });
+        if (result.count === 0) {
+            return res.status(404).json({ Message: "Notification not found" });
+        }
         res.status(200).json({ Message: "Notification deleted" });
     }
     catch (error) {

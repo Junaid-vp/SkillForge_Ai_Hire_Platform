@@ -1,5 +1,6 @@
 import express, { Application } from "express";
 import dotenv from "dotenv";
+dotenv.config({ override: false });
 import AuthRoute from "./src/HR/Routes/AuthRoute.js";
 import InterviewRoute from "./src/HR/Routes/InterviewRoute.js"
 import TaskLibaryRoute from "./src/HR/Routes/libarytask.js";
@@ -22,10 +23,21 @@ import QuestionRoute from "./src/HR/Routes/QuestionRoute.js";
 import CodeRoute from "./src/HR/Routes/codeRoutes.js";
 import NotificationRoute from "./src/HR/Routes/NotificationRoute.js";
 import ReportRoute from "./src/HR/Routes/Reportroute.js";
+import SystemRoute from "./src/System/Routes/ContactRoute.js";
+import helmet        from "helmet"
+import { aiLimiter } from "./src/HR/Middleware/RateLimit.js";
+import { closeTaskQueue, startTaskWorker } from "./src/HR/services/Taskqueue.js";
+import { prisma } from "./src/HR/Lib/prisma.js";
+
 dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 3005;
 const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").trim();
+const trustProxy = process.env.TRUST_PROXY ?? (process.env.NODE_ENV === "production" ? "1" : "0");
+
+if (trustProxy !== "0") {
+  app.set("trust proxy", trustProxy === "true" ? true : Number(trustProxy) || 1);
+}
 
 
 const httpServer = createServer(app)
@@ -37,9 +49,63 @@ export const io = new Server(httpServer, {
     credentials: true,
   }
 })
-
-
 socketHandler(io)
+
+app.use(helmet({
+
+  //  Disable COEP (Cross-Origin Embedder Policy)
+  // Needed because WebRTC / PeerJS requires cross-origin access for camera, mic, and peer connections
+  crossOriginEmbedderPolicy: false,
+
+  contentSecurityPolicy: {
+    directives: {
+
+      // Default rule for all resources (fallback)
+      // Only allow resources from your own server (same origin)
+      defaultSrc: ["'self'"],
+
+      //  Controls where JavaScript can be loaded from
+      scriptSrc: [
+        "'self'",                // Allow scripts from your own server
+        "'unsafe-inline'",       // Allow inline scripts (needed sometimes, but risky - XSS)
+        "cdn.jsdelivr.net",      // Allow trusted CDN scripts
+        "storage.googleapis.com"//  Allow scripts from Google Cloud Storage
+      ],
+
+      // Controls API calls, WebSockets, and network requests
+      connectSrc: [
+        "'self'",  //  Allow requests to your backend
+        "wss:",    //  Allow secure WebSocket (Socket.IO, PeerJS)
+        "ws:",     //  Allow non-secure WebSocket
+        "https:"   //  Allow HTTPS API calls
+      ],
+
+      //  Controls audio/video sources
+      mediaSrc: [
+        "'self'", // Allow media from your server
+        "blob:"   // Allow media streams (WebRTC camera, mic, screen share)
+      ],
+
+      //  Controls image sources
+      imgSrc: [
+        "'self'",               // Local images
+        "data:",                // Base64 images
+        "blob:",                // Generated images (canvas, etc.)
+        "res.cloudinary.com"    // Cloudinary hosted images
+      ],
+
+      //  Controls iframe usage
+      frameSrc: [
+        "'none'" // Completely block all iframes (prevents clickjacking attacks)
+      ],
+    }
+  }
+}))
+
+
+
+
+
 
 
 app.use(
@@ -57,21 +123,47 @@ app.post('/api/subscription/webhook', express.raw({ type: "application/json" }),
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
-app.use("/api/auth/", AuthRoute);
-app.use('/api/interview/', InterviewRoute)
+app.use("/api/auth", AuthRoute);
+app.use('/api/interview', InterviewRoute)
 app.use('/api/tasklibary', TaskLibaryRoute)
-app.use('/api/dev/', DevAuthroute)
+app.use('/api/dev', DevAuthroute)
 app.use('/api/dash/dev', DevDashRoute)
-app.use('/api/setting/', SettingRoute)
+app.use('/api/setting', SettingRoute)
 app.use('/api/task/', TaskRoute)
-app.use('/api/resume/', ResumeRoute)
+app.use('/api/resume/',aiLimiter,ResumeRoute)
 app.use('/api/subscription', SubscriptonRoute)
 app.use('/api/questions', QuestionRoute)
 app.use('/api/code/', CodeRoute)
 app.use('/api/notification', NotificationRoute)
 app.use("/api/report", ReportRoute)
+app.use("/api/system", SystemRoute)
 startCronJobs()
 startRedisServer()
+
+
+// ── Database Connection Check ─────────────────
+prisma.$connect()
+  .then(() => console.log("✅ Database connected successfully within Docker"))
+  .catch((err) => console.error("❌ Database connection failed within Docker:", err.message));
+
+startTaskWorker()
+
+// ── Health Check ─────────────────────────────
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+ 
+// ── Graceful shutdown ─────────────────────────
+process.on("SIGTERM", async () => {
+  console.log("SIGTERM — shutting down")
+  await closeTaskQueue()
+  process.exit(0)
+})
+process.on("SIGINT", async () => {
+  console.log("SIGINT — shutting down")
+  await closeTaskQueue()
+  process.exit(0)
+})
 
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

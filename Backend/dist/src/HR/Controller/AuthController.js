@@ -5,6 +5,7 @@ import { sentOTPemail } from "../services/Email/sendEmailOTP.js";
 import { tokenGenerator } from "../services/tokenGeneratior.js";
 import { redis } from "../Lib/redis.js";
 import { authCookieOptions } from "../Lib/cookieOptions.js";
+import jwt from "jsonwebtoken";
 export const HRregisterController = async (req, res) => {
     try {
         const { name, email, companyName, designation, companyWebsite, password, } = req.body;
@@ -24,6 +25,7 @@ export const HRregisterController = async (req, res) => {
                 designation,
                 companyWebsite,
                 password: hashPassword,
+                interviewLimit: 5
             },
         });
         res
@@ -88,7 +90,7 @@ export const otpValidation = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        const { RefreshToken, AccessToken } = tokenGenerator(email, user.id);
+        const { RefreshToken, AccessToken } = await tokenGenerator(email, user.id);
         res
             .status(200)
             .cookie("Access_Token", AccessToken, authCookieOptions)
@@ -125,6 +127,19 @@ export const otpResend = async (req, res) => {
 };
 export const HrLogoutController = async (req, res) => {
     try {
+        const accessToken = req.cookies?.Access_Token;
+        const accessKey = process.env.ACCESS_TOKEN_KEY;
+        if (accessToken && accessKey) {
+            try {
+                const decode = jwt.verify(accessToken, accessKey);
+                if (decode?.Id) {
+                    await redis.del(`refresh:hr:${decode.Id}`);
+                }
+            }
+            catch {
+                // Ignore decode failures on logout.
+            }
+        }
         res
             .clearCookie("Access_Token", authCookieOptions)
             .clearCookie("Refresh_Token", authCookieOptions)
@@ -142,11 +157,14 @@ export const getHrMeController = async (req, res) => {
             where: { id: hrId },
             select: {
                 id: true,
+                plan: true,
                 name: true,
                 email: true,
                 companyName: true,
                 designation: true,
                 companyWebsite: true,
+                interviewCount: true,
+                interviewLimit: true,
             },
         });
         if (!user) {

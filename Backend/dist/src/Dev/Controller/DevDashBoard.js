@@ -13,6 +13,9 @@ export const getDashboard = async (req, res) => {
             },
             include: {
                 interviews: {
+                    orderBy: {
+                        createdAt: "desc",
+                    },
                     include: {
                         hr: {
                             select: {

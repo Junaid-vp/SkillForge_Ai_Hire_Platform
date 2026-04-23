@@ -1,134 +1,114 @@
-import { createBrowserRouter } from "react-router-dom";
-import Home from "./Home/Home";
-import SignUp from "./HR/Authentication/SignUp";
-import RollSelection from "./Pages/RollSelection";
-import Login from "./HR/Authentication/Login";
-import Dashboard from "./HR/Pages/Dashboard";
-import DashboardLayout from "./HR/Components/DashboardLayout";
-import CreateInterview from "./HR/Pages/CreateInterview";
-import DeveloperList from "./HR/Pages/DeveloperList";
-import ScheduledInterview from "./HR/Pages/SheduledInterview";
-import TaskLibraryList from "./HR/Pages/TaskList";
-import TaskLibraryEdit from "./HR/Pages/TaskEdit";
-import TaskPreview from "./HR/Pages/TaskPreview";
-import DevLogin from "./Dev/Auth/DevLogin";
-import DevDashBoard from "./Dev/Page/DevDashBoard";
-import Settings from "./HR/Pages/Settings";
-import DeveloperTotalDetails from "./HR/Pages/DeveloperTotalDetails";
-import UpgradePage from "./HR/Pages/Upgradepage";
-import InterviewRoom from "./Pages/Interviewroom";
-import NotificationPage from "./HR/Pages/NotificationPage";
+// src/router.tsx — Full lazy loading with React.lazy + Suspense
+import { createBrowserRouter } from "react-router-dom"
+import { lazy, Suspense } from "react"
 import {
   DevProtectedRoute,
   HrProtectedRoute,
   PublicOnlyRoute,
-} from "./Context/ProtectedRoutes";
-import ReportPage from "./HR/Pages/ReportPage";
+} from "./Context/ProtectedRoutes"
 
+// ─── Loading fallback ──────────────────────────────────────────────────────────
+function PageLoader() {
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-[3px] border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-gray-400 font-medium">Loading...</p>
+      </div>
+    </div>
+  )
+}
 
+function wrap(element: React.ReactNode) {
+  return <Suspense fallback={<PageLoader />}>{element}</Suspense>
+}
 
+// ─── Public pages ──────────────────────────────────────────────────────────────
+const Home            = lazy(() => import("./Home/Home"))
+const SignUp          = lazy(() => import("./HR/Authentication/SignUp"))
+const Login           = lazy(() => import("./HR/Authentication/Login"))
+const RollSelection   = lazy(() => import("./Pages/RollSelection"))
+const DevLogin        = lazy(() => import("./Dev/Auth/DevLogin"))
+const AboutPage       = lazy(() => import("./Home/Aboutpage"))
+const ContactPage     = lazy(() => import("./Home/Contactpage"))
+const PrivacyPage     = lazy(() => import("./Home/Privacypage"))
+
+// ─── HR Dashboard pages ────────────────────────────────────────────────────────
+const DashboardLayout      = lazy(() => import("./HR/Components/DashboardLayout"))
+const Dashboard            = lazy(() => import("./HR/Pages/Dashboard"))
+const CreateInterview      = lazy(() => import("./HR/Pages/CreateInterview"))
+const DeveloperList        = lazy(() => import("./HR/Pages/DeveloperList"))
+const ScheduledInterview   = lazy(() => import("./HR/Pages/SheduledInterview"))
+const TaskLibraryList      = lazy(() => import("./HR/Pages/TaskList"))
+const TaskLibraryEdit      = lazy(() => import("./HR/Pages/TaskEdit"))
+const TaskPreview          = lazy(() => import("./HR/Pages/TaskPreview"))
+const Settings             = lazy(() => import("./HR/Pages/Settings"))
+const DeveloperTotalDetails= lazy(() => import("./HR/Pages/DeveloperTotalDetails"))
+const UpgradePage          = lazy(() => import("./HR/Pages/Upgradepage"))
+const NotificationPage     = lazy(() => import("./HR/Pages/NotificationPage"))
+const ReportPage           = lazy(() => import("./HR/Pages/ReportPage"))
+
+// ─── Interview Room (shared HR + Dev) ─────────────────────────────────────────
+// Heavy page — Monaco + PeerJS + MediaPipe — benefits most from lazy load
+const InterviewRoom = lazy(() => import("./Pages/Interviewroom"))
+
+// ─── Developer pages ───────────────────────────────────────────────────────────
+const DevDashBoard = lazy(() => import("./Dev/Page/DevDashBoard"))
+
+// ─── Router ────────────────────────────────────────────────────────────────────
 export const router = createBrowserRouter([
+
+  // ── Public routes ────────────────────────────────────────────────────────────
   {
     element: <PublicOnlyRoute />,
     children: [
-      {
-        path: "/",
-        element: <Home />,
-      },
-      {
-        path: "/signup",
-        element: <SignUp />,
-      },
-      {
-        path: "/rollselection",
-        element: <RollSelection />,
-      },
-      {
-        path: "/login",
-        element: <Login />,
-      },
-      {
-        path: "/devLogin",
-        element: <DevLogin />,
-      },
+      { path: "/",             element: wrap(<Home />)          },
+      { path: "/signup",       element: wrap(<SignUp />)        },
+      { path: "/login",        element: wrap(<Login />)         },
+      { path: "/rollselection",element: wrap(<RollSelection />) },
+      { path: "/devLogin",     element: wrap(<DevLogin />)      },
+      { path: "/about",        element: wrap(<AboutPage />)     },
+      { path: "/contact",      element: wrap(<ContactPage />)   },
+      { path: "/privacy",      element: wrap(<PrivacyPage />)   },
     ],
   },
+
+  // ── HR protected routes ───────────────────────────────────────────────────────
   {
     element: <HrProtectedRoute />,
     children: [
       {
         path: "/dashboard",
-        element: <DashboardLayout />,
+        element: wrap(<DashboardLayout />),
         children: [
-          {
-            index: true,
-            element: <Dashboard />,
-          },
-          {
-            path: "/dashboard/create-interview",
-            element: <CreateInterview />,
-          },
-          {
-            path: "/dashboard/developers",
-            element: <DeveloperList />,
-          },
-          {
-            path: "/dashboard/schedule",
-            element: <ScheduledInterview />,
-          },
-          {
-            path: "/dashboard/task-library",
-            element: <TaskLibraryList />,
-          },
-          {
-            path: "/dashboard/task-create",
-            element: <TaskLibraryEdit />,
-          },
-          {
-            path: "/dashboard/task-edit/:id",
-            element: <TaskLibraryEdit />,
-          },
-          {
-            path: "/dashboard/task-preview/:id",
-            element: <TaskPreview />,
-          },
-          {
-            path: "/dashboard/settings",
-            element: <Settings />,
-          },
-          {
-            path: "/dashboard/devFullDetails/:id",
-            element: <DeveloperTotalDetails />,
-          },
-          {
-            path: "/dashboard/upgrade",
-            element: <UpgradePage />,
-          },
-          {
-            path: "/dashboard/notifications",
-            element: <NotificationPage />,
-          },
-          { path: "/dashboard/reports", element: <ReportPage /> },
+          { index: true,                                    element: wrap(<Dashboard />)             },
+          { path: "/dashboard/create-interview",            element: wrap(<CreateInterview />)       },
+          { path: "/dashboard/developers",                  element: wrap(<DeveloperList />)         },
+          { path: "/dashboard/schedule",                    element: wrap(<ScheduledInterview />)    },
+          { path: "/dashboard/task-library",                element: wrap(<TaskLibraryList />)       },
+          { path: "/dashboard/task-create",                 element: wrap(<TaskLibraryEdit />)       },
+          { path: "/dashboard/task-edit/:id",               element: wrap(<TaskLibraryEdit />)       },
+          { path: "/dashboard/task-preview/:id",            element: wrap(<TaskPreview />)           },
+          { path: "/dashboard/settings",                    element: wrap(<Settings />)              },
+          { path: "/dashboard/devFullDetails/:id",          element: wrap(<DeveloperTotalDetails />)},
+          { path: "/dashboard/upgrade",                     element: wrap(<UpgradePage />)           },
+          { path: "/dashboard/notifications",               element: wrap(<NotificationPage />)      },
+          { path: "/dashboard/reports",                     element: wrap(<ReportPage />)            },
         ],
       },
       {
         path: "/dashboard/HrInterviewRoom/:interviewId",
-        element: <InterviewRoom />,
+        element: wrap(<InterviewRoom />),
       },
     ],
   },
+
+  // ── Developer protected routes ────────────────────────────────────────────────
   {
     element: <DevProtectedRoute />,
     children: [
-      {
-        path: "/devDashboard",
-        element: <DevDashBoard />,
-      },
-      {
-        path: "/DevInterviewRoom/:interviewId",
-        element: <InterviewRoom />,
-        // element:<InterviewRoom_Index/>
-      },
+      { path: "/devDashboard",                   element: wrap(<DevDashBoard />)   },
+      { path: "/DevInterviewRoom/:interviewId",  element: wrap(<InterviewRoom />) },
     ],
   },
-]);
+])

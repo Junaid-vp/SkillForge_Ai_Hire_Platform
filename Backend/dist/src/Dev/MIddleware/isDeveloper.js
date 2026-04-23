@@ -13,7 +13,8 @@ export const isDeveloper = async (req, res, next) => {
             throw new Error("JWT key not defined");
         const decode = jwt.verify(token, accessKey);
         const interview = await prisma.interview.findFirst({
-            where: { developerId: decode.Id }
+            where: { developerId: decode.Id },
+            orderBy: { createdAt: "desc" }
         });
         if (!interview) {
             return res.status(400).json({ Message: "No interview found" });
@@ -22,13 +23,18 @@ export const isDeveloper = async (req, res, next) => {
             where: { developerId: decode.Id }
         });
         req.devId = decode.Id;
-        if (!task) {
-            return next();
+        if (interview.status === "SUSPENDED") {
+            return res.status(403).json({
+                Message: "Interview Suspended"
+            });
         }
         if (interview.status === "CANCELLED") {
             return res.status(403).json({
-                Message: "Interview cancelled"
+                Message: "Interview Cancelled"
             });
+        }
+        if (!task) {
+            return next();
         }
         if (interview.status === "COMPLETED") {
             if (task && task.status === "PENDING") {
@@ -36,12 +42,12 @@ export const isDeveloper = async (req, res, next) => {
             }
             if (task?.status === "SUBMITTED") {
                 return res.status(403).json({
-                    Message: "Task already submitted"
+                    Message: "Task already Submitted"
                 });
             }
             if (task?.status === "EXPIRED") {
                 return res.status(403).json({
-                    Message: "Task deadline passed"
+                    Message: "Task deadline Passed"
                 });
             }
             return res.status(403).json({

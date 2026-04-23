@@ -10,6 +10,7 @@ const initialValues = {
   developerEmail: "",
   position: "",
   experience: "",
+  skills: "",
   interviewDate: "",
   interviewTime: "",
 };
@@ -45,8 +46,11 @@ function CreateInterview() {
       formDataObj.append("resume", file);
  
       const res = await api.post("/resume/upload", formDataObj);
+
+   
       const data = res.data.data;
  
+
    
       // ✅ Staggered population for a more "premium" AI feel
       const fields = [
@@ -54,6 +58,7 @@ function CreateInterview() {
         { name: "developerEmail", value: data.developerEmail         ?? "" },
         { name: "position",       value: data.position               ?? "" },
         { name: "experience",     value: data.experience?.toString() ?? "" },
+        { name: "skills",         value: (data.skills ?? []).join(", ") },
       ];
 
       for (let i = 0; i < fields.length; i++) {
@@ -69,8 +74,9 @@ function CreateInterview() {
         skills:    data.skills     ?? [],
       });
  
-    } catch (e) {
-      toast.error('Resume parsing failed. Please fill the fields manually.');
+    } catch (e: any) {
+      const msg = e?.response?.data?.Message || e?.response?.data?.message;
+      toast.error(msg || 'Resume parsing failed. Please fill the fields manually.');
     } finally {
       setIsParsing(false);
     }
@@ -101,7 +107,7 @@ function CreateInterview() {
         // ✅ Clean access — no more optional chaining on File type
         resumeUrl:      resumeData?.resumeUrl ?? null,
         aiSummary:      resumeData?.aiSummary ?? null,
-        skills:         resumeData?.skills    ?? [],
+        skills:         values.skills, // Send explicitly filled skills
       };
  
       await api.post('/interview/schedule', Data);
@@ -344,6 +350,38 @@ function CreateInterview() {
                     )}
                   </div>
                 </div>
+
+                {/* Skills Field */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                      Skills <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative group">
+                      <Field
+                        placeholder="React, Node.js, TypeScript (comma separated)"
+                        name="skills"
+                        type="text"
+                        disabled={isParsing}
+                        className={`${inputClasses} ${isParsing ? 'text-transparent select-none border-blue-200' : ''} ${isParsing ? 'animate-border-glow' : ''} pr-10`}
+                      />
+                      {isParsing && (
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-xl overflow-hidden pointer-events-none">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent animate-shimmer-premium" />
+                        </div>
+                      )}
+                      {resumeData && !isParsing && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
+                          <Sparkles size={10} className="text-blue-500 fill-blue-500/10" />
+                        </div>
+                      )}
+                    </div>
+                    {errors.skills && touched.skills && (
+                      <p className="mt-1 text-[10px] text-red-500">{errors.skills}</p>
+                    )}
+                  </div>
+                </div>
+
               </div>
             </div>
  

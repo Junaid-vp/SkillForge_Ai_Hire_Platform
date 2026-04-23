@@ -44,7 +44,7 @@ export interface DeveloperDetails {
   uniqueCode:     string;
   resumeUrl:      string | null;
   aiSummary:      string | null;
-  skills:         string[] | null;
+  skills:         string | string[] | null;
 }
 
 

@@ -130,7 +130,17 @@ Return ONLY a valid JSON array of exactly 15 objects. No markdown. No extra text
 };
 export const getQuestions = async (req, res) => {
     try {
+        const hrId = req.userId;
+        if (!hrId)
+            return res.status(401).json({ Message: "HR not logged in" });
         const interviewId = req.params.interviewId;
+        const interview = await prisma.interview.findUnique({
+            where: { id: interviewId },
+            select: { hrId: true },
+        });
+        if (!interview || interview.hrId !== hrId) {
+            return res.status(403).json({ Message: "Unauthorized" });
+        }
         const questions = await prisma.question.findMany({
             where: { interviewId },
             include: { answer: true },

@@ -6,13 +6,14 @@ import Validate from "../Middleware/Validate.js";
 import { registerValidate } from "../Validator/Register.js";
 import { LoginValidate } from "../Validator/Login.js";
 import { TokenRegenrator } from "../services/tokenRegenerator.js";
+import { authLimiter } from "../Middleware/RateLimit.js";
 
 const router: Router = Router()
 
-router.post('/hr/register', Validate(registerValidate), HRregisterController)
-router.post('/hr/login', Validate(LoginValidate), HrloginController)
-router.post('/hr/verify-otp', otpValidation)
-router.post('/hr/resent-otp', otpResend)
+router.post('/hr/register', authLimiter, Validate(registerValidate), HRregisterController)
+router.post('/hr/login', authLimiter, Validate(LoginValidate), HrloginController)
+router.post('/hr/verify-otp', authLimiter, otpValidation)
+router.post('/hr/resent-otp', authLimiter, otpResend)
 router.post('/refresh', TokenRegenrator)
 router.post('/hr/logout', HrLogoutController)
 router.get('/hr/me', isHr, getHrMeController)

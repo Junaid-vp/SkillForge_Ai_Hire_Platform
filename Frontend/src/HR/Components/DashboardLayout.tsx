@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { Sparkles, LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, Settings, ChevronLeft, AlignJustify, LogOut, Crown, BarChart2 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -6,6 +6,7 @@ import { api } from '../../Api/Axios'
 
 
 import NotificationBell from './NotificationBell' 
+import { Logo, HexBolt } from './Icons'
 import { useAuth } from '../../Context/AuthContext'
 
  
@@ -29,6 +30,12 @@ export default function DashboardLayout() {
   const { hr, clearAuth } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const activeLabel =
     navItems.find(n => n.path === location.pathname)?.label ??
@@ -57,12 +64,13 @@ export default function DashboardLayout() {
 
         {/* Brand */}
         <div className="flex items-center gap-2.5 px-4 min-h-16 border-b border-gray-100">
-          <div className="w-7 h-7 min-w-[28px] bg-blue-600 rounded-lg flex items-center justify-center">
-            <Sparkles size={13} className="text-white" />
-          </div>
-          <span className={`font-bold text-sm tracking-tight text-gray-900 whitespace-nowrap transition-all duration-200 ${collapsed ? 'opacity-0 w-0' : 'opacity-100'}`}>
-            SkillForge AI
-          </span>
+          {collapsed ? (
+            <div className="w-7 h-7 min-w-[28px] flex items-center justify-center mx-auto">
+              <HexBolt size={28} />
+            </div>
+          ) : (
+            <Logo onClick={() => navigate('/dashboard')} className="cursor-pointer" />
+          )}
         </div>
 
         {/* Nav */}
@@ -152,6 +160,17 @@ export default function DashboardLayout() {
             <h1 className="text-sm font-semibold text-gray-900 tracking-tight">{activeLabel}</h1>
           </div>
 
+          {/* Center — Live Clock */}
+          <div className="hidden md:flex items-center gap-2 text-gray-400">
+            <span className="text-xs font-mono font-semibold text-gray-700 tabular-nums">
+              {now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+            </span>
+            <span className="w-px h-3.5 bg-gray-200" />
+            <span className="text-[10px] font-medium text-gray-400">
+              {now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+
           {/* Right Side: Upgrade + Avatar */}
           <div className="flex items-center gap-4">
             {location.pathname !== "/dashboard/upgrade" && (
@@ -163,42 +182,7 @@ export default function DashboardLayout() {
 
             {/* Notification Bell */}
             {hr?.id && <NotificationBell hrId={hr.id} />}
-
-            {/* Avatar + dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white text-[11px] font-bold tracking-wide hover:bg-gray-800 transition-colors shadow-sm"
-              >
-                HR
-              </button>
-
-            {showDropdown && (
-              <>
-                {/* Backdrop */}
-                <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)} />
-
-                {/* Dropdown */}
-                <div className="absolute right-0 top-11 z-20 w-40 bg-white border border-gray-100 rounded-xl shadow-lg shadow-gray-200/60 overflow-hidden">
-                  <button
-                    onClick={() => { setShowDropdown(false); navigate('/dashboard/settings'); }}
-                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-                  >
-                    <Settings size={13} />
-                    Settings
-                  </button>
-                  <div className="h-px bg-gray-100" />
-                  <button
-                    onClick={() => { setShowDropdown(false); handleLogout(); }}
-                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <LogOut size={13} />
-                    Logout
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          
           </div>
         </header>
 

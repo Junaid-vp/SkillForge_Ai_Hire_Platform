@@ -12,6 +12,13 @@ export const saveNote = async (req, res) => {
                 Message: "interviewId and content required"
             });
         }
+        const interview = await prisma.interview.findUnique({
+            where: { id: interviewId },
+            select: { hrId: true },
+        });
+        if (!interview || interview.hrId !== hrId) {
+            return res.status(403).json({ Message: "Unauthorized" });
+        }
         await prisma.interviewNote.upsert({
             where: { interviewId },
             create: { interviewId, hrId, content },
@@ -37,6 +44,13 @@ export const getNote = async (req, res) => {
             return res.status(401).json({ Message: "Not authorized" });
         }
         const interviewId = req.params.interviewId;
+        const interview = await prisma.interview.findUnique({
+            where: { id: interviewId },
+            select: { hrId: true },
+        });
+        if (!interview || interview.hrId !== hrId) {
+            return res.status(403).json({ Message: "Unauthorized" });
+        }
         const note = await prisma.interviewNote.findUnique({
             where: { interviewId }
         });

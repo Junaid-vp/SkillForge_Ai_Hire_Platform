@@ -10,22 +10,40 @@ export const submitAnswer = async (
   res: Response
 ) => {
   try {
-    const { questionId, answerText, interviewId } = req.body
- console.log(answerText);
+    const { questionId, answerText } = req.body
+    const devId = req.devId
  
     if (!questionId || !answerText) {
       return res.status(400).json({
         Message: "questionId and answerText required"
       })
     }
+    if (!devId) {
+      return res.status(401).json({ Message: "Unauthorized" })
+    }
 
-    // Get question
+    // Get question and enforce ownership through interview relation.
     const question = await prisma.question.findUnique({
-      where: { id: questionId }
+      where: { id: questionId },
+      select: {
+        id: true,
+        interviewId: true,
+        questionText: true,
+        expectedAnswer: true,
+        keywords: true,
+        interview: {
+          select: {
+            developerId: true,
+          },
+        },
+      },
     })
 
     if (!question) {
       return res.status(404).json({ Message: "Question not found" })
+    }
+    if (question.interview.developerId !== devId) {
+      return res.status(403).json({ Message: "Forbidden" })
     }
 
     // Evaluate with Groq AI
@@ -87,7 +105,7 @@ Return ONLY this JSON:
       where: { questionId },
       create: {
         questionId,
-        interviewId,
+        interviewId: question.interviewId,
         answerText,
         score:    evaluation.score,
         feedback: JSON.stringify(evaluation),
@@ -101,7 +119,7 @@ Return ONLY this JSON:
       }
     })
 
-    io.to(interviewId).emit("answer-evaluated", {
+    io.to(question.interviewId).emit("answer-evaluated", {
       questionId,
       score:          evaluation.score,
       feedback:       evaluation.feedback,

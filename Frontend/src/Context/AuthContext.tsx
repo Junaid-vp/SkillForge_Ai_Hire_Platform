@@ -6,6 +6,14 @@ type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 interface HrUser {
   id: string;
+  name: string;
+  email: string;
+  companyName: string;
+  designation?: string;
+  companyWebsite: string;
+  plan: string;
+  interviewCount: number;
+  interviewLimit: number;
 }
 
 interface DevUser {

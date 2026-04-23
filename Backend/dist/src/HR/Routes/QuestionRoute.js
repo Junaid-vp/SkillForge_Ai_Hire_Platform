@@ -1,13 +1,14 @@
 import express from "express";
 import isHr from "../Middleware/isHr.js";
-import { generateQuestions, getQuestions } from "../Controller/QuestionController.js";
+import { generateQuestions, getQuestions, } from "../Controller/QuestionController.js";
 import { submitAnswer } from "../Controller/AnswerController.js";
 import { isDeveloper } from "../../Dev/MIddleware/isDeveloper.js";
 import { getNote, saveNote } from "../Controller/NoteController.js";
+import { aiLimiter } from "../Middleware/RateLimit.js";
 const route = express.Router();
-route.post("/generate", isHr, generateQuestions);
+route.post("/generate", aiLimiter, isHr, generateQuestions);
 route.get("/:interviewId", isHr, getQuestions);
-route.post("/answer/submit", isDeveloper, submitAnswer);
+route.post("/answer/submit", aiLimiter, isDeveloper, submitAnswer);
 route.post("/note/save", isHr, saveNote);
 route.get("/note/:interviewId", isHr, getNote);
 export default route;

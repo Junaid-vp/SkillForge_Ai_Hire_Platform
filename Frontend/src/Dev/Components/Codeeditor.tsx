@@ -7,6 +7,7 @@ import {
   Code2, ChevronDown, Terminal, Clock,
   Cpu, Timer, Send, AlertCircle, Info,
 } from "lucide-react"
+import { Logo } from "../../HR/Components/Icons"
 import { LANGUAGES, DEFAULT_CODE, getLanguagesByCategory } from "../Config/languages"
 import toast from "react-hot-toast"
 import { submitCode, type CodeResult } from "../../Service/judge0"
@@ -250,10 +251,8 @@ export default function EmbeddedCodeEditor({
       {/* ── Top Bar ── */}
       <header className="bg-[#181825] border-b border-white/5 px-5 h-12 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
-            <Code2 size={12} className="text-white" />
-          </div>
-          <span className="text-white font-bold text-sm tracking-tight">Code Editor</span>
+          <Logo />
+          <span className="text-white/20 text-xs font-mono ml-2">| Code Editor</span>
           <span className="text-white/20 text-xs font-mono">#{interviewId.slice(0, 8)}</span>
 
           {/* Problem tabs */}

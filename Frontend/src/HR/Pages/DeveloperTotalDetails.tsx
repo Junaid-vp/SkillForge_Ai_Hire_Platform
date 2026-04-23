@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, AlertCircle, User } from "lucide-react";
+import { Logo } from "../Components/Icons";
 import { api } from "../../Api/Axios";
 import { DeveloperDetailsSection } from "../Components/DeveloperDetailsSection";
 import { AISummarySection } from "../Components/AISummarySection";
@@ -51,12 +52,7 @@ console.log(task);
 
       {/* Page Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-            <User size={12} className="text-white" />
-          </div>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">HR Portal</span>
-        </div>
+          <Logo className="mb-2" size={24} textSize="text-[13px]" subTextSize="text-[7px]" />
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{developer.developerName}</h1>
         <p className="text-sm text-gray-400 mt-1">
           {developer.position} · {developer.experience} yr{developer.experience !== 1 ? "s" : ""} experience

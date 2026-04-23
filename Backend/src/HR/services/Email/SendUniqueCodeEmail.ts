@@ -58,7 +58,7 @@ export const sendUniqueCode = async (
   <tr><td align="center" style="padding-bottom:28px;">
     <table cellpadding="0" cellspacing="0"><tr>
       <td style="background:#1d4ed8;border-radius:8px;padding:8px 11px;">
-        <span style="color:#fff;font-size:13px;font-weight:800;letter-spacing:0.3px;">✨ SkillForge AI</span>
+        <span style="color:#fff;font-size:13px;font-weight:800;letter-spacing:0.3px;">SkillForge AI</span>
     </tr></table>
   </td></tr>
 

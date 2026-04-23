@@ -1,5 +1,6 @@
 import { Briefcase, Code, User, Sparkles, ArrowRight, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Logo, Bolt } from '../HR/Components/Icons';
 
 const roles = [
   {
@@ -47,14 +48,7 @@ function RollSelection() {
       {/* Navbar */}
       <nav className="border-b border-gray-100 bg-white/90 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-6 h-16 max-w-7xl flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-base tracking-tight">
-              SkillForge <span className="text-blue-600">AI</span>
-            </span>
-          </div>
+          <Logo onClick={() => navigate('/')} className="cursor-pointer" />
 
           <button
             onClick={() => navigate('/')}

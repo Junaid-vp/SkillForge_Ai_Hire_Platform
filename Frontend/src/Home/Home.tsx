@@ -1,31 +1,110 @@
-import { Sparkles, Code, BarChart, Target, Users, Layout, Cpu, MessageSquare, Zap, FileText, ArrowRight, Menu, X } from 'lucide-react';
+import { Sparkles, Code, BarChart, Target, Users, Layout, Cpu, MessageSquare, Zap, FileText, ArrowRight, Menu, X, Brain, Shield, Video, Twitter, Github, Linkedin, ChevronDown } from 'lucide-react';
+import { Logo, Bolt } from '../HR/Components/Icons';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+
 
 const howItWorks = [
-  { icon: <Target className="w-4 h-4 text-blue-600" />, title: 'Select a Coding Task', desc: 'HR teams choose from a library of pre-built real-world coding challenges.' },
-  { icon: <Code className="w-4 h-4 text-blue-600" />, title: 'Candidates Submit Code', desc: 'Developers complete the task in VS Code and upload their project files.' },
-  { icon: <Cpu className="w-4 h-4 text-blue-600" />, title: 'AI Analysis & Report', desc: 'AI analyzes code for quality, security, and performance.' },
-  { icon: <Users className="w-4 h-4 text-blue-600" />, title: 'Job Seeker Practice', desc: 'Practice challenges, get AI feedback, and improve for interviews.' },
-]
+  {
+    icon:  <Users   className="w-4 h-4 text-blue-600" />,
+    title: 'Schedule Interview',
+    desc:  'HR uploads developer resume. AI parses it and auto-fills candidate details instantly.',
+  },
+  {
+    icon:  <Video   className="w-4 h-4 text-blue-600" />,
+    title: 'Live Interview Room',
+    desc:  'Video call with screen sharing, live Q&A panel, and real-time AI malpractice detection.',
+  },
+  {
+    icon:  <Brain   className="w-4 h-4 text-blue-600" />,
+    title: 'AI Evaluates Answers',
+    desc:  'Each answer is scored 0–10 by AI with feedback, strengths, and missing points.',
+  },
+  {
+    icon:  <FileText className="w-4 h-4 text-blue-600" />,
+    title: 'Report & Decision',
+    desc:  'Get a full PDF report with scores, HR notes, and AI recommendation to hire or reject.',
+  },
+];
 
 const hrFeatures = [
-  { icon: <Layout className="w-4 h-4 text-gray-700" />, title: 'Structured Interview Platform', desc: 'Invite candidates to complete real-world coding tasks and review submissions.' },
-  { icon: <BarChart className="w-4 h-4 text-gray-700" />, title: 'AI-Powered Insights', desc: 'Detailed evaluation reports with AI analysis of code quality and performance.' },
-  { icon: <Users className="w-4 h-4 text-gray-700" />, title: 'Candidate Dashboard', desc: 'Manage all candidates, submissions, and evaluations in one place.' },
-]
+  {
+    icon:  <Layout className="w-4 h-4 text-gray-700" />,
+    title: 'AI-Powered Interview Room',
+    desc:  'Live video call with Q&A panel, screen sharing, Monaco code editor, and malpractice detection.',
+  },
+  {
+    icon:  <Brain  className="w-4 h-4 text-gray-700" />,
+    title: 'Automatic Question Generation',
+    desc:  'AI generates 15 technical questions based on developer resume, skills, and job position.',
+  },
+  {
+    icon:  <BarChart className="w-4 h-4 text-gray-700" />,
+    title: 'Evaluation Reports',
+    desc:  'Full PDF report with Q&A scores, LeetCode results, task evaluation, and hire/reject recommendation.',
+  },
+  {
+    icon:  <Shield className="w-4 h-4 text-gray-700" />,
+    title: 'AI Malpractice Detection',
+    desc:  'Detects phone use, multiple faces, head movement, and tab switching in real-time during interviews.',
+  },
+];
+
+
+
+const internFeatures = [
+  {
+    icon:  <Target className="w-4 h-4 text-gray-700" />,
+    title: 'AI Evaluates Skills',
+    desc:  'A free self-learning module for freshers and interns to build real interview skills through practice.',
+  },
+  {
+    icon:  <MessageSquare className="w-4 h-4 text-gray-700" />,
+    title: 'Real HR Questions & AI Feedback',
+    desc:  'Access a bank of real HR interview questions. AI evaluates your written answers and provides corrections.',
+  },
+  {
+    icon:  <Code className="w-4 h-4 text-gray-700" />,
+    title: 'Industry LeetCode Questions',
+    desc:  'Practice tackling industry-standard logical LeetCode problems and take-home tasks.',
+  },
+  {
+    icon:  <BarChart className="w-4 h-4 text-gray-700" />,
+    title: 'Identify Areas of Improvement',
+    desc:  'AI continuously tracks your progress and explicitly highlights which specific fields you need to improve to land a job.',
+  },
+];
+
 
 const devFeatures = [
-  { icon: <Code className="w-4 h-4 text-gray-700" />, title: 'Practice Coding Challenges', desc: 'Solve technical interview questions and improve your problem-solving skills.' },
-  { icon: <MessageSquare className="w-4 h-4 text-gray-700" />, title: 'Answer HR Interview Questions', desc: 'Practice common HR questions and submit answers through the platform.' },
-  { icon: <Zap className="w-4 h-4 text-gray-700" />, title: 'AI Feedback on Answers', desc: 'Receive AI-powered feedback and improvement suggestions on your solutions.' },
-  { icon: <FileText className="w-4 h-4 text-gray-700" />, title: 'AI Resume Review', desc: 'Get AI feedback to improve your resume formatting, clarity, and presentation.' },
-]
+  {
+    icon:  <Code        className="w-4 h-4 text-gray-700" />,
+    title: 'Magic Link Access',
+    desc:  'No registration needed. Click the link in your email to join the interview instantly.',
+  },
+  {
+    icon:  <MessageSquare className="w-4 h-4 text-gray-700" />,
+    title: 'Live Q&A Session',
+    desc:  'Answer technical questions one by one with a timer. AI evaluates each answer live.',
+  },
+  {
+    icon:  <Zap        className="w-4 h-4 text-gray-700" />,
+    title: 'In-Browser Code Editor',
+    desc:  'Solve LeetCode-style problems in a Monaco editor with real-time code execution.',
+  },
+  {
+    icon:  <Target     className="w-4 h-4 text-gray-700" />,
+    title: 'Take-Home Task',
+    desc:  'Complete a real-world coding task and submit via  ZIP. AI reviews your code.',
+  },
+];
+
 
 const navLinks = [
   { label: 'How It Works', href: '#how-it-works' },
   { label: 'For HR', href: '#for-hr' },
   { label: 'For Developers', href: '#for-devs' },
+  { label: 'For Job Seekers', href: '#for-interns' },
 ]
 
 function Home() {
@@ -38,17 +117,47 @@ function Home() {
       {/* Navbar */}
       <nav className="border-b border-gray-100 bg-white/90 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-6 h-16 max-w-7xl flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-base tracking-tight">SkillForge <span className="text-blue-600">AI</span></span>
-          </div>
+          <Logo onClick={() => navigate('/')} className="cursor-pointer" />
 
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
-            {navLinks.map(l => (
-              <a key={l.href} href={l.href} className="hover:text-gray-900 transition-colors">{l.label}</a>
-            ))}
+          <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-600">
+            {/* Product Dropdown */}
+            <div className="relative group py-1">
+              <button className="flex items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer outline-none">
+                Product <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-200" />
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full rounded-full"></span>
+              </button>
+              
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="w-40 bg-white border border-gray-100 shadow-xl shadow-gray-200/50 rounded-xl overflow-hidden flex flex-col p-1.5 backdrop-blur-md">
+                  {navLinks.filter(l => l.href !== '#how-it-works').map(l => (
+                    <a key={l.href} href={l.href} className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-lg transition-colors">
+                      {l.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <a href="#how-it-works" className="relative hover:text-blue-600 transition-colors group py-1">
+              How It Works
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full rounded-full"></span>
+            </a>
+            
+            {/* Company Dropdown */}
+            <div className="relative group py-1">
+              <button className="flex items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer outline-none">
+                Company <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-200" />
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full rounded-full"></span>
+              </button>
+              
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="w-36 bg-white border border-gray-100 shadow-xl shadow-gray-200/50 rounded-xl overflow-hidden flex flex-col p-1.5 backdrop-blur-md">
+                  <Link to="/about" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-lg transition-colors">About</Link>
+                  <Link to="/contact" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-lg transition-colors">Contact</Link>
+                  <Link to="/privacy" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-lg transition-colors">Privacy</Link>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -91,7 +200,7 @@ function Home() {
             <div className="flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 space-y-6">
                 <div className="bg-blue-50 border border-blue-100 px-4 py-1.5 rounded-full inline-flex items-center gap-2">
-                  <Sparkles className="w-3 h-3 text-blue-600" />
+                  <Bolt className="w-3 h-3 text-blue-600" />
                   <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-600">AI-Powered Career Intelligence</span>
                 </div>
 
@@ -101,7 +210,10 @@ function Home() {
                 </h1>
 
                 <p className="text-base text-gray-500 leading-relaxed max-w-md">
-                  SkillForge AI helps HR teams make confident hiring decisions by analyzing real code submissions — while helping job seekers showcase and improve their skills.
+                 
+                  SkillForge AI gives HR teams a complete interview platform — live video,
+                  AI-generated questions, instant evaluation, malpractice detection,
+                  and automated reports. All in one place.
                 </p>
 
                 <div className="pt-2">
@@ -149,7 +261,7 @@ function Home() {
         <section id="for-hr" className="container mx-auto px-6 py-20 max-w-7xl">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 w-full order-2 lg:order-1">
-              <img src="/Home/b7a74eab-320f-4710-a25d-89309bcd6719.png" alt="HR Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100" />
+              <img src="/Home/ChatGPT Image Apr 19, 2026, 11_10_19 PM.png" alt="HR Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100" />
             </div>
             <div className="flex-1 space-y-7 order-1 lg:order-2">
               <div>
@@ -172,14 +284,14 @@ function Home() {
           </div>
         </section>
 
-        {/* For Job Seekers */}
+        {/* For Developers */}
         <section id="for-devs" className="bg-gray-50/80 py-20">
           <div className="container mx-auto px-6 max-w-7xl">
             <div className="flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 space-y-7">
                 <div>
-                  <span className="text-blue-600 font-semibold text-xs uppercase tracking-[0.2em]">For Developers</span>
-                  <h2 className="text-3xl font-bold mt-3 mb-3 tracking-tight">For Job Seekers</h2>
+                  <span className="text-blue-600 font-semibold text-xs uppercase tracking-[0.2em]">For Candidates</span>
+                  <h2 className="text-3xl font-bold mt-3 mb-3 tracking-tight">For Developers</h2>
                   <div className="w-12 h-0.5 bg-blue-200" />
                 </div>
                 <div className="space-y-5">
@@ -195,7 +307,33 @@ function Home() {
                 </div>
               </div>
               <div className="flex-1 w-full">
-                <img src="/Home/f9b871de-701f-4ee0-823d-ad048100e29c.png" alt="Job Seeker Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100 object-cover" />
+                <img src="/Home/ChatGPT Image Apr 19, 2026, 10_58_55 PM.png" alt="Job Seeker Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100 object-cover" />
+              </div>
+            </div>
+          </div>
+        </section>
+                {/* For Intern JobSeekers */}
+        <section id="for-interns" className="container mx-auto px-6 py-20 max-w-7xl">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+            <div className="flex-1 w-full order-2 lg:order-1">
+              <img src="/Home/ChatGPT Image Apr 19, 2026, 11_26_26 PM.png" alt="HR Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100" />
+            </div>
+            <div className="flex-1 space-y-7 order-1 lg:order-2">
+              <div>
+                <span className="text-blue-600 font-semibold text-xs uppercase tracking-[0.2em]">For Interns</span>
+                <h2 className="text-3xl font-bold mt-3 mb-3 tracking-tight">For JobSeekers</h2>
+                <div className="w-12 h-0.5 bg-blue-200" />
+              </div>
+              <div className="space-y-5">
+                {internFeatures.map((item, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">{item.icon}</div>
+                    <div>
+                      <h3 className="text-sm font-semibold mb-1 text-gray-900">{item.title}</h3>
+                      <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -222,37 +360,41 @@ function Home() {
       {/* Footer */}
       <footer className="bg-white border-t border-gray-100">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <Sparkles size={13} className="text-white" />
-                </div>
-                <span className="font-bold text-sm tracking-tight">SkillForge <span className="text-blue-600">AI</span></span>
+          <div className="py-16 grid grid-cols-1 md:grid-cols-4 gap-12 lg:gap-8">
+            <div className="space-y-4 md:col-span-2">
+              <Logo />
+              <p className="text-sm text-gray-500 max-w-sm leading-relaxed">
+                The career intelligence platform for modern recruitment. We help HR teams assess developers accurately and empower engineers to land their dream jobs.
+              </p>
+            </div>
+
+            <div className="space-y-5">
+              <p className="text-sm font-semibold tracking-wide text-gray-900">Platform</p>
+              <div className="flex flex-col space-y-3">
+                {navLinks.map(l => (
+                  <a key={l.label} href={l.href} className="w-fit text-sm text-gray-500 hover:text-blue-600 transition-colors">{l.label}</a>
+                ))}
               </div>
-              <p className="text-sm text-gray-500 max-w-xs leading-relaxed">Career Intelligence Platform for modern recruitment.</p>
             </div>
 
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-900">Product</p>
-              {['How It Works', 'For HR Teams', 'For Developers'].map(l => (
-                <a key={l} href="#" className="block text-sm text-gray-500 hover:text-blue-600 transition-colors">{l}</a>
-              ))}
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-900">Company</p>
-              {['About', 'Contact', 'Privacy Policy'].map(l => (
-                <a key={l} href="#" className="block text-sm text-gray-500 hover:text-blue-600 transition-colors">{l}</a>
-              ))}
+            <div className="space-y-5">
+              <p className="text-sm font-semibold tracking-wide text-gray-900">Company</p>
+              <div className="flex flex-col space-y-3">
+                {[{to:'About',path:"/about"}, {to:'Contact', path:"/contact"}, {to:'Privacy Policy',path:"/privacy"}].map(l => (
+                  <Link key={l.to} to={l.path} className="w-fit text-sm text-gray-500 hover:text-blue-600 transition-colors">{l.to}</Link>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="py-5 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-2">
-            <p className="text-xs text-gray-400">© 2026 SkillForge AI. All rights reserved.</p>
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-              <span className="text-xs text-gray-400">All systems operational</span>
+          <div className="py-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-500">© {new Date().getFullYear()} SkillForge AI. All rights reserved.</p>
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+              </span>
+              <span className="text-sm text-gray-600 font-medium">All systems operational</span>
             </div>
           </div>
         </div>

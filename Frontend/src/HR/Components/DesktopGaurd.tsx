@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { Sparkles, Monitor, Ruler, Smartphone } from "lucide-react"
+import { Monitor, Ruler, Smartphone } from "lucide-react"
+import { Logo } from "./Icons"
 
 const MobileGuard = ({ children }: { children: React.ReactNode }) => {
   const [isMobile, setIsMobile] = useState(false)
@@ -24,14 +25,7 @@ const MobileGuard = ({ children }: { children: React.ReactNode }) => {
       <div className="relative z-10 w-full max-w-sm">
 
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Sparkles size={14} className="text-white" />
-          </div>
-          <span className="text-sm font-bold tracking-tight text-gray-900">
-            SkillForge <span className="text-blue-600">AI</span>
-          </span>
-        </div>
+        <Logo className="justify-center mb-6" />
 
         {/* Card */}
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/80 shadow-2xl shadow-gray-200/60 px-6 py-8 text-center">

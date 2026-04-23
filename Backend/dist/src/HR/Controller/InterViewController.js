@@ -3,6 +3,7 @@ import { UniqueCodeGenerator } from "../services/uniqueCodeGenerator.js";
 import { redis } from "../Lib/redis.js";
 import { sendUniqueCode } from "../services/Email/SendUniqueCodeEmail.js";
 import { sendResheduledTime } from "../services/Email/sendReshedule.js";
+import { createNotification } from "../services/NotificationService.js";
 import Groq from "groq-sdk";
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 export const generateUniqueCode = async (req, res) => {
@@ -46,11 +47,21 @@ export const sheduleInterview = async (req, res) => {
             });
         }
         const { developerEmail, developerName, experience, interviewDate, interviewTime, position, uniqueCode, resumeUrl, aiSummary, skills, } = req.body;
+        if (!skills || (typeof skills === "string" && skills.trim() === "") || (Array.isArray(skills) && skills.length === 0)) {
+            return res.status(400).json({ Message: "Skills are required" });
+        }
         const Code = await redis.get(`Unique:${uniqueCode}`);
         if (Code !== uniqueCode) {
             return res.status(400).json({ Message: "Invalid uniqueCode" });
         }
         await redis.del(`Unique:${uniqueCode}`);
+        let parsedSkills = [];
+        if (typeof skills === "string") {
+            parsedSkills = skills.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+        else if (Array.isArray(skills)) {
+            parsedSkills = skills.map((s) => String(s).trim()).filter(Boolean);
+        }
         const dev = await prisma.developer.create({
             data: {
                 developerName,
@@ -65,7 +76,7 @@ export const sheduleInterview = async (req, res) => {
                 uniqueCode,
                 resumeUrl: resumeUrl ?? null,
                 aiSummary: aiSummary ?? null,
-                skills: skills ? JSON.stringify(skills) : null,
+                skills: JSON.stringify(parsedSkills),
             },
         });
         const scheduledAt = new Date(`${interviewDate}T${interviewTime}:00`);
@@ -85,6 +96,7 @@ export const sheduleInterview = async (req, res) => {
         const secondsUntilExpired = Math.floor((scheduledAt.getTime() - today.getTime()) / 1000) + 604800;
         await redis.set(`magic:${uniqueCode}`, dev.id, { EX: secondsUntilExpired });
         await sendUniqueCode(developerName, developerEmail, position, uniqueCode, interviewDate, interviewTime, user.email, user.companyName, user.name, magicLink);
+        await createNotification(id, "Interview Scheduled", `${developerName} interview is scheduled for ${new Date(interviewDate).toLocaleDateString()} at ${interviewTime}.`, "INTERVIEW_SCHEDULED", true);
         res.status(201).json({
             message: "Interview scheduled successfully",
             status: "success"
@@ -100,8 +112,13 @@ export const sheduledInterviewDetails = async (req, res) => {
         if (!id) {
             return res.status(401).json({ Message: "HR is not logged in" });
         }
+        const { status } = req.query;
+        const where = { hrId: id };
+        if (status && status !== "ALL") {
+            where.status = status;
+        }
         const details = await prisma.interview.findMany({
-            where: { hrId: id },
+            where,
             include: {
                 developer: {
                     select: {
@@ -144,8 +161,16 @@ export const getDevelopers = async (req, res) => {
         if (!id) {
             return res.status(401).json({ Message: "HR is not logged in" });
         }
+        const { search } = req.query;
+        const where = { hrId: id };
+        if (search) {
+            where.developerName = {
+                contains: search,
+                mode: "insensitive",
+            };
+        }
         const developers = await prisma.developer.findMany({
-            where: { hrId: id },
+            where,
             orderBy: { createdAt: "desc" }
         });
         if (developers.length === 0) {
@@ -209,6 +234,7 @@ export const rescheduleInterview = async (req, res) => {
         const secondsUntilExpired = Math.floor((scheduledAt.getTime() - today.getTime()) / 1000) + 604800;
         await redis.set(`magic:${interview.developer.uniqueCode}`, interview.developerId, { EX: secondsUntilExpired });
         await sendResheduledTime(interview.developer.developerName, interview.developer.developerEmail, interview.developer.position, interview.developer.uniqueCode, interview.hr.email, interview.hr.companyName, interview.hr.name, newTime, newDate, magicLink);
+        await createNotification(id, "Interview Rescheduled", `${interview.developer.developerName} interview moved to ${new Date(newDate).toLocaleDateString()} at ${newTime}.`, "INTERVIEW_RESCHEDULED", true);
         res.status(200).json({
             message: "Interview rescheduled successfully",
             status: "success"
@@ -247,6 +273,11 @@ export const cancelInterview = async (req, res) => {
             where: { id: interviewId },
             data: { status: "CANCELLED" }
         });
+        const developer = await prisma.developer.findUnique({
+            where: { id: interview.developerId },
+            select: { developerName: true },
+        });
+        await createNotification(id, "Interview Cancelled", `Interview with ${developer?.developerName ?? "developer"} has been cancelled.`, "INTERVIEW_CANCELLED", true);
         res.status(200).json({
             message: "Interview cancelled successfully",
             status: "success"

@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Search, Users, Calendar, Clock, Briefcase, ChevronRight, Inbox } from 'lucide-react';
+import { Logo } from "../Components/Icons";
 import { api } from "../../Api/Axios";
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from "react-router-dom";
@@ -53,12 +53,7 @@ function DeveloperList() {
 
       {/* Page Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-            <Users size={12} className="text-white" />
-          </div>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">HR Portal</span>
-        </div>
+          <Logo className="mb-2" size={24} textSize="text-[13px]" subTextSize="text-[7px]" />
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Developers</h1>

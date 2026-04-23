@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Formik, Form, Field } from "formik";
 import {
-  BookOpen,
   Sparkles,
+  BookOpen,
   CheckCircle2,
   Send,
   Layers,
@@ -12,6 +12,8 @@ import {
   Pencil,
   ArrowLeft,
 } from "lucide-react";
+import { Logo } from "../Components/Icons";
+
 import toast from 'react-hot-toast';
 import { api } from "../../Api/Axios";
 import { TaskValidation } from "../Validation/TaskLibaryValidation";
@@ -137,12 +139,7 @@ function TaskLibraryEdit() {
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-            <Sparkles size={12} className="text-white" />
-          </div>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">
-            HR Portal
-          </span>
+          <Logo className="mb-2" size={24} textSize="text-[13px]" subTextSize="text-[7px]" />
         </div>
         <div className="flex items-center justify-between">
           <div>

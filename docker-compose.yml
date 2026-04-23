@@ -1,0 +1,126 @@
+# ============================================
+# SkillForge/docker-compose.yml
+# Place in ROOT folder (same level as Backend/)
+# Run: docker compose up -d --build
+# ============================================
+
+version: "3.9"
+
+services:
+
+  # ── 1. PostgreSQL ──────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: skillforge_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+    networks:
+      - skillforge_net
+
+
+  # ── 2. Redis ───────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: skillforge_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+    networks:
+      - skillforge_net
+
+
+  # ── 3. RabbitMQ ────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: skillforge_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    ports:
+      - "5672:5672"     # AMQP protocol — backend connects here
+      - "15672:15672"   # Management UI — http://YOUR_IP:15672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout:  10s
+      retries:  5
+    networks:
+      - skillforge_net
+
+
+  # ── 4. Backend ─────────────────────────────────
+  backend:
+    build:
+      context:    ./Backend
+      dockerfile: Dockerfile
+    container_name: skillforge_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3005
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@host.docker.internal:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      FRONTEND_URL: ${FRONTEND_URL}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_DOMAIN: ${EMAIL_DOMAIN}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      JUDGE0_URL: ${JUDGE0_URL}
+      JUDGE0_API_KEY: ${JUDGE0_API_KEY}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      ACCESS_TOKEN_KEY: ${ACCESS_TOKEN_KEY}
+      REFRESH_TOKEN_KEY: ${REFRESH_TOKEN_KEY}
+    ports:
+      - "3005:3005"
+    command: >
+      sh -c "npx prisma migrate deploy && pm2-runtime start dist/server.js --name skillforge-api"
+    networks:
+      - skillforge_net
+
+
+# ── Volumes ────────────────────────────────────
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+
+# ── Network ────────────────────────────────────
+networks:
+  skillforge_net:
+    driver: bridge

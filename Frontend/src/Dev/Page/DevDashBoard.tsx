@@ -4,21 +4,20 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
-  Sparkles,
-  User,
-  Briefcase,
-  CalendarDays,
-  Clock,
-  Building2,
-  BarChart2,
-  Video,
-  CheckCircle2,
+  Sparkles, Clock, Calendar, CheckCircle2, ChevronRight,
+  Code2, Play, Layout, FileText, Brain, LogOut,
+  ChevronDown, MessageSquare, AlertCircle, Cpu, User, ArrowRight,
   Circle,
   Timer,
+  Briefcase,
+  BarChart2,
+  CalendarDays,
+  Building2,
+  Video,
   BookOpen,
-  Layers,
-  LogOut,
+  Layers
 } from "lucide-react";
+import { Logo } from "../../HR/Components/Icons";
 import { useEffect, useState } from "react";
 import ThankYouScreen from "../Components/ThankYouScreen";
 import SubmitTaskModal from "../Components/SubmitTaskModal";
@@ -221,14 +220,7 @@ function DevDashBoard() {
     <div className="min-h-screen bg-gray-50 font-sans antialiased flex flex-col">
       {/* Topbar */}
       <header className="sticky top-0 z-10 flex items-center justify-between px-8 border-b border-gray-100 bg-white/80 backdrop-blur-md h-16">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Sparkles size={13} className="text-white" />
-          </div>
-          <span className="font-bold text-sm tracking-tight text-gray-900">
-            SkillForge AI
-          </span>
-        </div>
+        <Logo />
 
         {data && (
           <div className="flex items-center gap-3">

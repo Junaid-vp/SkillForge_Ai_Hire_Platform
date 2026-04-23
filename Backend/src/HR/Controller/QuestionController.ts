@@ -40,7 +40,7 @@ Always return valid JSON only. No markdown, no extra text.`
           content: `Generate exactly 15 technical interview questions for this candidate.
  
 Position: ${position}
-Skills: ${skills.join(", ")}
+Skills: ${skills.join(", ") }
  
 Rules:
 - Questions 1-10: Conceptual/theoretical questions based on their skills
@@ -147,7 +147,17 @@ export const getQuestions = async (
   res: Response
 ) => {
   try {
+    const hrId = req.userId
+    if (!hrId) return res.status(401).json({ Message: "HR not logged in" })
+
     const interviewId  = req.params.interviewId as string
+    const interview = await prisma.interview.findUnique({
+      where: { id: interviewId },
+      select: { hrId: true },
+    })
+    if (!interview || interview.hrId !== hrId) {
+      return res.status(403).json({ Message: "Unauthorized" })
+    }
 
     const questions = await prisma.question.findMany({
       where: { interviewId },

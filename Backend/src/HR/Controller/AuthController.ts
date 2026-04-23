@@ -38,6 +38,7 @@ export const HRregisterController = async (req: Request, res: Response) => {
         designation,
         companyWebsite,
         password: hashPassword,
+        interviewLimit: 5
       },
     });
 
@@ -173,6 +174,14 @@ export const getHrMeController = async (req: Request, res: Response) => {
       where: { id: hrId },
       select: {
         id: true,
+        plan: true,
+        name: true,
+        email: true,
+        companyName: true,
+        designation: true,
+        companyWebsite: true,
+        interviewCount: true,
+        interviewLimit: true,
       },
     });
 

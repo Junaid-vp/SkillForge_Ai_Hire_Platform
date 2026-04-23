@@ -12,6 +12,7 @@ import {
   ChevronRight, CheckCircle2, Loader2, Star, Timer,
   AlertTriangle, ShieldX, ClipboardList, XCircle, Hourglass, Hand, Circle,
 } from "lucide-react"
+import { Logo } from "../HR/Components/Icons"
 import toast from "react-hot-toast"
 import { disconnectSocket, getSocket } from "../Service/socket"
 import { api } from "../Api/Axios"
@@ -767,10 +768,7 @@ export default function InterviewRoom() {
       {/* ── Top bar ── */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 min-h-14 flex items-center justify-between shrink-0 sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Sparkles size={13} className="text-white" />
-          </div>
-          <span className="font-bold text-sm tracking-tight text-gray-900">SkillForge AI</span>
+          <Logo />
           <span className="text-gray-200 mx-1">|</span>
           <p className="text-xs font-semibold text-gray-600">
             {isHR ? "HR Interview Room" : "Developer Interview Room"}

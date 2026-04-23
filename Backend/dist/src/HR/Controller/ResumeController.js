@@ -8,6 +8,15 @@ export const parseResumeController = async (req, res) => {
         if (!id) {
             return res.status(401).json({ Message: "HR not logged in" });
         }
+        const hr = await prisma.hR.findUnique({
+            where: { id }
+        });
+        if (hr?.plan === "free" && (hr?.interviewCount ?? 0) >= (hr?.interviewLimit ?? 5)) {
+            return res.status(403).json({
+                Message: "Limit is Over Upgrade to pro",
+                upgrade: true,
+            });
+        }
         if (!req.file) {
             return res.status(400).json({ Message: "Please upload a PDF" });
         }

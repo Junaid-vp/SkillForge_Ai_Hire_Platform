@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { CheckCircle2, Sparkles } from "lucide-react"
+import { Logo } from "../../HR/Components/Icons"
 import toast from "react-hot-toast"
 import { api } from "../../Api/Axios"
 import { useAuth } from "../../Context/AuthContext"
@@ -48,12 +49,7 @@ useEffect(() => {
         </div>
 
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-5">
-          <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center">
-            <Sparkles size={10} className="text-white" />
-          </div>
-          <span className="text-xs font-bold text-gray-400 tracking-tight">SkillForge AI</span>
-        </div>
+        <Logo className="justify-center mb-5" />
 
         <h2 className="text-xl font-bold text-gray-900 mb-2">
           Thank You for Submitting!

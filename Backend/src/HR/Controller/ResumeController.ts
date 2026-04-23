@@ -5,19 +5,32 @@ import { uploadFile } from "../services/cloudinary.js"
 import { prisma } from "../Lib/prisma.js"
 
 
-export const parseResumeController = async(req:Request,res:Response)=>{
-    try{
-  const id = req.userId
+export const parseResumeController = async (req: Request, res: Response) => {
+  try {
+    const id = req.userId
 
     if (!id) {
       return res.status(401).json({ Message: "HR not logged in" })
     }
 
+
+    const hr = await prisma.hR.findUnique({
+      where: { id }
+    })
+
+    if (hr?.plan === "free" && (hr?.interviewCount ?? 0) >= (hr?.interviewLimit ?? 5)) {
+      return res.status(403).json({
+        Message: "Limit is Over Upgrade to pro",
+        upgrade: true,
+      })
+    }
+
+
     if (!req.file) {
       return res.status(400).json({ Message: "Please upload a PDF" })
     }
 
-     if (req.file.mimetype !== "application/pdf") {
+    if (req.file.mimetype !== "application/pdf") {
       return res.status(400).json({ Message: "Only PDF files allowed" })
     }
 
@@ -29,23 +42,23 @@ export const parseResumeController = async(req:Request,res:Response)=>{
 
     const resumeName = `resume_${randomBytes(8).toString("hex")}`;
 
-    const resumeUrl = await uploadFile(req.file.buffer,resumeName);
-   
+    const resumeUrl = await uploadFile(req.file.buffer, resumeName);
+
     res.status(200).json({
-        data:{
-            ...data,
-            resumeUrl
-        },
-        Status:"Success"
+      data: {
+        ...data,
+        resumeUrl
+      },
+      Status: "Success"
     })
 
 
-    }catch(e:any){
-        res.json({
-            Message:"Server Error",
-            Error:e.message
-        })
-    }
+  } catch (e: any) {
+    res.json({
+      Message: "Server Error",
+      Error: e.message
+    })
+  }
 }
 
 export const specificDevTotalDetails = async (
@@ -64,7 +77,7 @@ export const specificDevTotalDetails = async (
       return res.status(400).json({ Message: "Developer ID required" })
     }
 
-    
+
     const DevDetails = await prisma.developer.findUnique({
       where: { id: devId }
     })
@@ -77,7 +90,7 @@ export const specificDevTotalDetails = async (
       return res.status(403).json({ Message: "Unauthorized" })
     }
 
-  
+
     const DevInterview = await prisma.interview.findFirst({
       where: {
         developerId: devId,
@@ -87,36 +100,36 @@ export const specificDevTotalDetails = async (
 
     const DevTask = DevInterview
       ? await prisma.task.findFirst({
-          where: {
-            interviewId: DevInterview.id
-          },
-          include: {
-            taskLibrary: {
-              select: {
-                title: true,
-                description: true,
-                requirements: true,
-                difficulty: true,
-                duration: true,
-                category: true,
-                techStack: true
-              }
+        where: {
+          interviewId: DevInterview.id
+        },
+        include: {
+          taskLibrary: {
+            select: {
+              title: true,
+              description: true,
+              requirements: true,
+              difficulty: true,
+              duration: true,
+              category: true,
+              techStack: true
             }
           }
-        })
+        }
+      })
       : null
 
-  
+
     // const skills = DevDetails.skills
     //   ? DevDetails.skills.split("|")
     //   : []
 
- 
+
     res.status(200).json({
       data: {
-        developer: 
-        DevDetails ?? null ,
-           
+        developer:
+          DevDetails ?? null,
+
         interview: DevInterview ?? null,
         task: DevTask ?? null
       },
@@ -124,7 +137,7 @@ export const specificDevTotalDetails = async (
     })
 
   } catch (e: any) {
-    
+
     res.status(500).json({
       Message: "Server Error",
       Error: e.message
