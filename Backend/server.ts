@@ -110,7 +110,15 @@ app.use(helmet({
 
 app.use(
   cors({
-    origin: frontendUrl,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      // or requests from our allowed frontendUrl array
+      if (!origin || frontendUrl.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   }),
 );
