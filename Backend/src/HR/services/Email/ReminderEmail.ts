@@ -34,7 +34,8 @@ export const sendInterviewReminderEmail = async ({
   interviewId: string;
   startTime: string;
 }) => {
-  const joinUrl = `${process.env.FRONTEND_URL}/HrInterviewRoom/${interviewId}?role=HR&name=${encodeURIComponent(hrName)}`;
+  const origin = process.env.FRONTEND_URL?.split(',')[0] || "https://skillforge-ai.com";
+  const joinUrl = `${origin}/HrInterviewRoom/${interviewId}?role=HR&name=${encodeURIComponent(hrName)}`;
   const time = formatTime(startTime);
 
   const html = `
@@ -178,7 +179,8 @@ export const sendDeveloperReminderEmail = async ({
   interviewId: string;
   startTime: string;
 }) => {
-  const dashUrl = `${process.env.FRONTEND_URL}/devDashboard`;
+  const origin = process.env.FRONTEND_URL?.split(',')[0] || "https://skillforge-ai.com";
+  const dashUrl = `${origin}/devDashboard`;
   const time = formatTime(startTime);
 
   const html = `
