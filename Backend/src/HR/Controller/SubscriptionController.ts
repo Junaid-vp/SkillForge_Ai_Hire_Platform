@@ -24,6 +24,8 @@ export const createCheckout = async (req: Request, res: Response) => {
       return res.status(404).json({ Message: "HR not found" });
     }
 
+    const origin = req.headers.origin || process.env.FRONTEND_URL?.split(',')[0] || "https://skillforge-ai.com";
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer_email: hr.email,
@@ -36,8 +38,8 @@ export const createCheckout = async (req: Request, res: Response) => {
       metadata: {
         hrId: id,
       },
-      success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
-      cancel_url: `${process.env.FRONTEND_URL}/dashboard?payment=cancelled`,
+      success_url: `${origin}/dashboard?payment=success`,
+      cancel_url: `${origin}/dashboard?payment=cancelled`,
     });
 
     res.status(200).json({
