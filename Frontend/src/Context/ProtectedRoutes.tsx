@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useSearchParams } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
-function FullScreenLoader() {
+export function FullScreenLoader() {
   return (
     <div className="min-h-screen relative overflow-hidden bg-gray-50 flex items-center justify-center px-6">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:38px_38px] opacity-40" />

@@ -8,6 +8,7 @@ import {
   User, Circle, Timer, Briefcase, BarChart2,
   CalendarDays, Building2, Video, BookOpen, Layers
 } from "lucide-react";
+import { FullScreenLoader } from "../../Context/ProtectedRoutes";
 import { Logo } from "../../HR/Components/Icons";
 import { useEffect, useState } from "react";
 import ThankYouScreen from "../Components/ThankYouScreen";
@@ -206,6 +207,7 @@ function DevDashBoard() {
   }, [data]);
 
   if (submitted) return <ThankYouScreen />;
+  if (isLoading) return <FullScreenLoader />;
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans antialiased flex flex-col">
@@ -237,22 +239,7 @@ function DevDashBoard() {
       {/* Page Content */}
       <main className="flex-1 p-8">
         <div className="max-w-3xl mx-auto">
-          {/* Loading */}
-          {isLoading && (
-            <div className="space-y-4">
-              <div className="h-7 bg-gray-100 rounded w-48 animate-pulse mb-8" />
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-white border border-gray-100 rounded-2xl p-6 animate-pulse space-y-3"
-                >
-                  <div className="h-4 bg-gray-100 rounded w-1/3" />
-                  <div className="h-3 bg-gray-100 rounded w-2/3" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Loading handled by FullScreenLoader */}
 
           {/* Error */}
           {error && !isLoading && (
