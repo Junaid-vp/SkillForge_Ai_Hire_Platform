@@ -24,7 +24,7 @@ import CodeRoute from "./src/HR/Routes/codeRoutes.js";
 import NotificationRoute from "./src/HR/Routes/NotificationRoute.js";
 import ReportRoute from "./src/HR/Routes/Reportroute.js";
 import SystemRoute from "./src/System/Routes/ContactRoute.js";
-import helmet        from "helmet"
+import helmet from "helmet"
 import { aiLimiter } from "./src/HR/Middleware/RateLimit.js";
 import { closeTaskQueue, startTaskWorker } from "./src/HR/services/Taskqueue.js";
 import { prisma } from "./src/HR/Lib/prisma.js";
@@ -130,7 +130,7 @@ app.use('/api/dev', DevAuthroute)
 app.use('/api/dash/dev', DevDashRoute)
 app.use('/api/setting', SettingRoute)
 app.use('/api/task/', TaskRoute)
-app.use('/api/resume/',aiLimiter,ResumeRoute)
+app.use('/api/resume/', aiLimiter, ResumeRoute)
 app.use('/api/subscription', SubscriptonRoute)
 app.use('/api/questions', QuestionRoute)
 app.use('/api/code/', CodeRoute)
@@ -152,7 +152,7 @@ startTaskWorker()
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
- 
+
 // ── Graceful shutdown ─────────────────────────
 process.on("SIGTERM", async () => {
   console.log("SIGTERM — shutting down")

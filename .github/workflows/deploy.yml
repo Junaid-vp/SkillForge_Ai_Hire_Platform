@@ -1,0 +1,70 @@
+name: CI/CD Pipeline   # pipeline name
+
+on:
+  push:
+    branches: [ main ]   # run when code pushed to main
+
+jobs:
+
+  build-and-push:
+    runs-on: ubuntu-latest   # use ubuntu server
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4   # get project code
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}   # aws access key
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}   # aws secret key
+          aws-region: ap-south-1   # aws region
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2   # login to :contentReference[oaicite:0]{index=0}
+
+      - name: Build, Tag, and Push Image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}   # ecr url
+          ECR_REPOSITORY: production/skillforgeai   # repo name
+          IMAGE_TAG: latest   # image version
+
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .   # build docker image
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG        # push image to ecr
+
+
+  deploy:
+    needs: build-and-push   # run after build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3   # connect to server
+
+        with:
+          host: ${{ secrets.EC2_HOST }}   # server ip
+          username: ${{ secrets.EC2_USERNAME }}   # server user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}   # ssh key
+
+          script: |
+            # login to ecr
+            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 723468358503.dkr.ecr.ap-south-1.amazonaws.com
+            
+            # get latest image
+            docker pull 723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:latest
+            
+            # delete old container
+            docker rm -f skillforge-app || true
+            
+            # run new container
+            docker run -d \
+              --name skillforge-app \
+              -p 3005:3005 \
+              --env-file /home/ubuntu/.env \
+              --restart unless-stopped \
+              723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:latest
+            
+            # update database
+            docker exec skillforge-app npx prisma db push
