@@ -28,7 +28,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}   # ecr url
           ECR_REPOSITORY: production/skillforgeai   # repo name
-          IMAGE_TAG: latest   # image version
+          IMAGE_TAG: ${{ github.sha }}   # use commit sha as image version
 
         run: |
           cd Backend
@@ -44,17 +44,21 @@ jobs:
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3   # connect to server
 
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+
         with:
           host: ${{ secrets.EC2_HOST }}   # server ip
           username: ${{ secrets.EC2_USERNAME }}   # server user
           key: ${{ secrets.SSH_PRIVATE_KEY }}   # ssh key
+          envs: IMAGE_TAG
 
           script: |
             # login to ecr
             aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 723468358503.dkr.ecr.ap-south-1.amazonaws.com
             
             # get latest image
-            docker pull 723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:latest
+            docker pull 723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:$IMAGE_TAG
             
             # delete old container
             docker rm -f skillforge-app || true
@@ -65,7 +69,7 @@ jobs:
               -p 3005:3005 \
               --env-file /home/ubuntu/.env \
               --restart unless-stopped \
-              723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:latest
+              723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:$IMAGE_TAG
             
             # update database
             docker exec skillforge-app npx prisma db push
