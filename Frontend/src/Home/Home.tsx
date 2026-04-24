@@ -228,7 +228,7 @@ function Home() {
 
               <div className="flex-1 w-full">
                 <img
-                  src="/Home/3c421513-15f3-4ce0-ba0e-730e6d64097e.png"
+                  src="/Home/hero-image.webp"
                   alt="SkillForge Platform"
                   className="w-full rounded-2xl shadow-xl border border-gray-100 object-cover"
                 />
@@ -261,7 +261,7 @@ function Home() {
         <section id="for-hr" className="container mx-auto px-6 py-20 max-w-7xl">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 w-full order-2 lg:order-1">
-              <img src="/Home/ChatGPT Image Apr 19, 2026, 11_10_19 PM.png" alt="HR Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100" />
+              <img src="/Home/hr-dashboard.webp" alt="HR Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100" />
             </div>
             <div className="flex-1 space-y-7 order-1 lg:order-2">
               <div>
@@ -307,7 +307,7 @@ function Home() {
                 </div>
               </div>
               <div className="flex-1 w-full">
-                <img src="/Home/ChatGPT Image Apr 19, 2026, 10_58_55 PM.png" alt="Job Seeker Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100 object-cover" />
+                <img src="/Home/dev-dashboard.webp" alt="Job Seeker Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100 object-cover" />
               </div>
             </div>
           </div>
@@ -316,7 +316,7 @@ function Home() {
         <section id="for-interns" className="container mx-auto px-6 py-20 max-w-7xl">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 w-full order-2 lg:order-1">
-              <img src="/Home/ChatGPT Image Apr 19, 2026, 11_26_26 PM.png" alt="HR Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100" />
+              <img src="/Home/intern-dashboard.webp" alt="HR Dashboard" className="w-full rounded-2xl shadow-xl border border-gray-100" />
             </div>
             <div className="flex-1 space-y-7 order-1 lg:order-2">
               <div>
