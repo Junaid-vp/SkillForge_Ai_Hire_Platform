@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../Context/AuthContext';
 import { Formik, Form, Field, type FormikHelpers } from "formik";
 import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Logo, Bolt } from '../Components/Icons';
 import toast from 'react-hot-toast';
 import { api } from '../../Api/Axios';

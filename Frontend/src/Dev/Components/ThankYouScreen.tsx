@@ -1,7 +1,7 @@
 // src/Dev/Components/ThankYouScreen.tsx
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { CheckCircle2, Sparkles } from "lucide-react"
+import { CheckCircle2 } from "lucide-react"
 import { Logo } from "../../HR/Components/Icons"
 import toast from "react-hot-toast"
 import { api } from "../../Api/Axios"

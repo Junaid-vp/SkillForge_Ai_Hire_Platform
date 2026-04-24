@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
-import { Sparkles, LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, Settings, ChevronLeft, AlignJustify, LogOut, Crown, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, PlusCircle, Code2, BookOpen, CalendarDays, Settings, ChevronLeft, AlignJustify, LogOut, Crown, BarChart2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { api } from '../../Api/Axios'
 
@@ -29,7 +29,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate()
   const { hr, clearAuth } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
-  const [showDropdown, setShowDropdown] = useState(false)
+
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {

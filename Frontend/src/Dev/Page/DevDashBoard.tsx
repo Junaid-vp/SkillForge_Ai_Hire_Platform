@@ -4,18 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
-  Sparkles, Clock, Calendar, CheckCircle2, ChevronRight,
-  Code2, Play, Layout, FileText, Brain, LogOut,
-  ChevronDown, MessageSquare, AlertCircle, Cpu, User, ArrowRight,
-  Circle,
-  Timer,
-  Briefcase,
-  BarChart2,
-  CalendarDays,
-  Building2,
-  Video,
-  BookOpen,
-  Layers
+  Sparkles, Clock, CheckCircle2, LogOut,
+  User, Circle, Timer, Briefcase, BarChart2,
+  CalendarDays, Building2, Video, BookOpen, Layers
 } from "lucide-react";
 import { Logo } from "../../HR/Components/Icons";
 import { useEffect, useState } from "react";
