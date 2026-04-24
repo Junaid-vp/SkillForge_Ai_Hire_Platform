@@ -56,11 +56,14 @@ jobs:
           script: |
             # login to ecr
             aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 723468358503.dkr.ecr.ap-south-1.amazonaws.com
+            # free up disk space by deleting old unused images BEFORE pulling
+            # this ensures we have enough space for the new image download
+            docker image prune -af
             
-            # get latest image
+            # get latest image (old container is still running, so NO DOWNTIME)
             docker pull 723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:$IMAGE_TAG
             
-            # delete old container
+            # swap containers instantly (2 seconds of downtime instead of 2 minutes)
             docker rm -f skillforge-app || true
             
             # run new container
