@@ -147,7 +147,7 @@ app.use("/api/report", ReportRoute)
 app.use("/api/system", SystemRoute)
 startCronJobs()
 startRedisServer()
-
+main()
 
 // ── Database Connection Check ─────────────────
 prisma.$connect()

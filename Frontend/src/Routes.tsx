@@ -5,22 +5,12 @@ import {
   DevProtectedRoute,
   HrProtectedRoute,
   PublicOnlyRoute,
+  FullScreenLoader
 } from "./Context/ProtectedRoutes"
 
 // ─── Loading fallback ──────────────────────────────────────────────────────────
-function PageLoader() {
-  return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-[3px] border-blue-600 border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-gray-400 font-medium">Loading...</p>
-      </div>
-    </div>
-  )
-}
-
 function wrap(element: React.ReactNode) {
-  return <Suspense fallback={<PageLoader />}>{element}</Suspense>
+  return <Suspense fallback={<FullScreenLoader />}>{element}</Suspense>
 }
 
 // ─── Public pages ──────────────────────────────────────────────────────────────
