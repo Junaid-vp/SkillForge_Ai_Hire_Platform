@@ -1,4 +1,3 @@
-import React from 'react';
 
 /**
  * SkillForge AI - High Fidelity Hex Bolt Icon

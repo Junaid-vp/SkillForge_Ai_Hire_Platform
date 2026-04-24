@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Formik, Form, Field } from "formik";
 import {
-  Sparkles,
   BookOpen,
   CheckCircle2,
   Send,

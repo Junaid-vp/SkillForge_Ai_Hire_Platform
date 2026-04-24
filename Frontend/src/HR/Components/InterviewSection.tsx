@@ -60,7 +60,7 @@ function ScoreBar({ label, icon, value }: { label: string; icon: React.ReactNode
 }
 
 // ── Feedback Card ─────────────────────────────────────────────────────────────
-function FeedbackCard({ feedback, interviewId }: { feedback: FeedbackReport; interviewId: string }) {
+function FeedbackCard({ feedback }: { feedback: FeedbackReport; interviewId: string }) {
   const rec        = RECOMMENDATION_CONFIG[feedback.recommendation] ?? RECOMMENDATION_CONFIG.MAYBE
   const overallPct = (feedback.overallScore / 10) * 100
 

@@ -5,7 +5,6 @@ import {
   CheckCircle2, 
   CalendarDays, 
   MessageSquare, 
-  ShieldAlert,
   Inbox,
   Clock
 } from "lucide-react";

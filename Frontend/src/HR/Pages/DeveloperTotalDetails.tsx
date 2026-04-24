@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, AlertCircle, User } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { Logo } from "../Components/Icons";
 import { api } from "../../Api/Axios";
 import { DeveloperDetailsSection } from "../Components/DeveloperDetailsSection";

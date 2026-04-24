@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Users, Calendar, Clock, Briefcase, ChevronRight, Inbox } from 'lucide-react';
+import { Search, Users, Calendar, Clock, Briefcase, ChevronRight } from 'lucide-react';
 import { Logo } from "../Components/Icons";
 import { api } from "../../Api/Axios";
 import { useQuery } from '@tanstack/react-query';

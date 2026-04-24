@@ -105,7 +105,7 @@ const format12Hour = (time24: string) => {
 
 const formatMessageTime = (msg: string) => {
   if (!msg) return "";
-  return msg.replace(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g, (match, h, m) => {
+  return msg.replace(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g, (_match, h, m) => {
     let hours = parseInt(h, 10);
     const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;

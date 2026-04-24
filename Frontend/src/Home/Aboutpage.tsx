@@ -1,5 +1,5 @@
 // src/Pages/AboutPage.tsx
-import { Brain, Shield, Zap, Users, Target, CheckCircle2, Clock, ArrowLeft, Sparkles } from "lucide-react"
+import { Brain, Shield, Zap, Users, Target, CheckCircle2, Clock, ArrowLeft } from "lucide-react"
 import { Logo, Bolt } from "../HR/Components/Icons"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"

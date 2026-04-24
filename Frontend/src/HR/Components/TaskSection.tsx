@@ -1,8 +1,8 @@
 import {
   ClipboardList, BookOpen, CheckCircle2, Timer,
-  Cpu, Tag, BarChart2, Clock, Brain, TrendingUp,
-  AlertCircle, ShieldCheck, TestTube, FolderOpen,
-  Users, Zap,
+  Cpu, Tag, BarChart2, Clock, Brain,
+  ShieldCheck, TestTube, FolderOpen,
+  Zap,
 } from "lucide-react";
 import { SectionCard, Badge, EmptyCard } from "./SectionCard";
 import { type Task, STATUS_STYLES, DIFFICULTY_STYLES, formatDate } from "../Types/developer.types";
