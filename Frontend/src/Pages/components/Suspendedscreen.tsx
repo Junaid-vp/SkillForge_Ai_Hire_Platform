@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ShieldX, Mail, MessageCircle, ArrowLeft, ExternalLink, Sparkles } from "lucide-react"
+import { ShieldX } from "lucide-react"
 import { Logo } from "../../HR/Components/Icons"
 import { api } from "../../Api/Axios"
 import { useAuth } from "../../Context/AuthContext"

@@ -8,7 +8,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom"
 import Peer from "peerjs"
 import {
   Mic, MicOff, Video, VideoOff, Monitor, PhoneOff,
-  Send, MessageSquare, Sparkles, Brain, Code2, FileText,
+  Send, MessageSquare, Brain, Code2, FileText,
   ChevronRight, CheckCircle2, Loader2, Star, Timer,
   AlertTriangle, ShieldX, ClipboardList, XCircle, Hourglass, Hand, Circle,
 } from "lucide-react"

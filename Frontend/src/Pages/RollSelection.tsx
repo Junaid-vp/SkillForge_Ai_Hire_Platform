@@ -1,6 +1,6 @@
 import { Briefcase, Code, User, Sparkles, ArrowRight, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Logo, Bolt } from '../HR/Components/Icons';
+import { Logo } from '../HR/Components/Icons';
 
 const roles = [
   {

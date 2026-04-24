@@ -1,5 +1,5 @@
 // src/Pages/PrivacyPage.tsx
-import { Shield, Lock, Eye, FileText, Globe, Scale, ArrowLeft, Clock, CheckCircle2 } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { Logo, Bolt } from "../HR/Components/Icons"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"

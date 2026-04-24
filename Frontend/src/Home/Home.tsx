@@ -1,4 +1,4 @@
-import { Sparkles, Code, BarChart, Target, Users, Layout, Cpu, MessageSquare, Zap, FileText, ArrowRight, Menu, X, Brain, Shield, Video, Twitter, Github, Linkedin, ChevronDown } from 'lucide-react';
+import { Sparkles, Code, BarChart, Target, Users, Layout, Cpu, MessageSquare, Zap, FileText, ArrowRight, Menu, X, Brain, Shield, Video, Twitter, Github, ChevronDown } from 'lucide-react';
 import { Logo, Bolt } from '../HR/Components/Icons';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
