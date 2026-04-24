@@ -32,7 +32,7 @@ import { prisma } from "./src/HR/Lib/prisma.js";
 dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 3005;
-const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").trim();
+const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").split(",").map(url => url.trim());
 const trustProxy = process.env.TRUST_PROXY ?? (process.env.NODE_ENV === "production" ? "1" : "0");
 
 if (trustProxy !== "0") {
