@@ -487,7 +487,14 @@ function DevDashBoard() {
                               {(() => {
                                 const reqs = Array.isArray(task.taskLibrary.requirements) 
                                   ? task.taskLibrary.requirements 
-                                  : (typeof (task.taskLibrary.requirements as any) === "string" ? (task.taskLibrary.requirements as any).split("|").filter((r: string) => r.trim()) : []);
+                                  : (() => {
+                                      const raw = (task.taskLibrary.requirements as any);
+                                      if (typeof raw !== "string") return [];
+                                      if (raw.startsWith && raw.startsWith("[") && raw.endsWith && raw.endsWith("]")) {
+                                        try { return JSON.parse(raw); } catch { }
+                                      }
+                                      return (raw as string).split("|").filter(Boolean);
+                                    })();
                                 
                                 return reqs.map((req: any, i: number) => (
                                   <div key={i} className="flex items-start gap-2">

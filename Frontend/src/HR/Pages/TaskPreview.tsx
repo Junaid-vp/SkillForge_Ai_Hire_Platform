@@ -119,7 +119,14 @@ function TaskPreview() {
 
   const requirements = Array.isArray(data?.requirements) 
     ? data.requirements 
-    : (typeof (data?.requirements as any) === "string" ? (data?.requirements as any).split("|").filter((r: string) => r.trim()) : []);
+    : (() => {
+        const raw = (data?.requirements as any);
+        if (typeof raw !== "string") return [];
+        if (raw.startsWith && raw.startsWith("[") && raw.endsWith && raw.endsWith("]")) {
+          try { return JSON.parse(raw); } catch { }
+        }
+        return (raw as string).split("|").filter(Boolean);
+      })();
 
   if (isLoading)
     return (

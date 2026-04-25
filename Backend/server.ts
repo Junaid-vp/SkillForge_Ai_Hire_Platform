@@ -164,7 +164,17 @@ app.get("/api/dev/force-migrate-requirements", async (req, res) => {
       ALTER COLUMN "requirements" TYPE JSONB 
       USING to_jsonb(requirements);
     `);
-    res.send("✅ Database column converted successfully! You can now run db push.");
+    // 2. Clear and Re-seed default tasks to fix their formatting
+    console.log("🌱 Re-seeding default tasks...");
+    await prisma.taskLibrary.deleteMany({ where: { isDefault: true } });
+    const { defaultTasks } = await import("./prisma/seed.js");
+    const tasksToSeed = defaultTasks.map((task: any) => ({
+      ...task,
+      requirements: Array.isArray(task.requirements) ? task.requirements.join("|") : task.requirements
+    }));
+    await prisma.taskLibrary.createMany({ data: tasksToSeed });
+
+    res.send("✅ Database column converted and default tasks re-seeded successfully!");
   } catch (err: any) {
     res.status(500).send("❌ Migration failed: " + err.message);
   }

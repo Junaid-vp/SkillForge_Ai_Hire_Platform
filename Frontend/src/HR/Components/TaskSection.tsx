@@ -238,7 +238,14 @@ export function TaskSection({ task }: { task: Task | null }) {
 
   const requirements = Array.isArray(lib.requirements) 
     ? lib.requirements 
-    : (typeof (lib.requirements as any) === "string" ? (lib.requirements as any).split("|").filter((r: string) => r.trim()) : []);
+    : (() => {
+        const raw = (lib.requirements as any);
+        if (typeof raw !== "string") return [];
+        if (raw.startsWith && raw.startsWith("[") && raw.endsWith && raw.endsWith("]")) {
+          try { return JSON.parse(raw); } catch { }
+        }
+        return (raw as string).split("|").filter(Boolean);
+      })();
 
   // ── Submission state helpers ──────────────────────────────────────────────
   const isSubmitted = task.status === "SUBMITTED" || task.status === "EVALUATED";

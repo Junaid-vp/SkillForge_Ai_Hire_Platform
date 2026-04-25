@@ -1,6 +1,6 @@
 import { prisma } from "../src/HR/Lib/prisma.js"
 
-const defaultTasks = [{
+export const defaultTasks = [{
   title: "Build a GitHub Profile Finder",
   description: "Create a React app that searches GitHub users, displays their profile, repositories, and contribution stats using GitHub public API. This task is inspired by real frontend assessments used at Razorpay and Swiggy.",
   requirements: [
@@ -727,8 +727,13 @@ const defaultTasks = [{
     })
 
   
+    const tasksToSeed = defaultTasks.map(task => ({
+      ...task,
+      requirements: Array.isArray(task.requirements) ? task.requirements.join("|") : task.requirements
+    }));
+
     await prisma.taskLibrary.createMany({
-      data: defaultTasks as any
+      data: tasksToSeed as any
     })
 
     console.log(`✅ Successfully seeded ${defaultTasks.length} default tasks`)

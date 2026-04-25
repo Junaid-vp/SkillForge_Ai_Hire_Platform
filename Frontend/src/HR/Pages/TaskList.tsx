@@ -257,7 +257,14 @@ function TaskLibraryList() {
             const diff = getDifficultyStyle(task.difficulty);
             const requirementsArray = Array.isArray(task.requirements) 
               ? task.requirements 
-              : (typeof (task.requirements as any) === "string" ? (task.requirements as any).split("|").filter((r: string) => r.trim()) : []);
+              : (() => {
+                  const raw = (task.requirements as any);
+                  if (typeof raw !== "string") return [];
+                  if (raw.startsWith && raw.startsWith("[") && raw.endsWith && raw.endsWith("]")) {
+                    try { return JSON.parse(raw); } catch { }
+                  }
+                  return (raw as string).split("|").filter(Boolean);
+                })();
             const requirementCount = requirementsArray.length;
 
             return (
