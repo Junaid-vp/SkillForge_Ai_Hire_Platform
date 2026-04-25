@@ -484,14 +484,20 @@ function DevDashBoard() {
                               Requirements
                             </p>
                             <div className="space-y-2">
-                              {(task.taskLibrary.requirements || []).map((req: any, i: number) => (
-                                <div key={i} className="flex items-start gap-2">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-                                  <p className="text-xs text-gray-600 leading-relaxed">
-                                    {req.trim ? req.trim() : req}
-                                  </p>
-                                </div>
-                              ))}
+                              {(() => {
+                                const reqs = Array.isArray(task.taskLibrary.requirements) 
+                                  ? task.taskLibrary.requirements 
+                                  : (typeof (task.taskLibrary.requirements as any) === "string" ? (task.taskLibrary.requirements as any).split("|").filter((r: string) => r.trim()) : []);
+                                
+                                return reqs.map((req: any, i: number) => (
+                                  <div key={i} className="flex items-start gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+                                    <p className="text-xs text-gray-600 leading-relaxed">
+                                      {req.trim ? req.trim() : req}
+                                    </p>
+                                  </div>
+                                ));
+                              })()}
                             </div>
                           </div>
                         )}

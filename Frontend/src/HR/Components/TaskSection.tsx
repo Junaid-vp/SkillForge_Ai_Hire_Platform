@@ -236,7 +236,9 @@ export function TaskSection({ task }: { task: Task | null }) {
   const difficultyStyle = DIFFICULTY_STYLES[lib.difficulty.toUpperCase()] ?? DIFFICULTY_STYLES.MEDIUM;
   const techStackList   = lib.techStack.split(",").map((t) => t.trim()).filter(Boolean);
 
-  const requirements = lib.requirements || [];
+  const requirements = Array.isArray(lib.requirements) 
+    ? lib.requirements 
+    : (typeof (lib.requirements as any) === "string" ? (lib.requirements as any).split("|").filter((r: string) => r.trim()) : []);
 
   // ── Submission state helpers ──────────────────────────────────────────────
   const isSubmitted = task.status === "SUBMITTED" || task.status === "EVALUATED";
@@ -281,7 +283,7 @@ export function TaskSection({ task }: { task: Task | null }) {
           <CheckCircle2 size={10} /> Requirements ({requirements.length})
         </p>
         <div className="space-y-2">
-          {requirements.map((req, i) => (
+          {requirements.map((req: string, i: number) => (
             <div key={i} className="flex items-start gap-2.5">
               <div className="w-5 h-5 bg-blue-50 border border-blue-100 rounded-md flex items-center justify-center shrink-0 mt-0.5">
                 <span className="text-[9px] font-bold text-blue-600">{i + 1}</span>

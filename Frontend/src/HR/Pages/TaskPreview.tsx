@@ -117,7 +117,9 @@ function TaskPreview() {
       }
     : null;
 
-  const requirements = data?.requirements || [];
+  const requirements = Array.isArray(data?.requirements) 
+    ? data.requirements 
+    : (typeof (data?.requirements as any) === "string" ? (data?.requirements as any).split("|").filter((r: string) => r.trim()) : []);
 
   if (isLoading)
     return (
@@ -286,7 +288,7 @@ function TaskPreview() {
               Requirements ({requirements.length})
             </p>
             <div className="space-y-2">
-              {requirements.map((req, i) => (
+              {requirements.map((req: string, i: number) => (
                 <div key={i} className="flex items-start gap-3">
                   <div className="w-5 h-5 bg-blue-50 border border-blue-100 rounded-md flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-[9px] font-bold text-blue-600">

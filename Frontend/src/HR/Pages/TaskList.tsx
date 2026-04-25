@@ -255,7 +255,10 @@ function TaskLibraryList() {
         <div className="space-y-3">
           {data.map((task) => {
             const diff = getDifficultyStyle(task.difficulty);
-            const requirementCount = (task.requirements || []).length;
+            const requirementsArray = Array.isArray(task.requirements) 
+              ? task.requirements 
+              : (typeof (task.requirements as any) === "string" ? (task.requirements as any).split("|").filter((r: string) => r.trim()) : []);
+            const requirementCount = requirementsArray.length;
 
             return (
               <div
