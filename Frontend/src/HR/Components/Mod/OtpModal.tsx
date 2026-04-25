@@ -33,6 +33,23 @@ function OTPModal({ isOpen, onConfirm, onClose, isVerifying, isInvalid, reSentOt
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text/plain").trim();
+    const pastedNumbers = pastedData.replace(/\D/g, "").slice(0, OTP_LENGTH).split("");
+    
+    if (pastedNumbers.length > 0) {
+      const newOtp = [...otp];
+      pastedNumbers.forEach((num, idx) => {
+        if (idx < OTP_LENGTH) newOtp[idx] = num;
+      });
+      setOtp(newOtp);
+      
+      const nextFocusIndex = Math.min(pastedNumbers.length, OTP_LENGTH - 1);
+      inputs.current[nextFocusIndex]?.focus();
+    }
+  };
+
   useEffect(() => {
     const code = otp.join("");
     if (code.length === OTP_LENGTH && otp.every(d => d !== "")) onConfirm(code);
@@ -110,6 +127,7 @@ function OTPModal({ isOpen, onConfirm, onClose, isVerifying, isInvalid, reSentOt
                 value={digit}
                 onChange={(e) => handleChange(e.target.value, i)}
                 onKeyDown={(e) => handleKeyDown(e, i)}
+                onPaste={handlePaste}
                 className={`w-11 text-center rounded-xl border transition-all duration-150 focus:outline-none focus:ring-2
                   ${isInvalid
                     ? 'border-red-300 bg-red-50 text-red-500 focus:ring-red-200 focus:border-red-400'
