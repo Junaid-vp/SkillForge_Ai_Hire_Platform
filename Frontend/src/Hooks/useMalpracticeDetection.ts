@@ -50,9 +50,9 @@ export function useMalpracticeDetection(
           outputFacialTransformationMatrixes: true,
         })
         modelsLoaded.current = true
-        console.log("✅ MediaPipe Face Landmarker loaded")
+        // MediaPipe Face Landmarker loaded
       } catch (e) {
-        console.error("MediaPipe failed to load:", e)
+        // MediaPipe load failed silently
       }
     }
 

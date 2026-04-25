@@ -73,7 +73,7 @@ function DevLogin() {
       setUniqueCode(values.uniqueCode)
 
       const res = await api.post("/dev/login", data);
-console.log(res);
+
 
       if (res.data.Status === "Success") {
         setShowOTP(true);
@@ -88,7 +88,7 @@ console.log(res);
         e?.response?.data?.message || "Something went wrong. Please try again.",
       );
       toast.error(e?.response?.data?.Message || 'Invalid email or unique code.');
-      console.error(e);
+      
     } finally {
       setSubmitting(false);
     }
@@ -113,7 +113,7 @@ console.log(res);
       }
     } catch (e: any) {
       setIsInvalid(e?.response?.data?.Message || "Invalid OTP. Please try again.");
-      console.error(e);
+      
     } finally {
       setIsVerifying(false);
     }
@@ -125,7 +125,7 @@ console.log(res);
       setIsInvalid(null);
       toast.success('New OTP sent to your email!');
     } catch (e: any) {
-      console.error("Resend OTP error:", e.message);
+      // error handled by toast
       toast.error('Failed to resend OTP. Please try again.');
     }
   };

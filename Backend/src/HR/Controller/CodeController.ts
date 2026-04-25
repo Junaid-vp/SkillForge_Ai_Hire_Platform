@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 // src/
 import { Request, Response } from "express"
 import { prisma } from "../Lib/prisma.js"
@@ -55,7 +56,7 @@ export const runCode = async (req: Request, res: Response) => {
 
     if (!submitRes.ok) {
       const errText = await submitRes.text().catch(() => submitRes.statusText)
-      console.error("Judge0 submit error:", errText)
+      logger.error("Judge0 submit error:", errText)
       return res.status(502).json({
         Message: `Judge0 submission failed (${submitRes.status})`,
         Error:   errText
@@ -114,7 +115,7 @@ export const runCode = async (req: Request, res: Response) => {
     })
 
   } catch (e: any) {
-    console.error("runCode error:", e)
+    logger.error("runCode error:", e)
     return res.status(500).json({ Message: "Server Error", Error: e.message })
   }
 }
@@ -179,7 +180,7 @@ export const submitCodeAnswer = async (req: Request, res: Response) => {
     res.status(200).json({ Message: "Code solution submitted successfully", status: "success" })
  
   } catch (e: any) {
-    console.error("submitCodeAnswer error:", e)
+    logger.error("submitCodeAnswer error:", e)
     res.status(500).json({ Message: "Server Error", Error: e.message })
   }
 }

@@ -53,7 +53,7 @@ function SignUp() {
        }
       
     } catch (e: any) {
-      console.error("Submission error:", e);
+      // error handled by toast
       const msg = e?.response?.data?.Message || e?.response?.data?.message;
       if (msg?.toLowerCase().includes('already') || e?.response?.status === 409) {
         toast.error('An HR account with this email already exists.');

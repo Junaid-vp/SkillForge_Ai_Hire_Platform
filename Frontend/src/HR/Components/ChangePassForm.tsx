@@ -50,7 +50,7 @@ function ChangePassForm() {
     } catch (e: any) {
       setErrorMsg(e.response?.data?.Message || "An error occurred");
       toast.error(e.response?.data?.Message || 'Current password is incorrect.');
-      console.error(e);
+      
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +75,7 @@ function ChangePassForm() {
       }
     } catch (e) {
       setIsInvalid("Invalid OTP");
-      console.error(e);
+      
     } finally {
       setIsVerifying(false);
     }
@@ -137,6 +137,8 @@ function ChangePassForm() {
           >
             {({ errors, touched, isSubmitting }) => (
               <Form className="space-y-4">
+                {/* Hidden username field for accessibility / password managers */}
+                <input type="text" name="username" autoComplete="username" className="hidden" aria-hidden="true" value="" readOnly />
                 
                 {/* Current Password */}
                 <div>

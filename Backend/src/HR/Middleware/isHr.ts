@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { Request, Response, NextFunction } from "express";
@@ -42,7 +43,7 @@ const isHr = (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    console.error("HR auth middleware error", error);
+    logger.error("HR auth middleware error", error);
     return res.status(401).json({ message: "Unauthorized" });
   }
 };

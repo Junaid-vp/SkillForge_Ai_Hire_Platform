@@ -71,7 +71,7 @@ function Login() {
       }
     } catch (e) {
       setIsInvalid("Invalid OTP");
-      console.log(e);
+      
     } finally {
       setIsVerifying(false);
     }

@@ -57,7 +57,7 @@ function TaskLibraryEdit() {
           duration: t.duration,
         });
       } catch (e) {
-        console.error("Failed to fetch task:", e);
+        // error handled by toast
         toast.error('Failed to load task details.');
       } finally {
         setLoadingTask(false);
@@ -102,7 +102,7 @@ function TaskLibraryEdit() {
       toast.success(isEdit ? 'Task updated successfully!' : 'Task created successfully!');
       setTimeout(() => setSubmitted(false), 3000);
     } catch (e: any) {
-      console.error("Submission error:", e);
+      // error handled by toast
       const msg = e?.response?.data?.Message || e?.response?.data?.message;
       toast.error(msg || 'Error saving task. Please try again.');
     } finally {

@@ -4,6 +4,7 @@
 import { Server } from "socket.io"
 import { prisma }  from "../src/HR/Lib/prisma.js"
 import { setIoInstance } from "../src/HR/services/NotificationService.js"
+import { logger } from "../src/System/utils/logger.js"
 
 // ─── In-memory room state ─────────────────────────────────────────────────────
 const roomStates   = new Map<string, any>()
@@ -25,7 +26,7 @@ export const socketHandler = (io: Server) => {
   setIoInstance(io)
 
   io.on("connection", (socket) => {
-    console.log("✅ User Connected:", socket.id)
+    logger.info({ socketId: socket.id }, "✅ User Connected")
 
     socket.on("join-hr-notification", (hrId: string) => {
       socket.join(hrId)
@@ -50,9 +51,9 @@ export const socketHandler = (io: Server) => {
             if (interview?.status === "SCHEDULED") {
               await prisma.interview.update({ where: { id: interviewId }, data: { status: "STARTED" } })
               io.to(interviewId).emit("interview-status-changed", { status: "STARTED" })
-              console.log(`✅ Interview ${interviewId} → STARTED`)
+              logger.info({ interviewId }, "✅ Interview → STARTED")
             }
-          } catch (err) { console.error("Failed to update status:", err) }
+          } catch (err) { logger.error({ err }, "Failed to update status") }
         }
       }
 
@@ -161,7 +162,7 @@ export const socketHandler = (io: Server) => {
       socket.to(data.interviewId).emit("malpractice-log", { ...data, isHard: false })
       // Dev own bell log
       socket.emit("malpractice-log", { ...data, isHard: false })
-      console.log(`📋 Soft [${data.severity}]: ${data.type}`)
+      logger.info({ severity: data.severity, type: data.type }, "📋 Soft malpractice")
     })
 
     // HARD → counts toward warnings → possible modals and suspension
@@ -172,7 +173,7 @@ export const socketHandler = (io: Server) => {
       // ✅ FIX: If this room is already suspended, silently ignore
       // No more modals fire for HR after suspension
       if (suspendedRooms.has(data.interviewId)) {
-        console.log(`🔇 Ignoring malpractice for suspended room: ${data.interviewId}`)
+        logger.info({ interviewId: data.interviewId }, "🔇 Ignoring malpractice for suspended room")
         return
       }
 
@@ -185,7 +186,7 @@ export const socketHandler = (io: Server) => {
         ...data, isHard: true, warningCount: count
       })
 
-      console.log(`🚨 Hard #${count}: ${data.type} in ${data.interviewId}`)
+      logger.warn({ count, type: data.type, interviewId: data.interviewId }, "🚨 Hard malpractice violation")
 
       // Warning modals at thresholds — both HR and Dev see them
       if (count === WARN_1) {
@@ -219,9 +220,9 @@ export const socketHandler = (io: Server) => {
           where: { id: interviewId },
           data:  { status: "SUSPENDED" as any }
         })
-        console.log(`🚫 Interview ${interviewId} SUSPENDED`)
+        logger.warn({ interviewId }, "🚫 Interview SUSPENDED")
       } catch (err) {
-        console.error("Failed to suspend:", err)
+        logger.error({ err }, "Failed to suspend interview")
       }
 
       // Send suspended event to developer (socket.to = everyone except HR who clicked)
@@ -233,7 +234,7 @@ export const socketHandler = (io: Server) => {
       // Clear violation count
       hardViolationCount.delete(interviewId)
 
-      console.log(`✅ Room ${interviewId} marked as suspended — no more modals will fire`)
+      logger.info({ interviewId }, "✅ Room marked as suspended — no more modals will fire")
     })
 
     socket.on("leave-room", (interviewId: string) => {
@@ -256,9 +257,9 @@ export const socketHandler = (io: Server) => {
             where: { id: interviewId },
             data:  { status: "COMPLETED" }
           })
-          console.log(`✅ Interview ${interviewId} → COMPLETED`)
+          logger.info({ interviewId }, "✅ Interview → COMPLETED")
         }
-      } catch (err) { console.error("Failed to complete:", err) }
+      } catch (err) { logger.error({ err }, "Failed to complete interview") }
     })
 
     socket.on("disconnect", () => {

@@ -1,3 +1,4 @@
+import { logger } from "../../../System/utils/logger.js";
 import nodemailer from "nodemailer";
 import dotenv from 'dotenv'
 dotenv.config()
@@ -102,7 +103,7 @@ export const sentChangePassOtp = async (email: string, otp: string) => {
   `
 });
   } catch (e) {
-    console.log("Email sending error:", e);
+    logger.info("Email sending error:", e);
     throw e;
   }
 }

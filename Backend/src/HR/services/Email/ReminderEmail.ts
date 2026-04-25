@@ -1,3 +1,4 @@
+import { logger } from "../../../System/utils/logger.js";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
@@ -157,7 +158,7 @@ export const sendInterviewReminderEmail = async ({
       html,
     });
   } catch (e: any) {
-    console.error("HR reminder email error:", e.message);
+    logger.error("HR reminder email error:", e.message);
   }
 };
 
@@ -327,6 +328,6 @@ export const sendDeveloperReminderEmail = async ({
       html,
     });
   } catch (e: any) {
-    console.error("Developer reminder email error:", e.message);
+    logger.error("Developer reminder email error:", e.message);
   }
 };

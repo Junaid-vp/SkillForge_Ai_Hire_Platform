@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 
 // RabbitMQ Queue for AI Task Evaluation
 
@@ -52,7 +53,7 @@ async function getChannel(): Promise<Channel> {
       await ch.assertQueue(QUEUE, { durable: true })
       ch.prefetch(1)
 
-      console.log(`✅ RabbitMQ connected — queue: "${QUEUE}"`)
+      logger.info(`✅ RabbitMQ connected — queue: "${QUEUE}"`)
 
       conn.on("error", () => { connection = null; channel = null })
       conn.on("close", () => { connection = null; channel = null })
@@ -60,7 +61,7 @@ async function getChannel(): Promise<Channel> {
       return ch
     } catch (err: any) {
       retries--
-      console.warn(`⏳ Waiting for RabbitMQ... (${retries} retries left) - ${err.message}`)
+      logger.warn(`⏳ Waiting for RabbitMQ... (${retries} retries left) - ${err.message}`)
       if (retries === 0) throw err
       await new Promise(res => setTimeout(res, 5000)) // Wait 5 seconds
     }
@@ -83,14 +84,14 @@ export async function enqueueTaskEvaluation(data: TaskEvalJobData): Promise<void
       { persistent: true }
     )
 
-    console.log(`📤 Queued task evaluation — taskId: ${data.taskId}`)
+    logger.info(`📤 Queued task evaluation — taskId: ${data.taskId}`)
 
   } catch (err: any) {
-    console.error("RabbitMQ enqueue error:", err.message)
+    logger.error("RabbitMQ enqueue error:", err.message)
 
     // FALLBACK: if RabbitMQ is down, run inline so developer still gets result
-    console.warn("⚠️  Running evaluation inline (RabbitMQ unavailable)")
-    evaluateTaskWithAI(data).catch(e => console.error("Inline eval error:", e.message))
+    logger.warn("⚠️  Running evaluation inline (RabbitMQ unavailable)")
+    evaluateTaskWithAI(data).catch(e => logger.error("Inline eval error:", e.message))
   }
 }
 
@@ -101,7 +102,7 @@ export async function enqueueTaskEvaluation(data: TaskEvalJobData): Promise<void
 export async function startTaskWorker(): Promise<void> {
   try {
     const ch = await getChannel()
-    console.log(`🔄 RabbitMQ worker listening on "${QUEUE}"...`)
+    logger.info(`🔄 RabbitMQ worker listening on "${QUEUE}"...`)
 
     ch.consume(QUEUE, async (msg) => {
       if (!msg) return
@@ -110,16 +111,16 @@ export async function startTaskWorker(): Promise<void> {
 
       try {
         data = JSON.parse(msg.content.toString()) as TaskEvalJobData
-        console.log(`⚙️  Processing — taskId: ${data.taskId}`)
+        logger.info(`⚙️  Processing — taskId: ${data.taskId}`)
 
         await evaluateTaskWithAI(data)
 
         // ✅ ack = job done successfully, remove from queue
         ch.ack(msg)
-        console.log(`✅ Completed — taskId: ${data.taskId}`)
+        logger.info(`✅ Completed — taskId: ${data.taskId}`)
 
       } catch (err: any) {
-        console.error(`❌ Failed — taskId: ${data?.taskId}`, err.message)
+        logger.error(`❌ Failed — taskId: ${data?.taskId}`, err.message)
 
         // nack = job failed, discard (don't requeue to avoid infinite loop)
         ch.nack(msg, false, false)
@@ -127,8 +128,8 @@ export async function startTaskWorker(): Promise<void> {
     }, { noAck: false })
 
   } catch (err: any) {
-    console.error("RabbitMQ worker start error:", err.message)
-    console.warn("⚠️  Worker not started — evaluations run inline as fallback")
+    logger.error("RabbitMQ worker start error:", err.message)
+    logger.warn("⚠️  Worker not started — evaluations run inline as fallback")
   }
 }
 
@@ -137,7 +138,7 @@ export async function closeTaskQueue(): Promise<void> {
   try {
     if (channel) await (channel as any).close()
     if (connection) await (connection as any).close()
-    console.log("✅ RabbitMQ closed gracefully")
+    logger.info("✅ RabbitMQ closed gracefully")
   } catch { }
 }
 
@@ -329,17 +330,17 @@ STRICT RULES:
       true
     )
 
-    console.log(`📊 Evaluation saved — taskId: ${taskId} score: ${evaluation.overallScore}/10`)
+    logger.info(`📊 Evaluation saved — taskId: ${taskId} score: ${evaluation.overallScore}/10`)
 
   } catch (err: any) {
-    console.error("evaluateTaskWithAI error:", err.message)
+    logger.error("evaluateTaskWithAI error:", err.message)
     throw err // re-throw so RabbitMQ calls nack()
   } finally {
     // Always delete temp ZIP file
     try {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath)
-        console.log(`🗑️  Deleted temp file: ${filePath}`)
+        logger.info(`🗑️  Deleted temp file: ${filePath}`)
       }
     } catch { /* ignore */ }
   }

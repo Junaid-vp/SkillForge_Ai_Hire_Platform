@@ -115,7 +115,7 @@ export default function NotificationBell({ hrId }: Props) {
       setUnreadCount(prev => Math.max(0, prev - 1))
       window.dispatchEvent(new Event('notifications_updated'));
     } catch (e) {
-      console.log(e)
+      // console removed
     }
   }
 

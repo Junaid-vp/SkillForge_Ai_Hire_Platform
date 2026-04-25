@@ -45,7 +45,7 @@ const fetchDeveloperDetails = async (id: string): Promise<DevDetailsResponse> =>
   );
 
   const { developer, interview, task } = data;
-console.log(task);
+
 
   return (
     <div className="max-w-4xl mx-auto pb-10">

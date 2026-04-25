@@ -1,3 +1,4 @@
+import { logger } from "../../../System/utils/logger.js";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
@@ -39,8 +40,8 @@ export const sendUniqueCode = async (
       return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
     };
 
-    console.log("Sending Schedule Email With Transporter...");
-    console.log("To:", developerEmail);
+    logger.info("Sending Schedule Email With Transporter...");
+    logger.info("To:", developerEmail);
 
     await transporter.sendMail({
       from: `"${companyName ?? "SkillForge AI"}" <${process.env.EMAIL_USER}>`,
@@ -182,7 +183,7 @@ export const sendUniqueCode = async (
 `,
     });
   } catch (e) {
-    console.error("Email sending error:", e);
+    logger.error("Email sending error:", e);
     throw e;
   }
 };

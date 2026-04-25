@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import { Request, Response } from "express"
 import { prisma } from "../Lib/prisma.js"
 import Groq from "groq-sdk"
@@ -45,7 +46,7 @@ Skills: ${skills.join(", ") }
 Rules:
 - Questions 1-10: Conceptual/theoretical questions based on their skills
 - Questions 11-13: Real-world scenario questions (how would you handle...)
-- Questions 14-15: LeetCode style coding problems (easy/medium level)
+- Questions 14-15: Practical coding challenges. IF the position (e.g., Data Analyst, Database Admin) or skills strongly involve databases/SQL, these MUST be SQL query problems with table schemas. OTHERWISE, provide standard LeetCode style algorithmic problems (easy/medium level).
  
 For questions 1-13 return this format:
 {
@@ -63,16 +64,16 @@ For questions 1-13 return this format:
  
 For questions 14-15 ONLY return this format (must include all leetcode fields):
 {
-  "questionText": "Full problem description. Example: Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
-  "expectedAnswer": "Explanation of the optimal algorithm and approach",
-  "keywords": ["array", "hashmap", "two-pointer"],
+  "questionText": "Full problem description. For Algorithm: 'Given an array...'. For SQL: 'Given the Employee table (id, name, salary), write a query to...'",
+  "expectedAnswer": "Explanation of the optimal algorithm or SQL query",
+  "keywords": ["array", "two-pointer"] OR ["sql", "join", "group by"],
   "difficulty": "Medium",
   "isLeetcode": true,
   "orderIndex": 14,
   "estimatedTime": 20,
-  "inputExample": "nums = [2,7,11,15], target = 9",
-  "outputExample": "[0,1]",
-  "constraints": "2 <= nums.length <= 10^4\\n-10^9 <= nums[i] <= 10^9\\nOnly one valid answer exists."
+  "inputExample": "nums = [2,7,11,15], target = 9 OR Table schema and sample data",
+  "outputExample": "[0,1] OR Expected result table",
+  "constraints": "Constraints or SQL dialect requirements"
 }
  
 estimatedTime:
@@ -136,7 +137,7 @@ Return ONLY a valid JSON array of exactly 15 objects. No markdown. No extra text
     })
  
   } catch (e: any) {
-    console.error("generateQuestions error:", e)
+    logger.error("generateQuestions error:", e)
     res.status(500).json({ Message: "Server Error", Error: e.message })
   }
 }

@@ -28,9 +28,13 @@ import helmet from "helmet"
 import { aiLimiter } from "./src/HR/Middleware/RateLimit.js";
 import { closeTaskQueue, startTaskWorker } from "./src/HR/services/Taskqueue.js";
 import { prisma } from "./src/HR/Lib/prisma.js";
+import { logger } from "./src/System/utils/logger.js";
+import pinoHttpModule from "pino-http";
+const pinoHttp = (pinoHttpModule as any).default || pinoHttpModule;
 
 dotenv.config();
 const app: Application = express();
+app.use(pinoHttp({ logger }));
 const PORT = process.env.PORT || 3005;
 const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").split(",").map(url => url.trim());
 const trustProxy = process.env.TRUST_PROXY ?? (process.env.NODE_ENV === "production" ? "1" : "0");
@@ -114,7 +118,7 @@ app.use(
       // Allow requests with no origin (like mobile apps or curl requests)
       // or requests from our allowed frontendUrl array
       if (!origin || frontendUrl.includes(origin)) {
-        callback(null, true);
+        callback(null, origin || false);
       } else {
         callback(new Error('Not allowed by CORS'));
       }
@@ -151,8 +155,8 @@ main()
 
 // ── Database Connection Check ─────────────────
 prisma.$connect()
-  .then(() => console.log("✅ Database connected successfully within Docker"))
-  .catch((err) => console.error("❌ Database connection failed within Docker:", err.message));
+  .then(() => logger.info("✅ Database connected successfully within Docker"))
+  .catch((err) => logger.error({ err }, "❌ Database connection failed within Docker"));
 
 startTaskWorker()
 
@@ -163,16 +167,16 @@ app.get("/health", (req, res) => {
 
 // ── Graceful shutdown ─────────────────────────
 process.on("SIGTERM", async () => {
-  console.log("SIGTERM — shutting down")
+  logger.info("SIGTERM — shutting down")
   await closeTaskQueue()
   process.exit(0)
 })
 process.on("SIGINT", async () => {
-  console.log("SIGINT — shutting down")
+  logger.info("SIGINT — shutting down")
   await closeTaskQueue()
   process.exit(0)
 })
 
 httpServer.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  logger.info(`Server is running on port ${PORT}`);
 });

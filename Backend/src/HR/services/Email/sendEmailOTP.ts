@@ -1,3 +1,4 @@
+import { logger } from "../../../System/utils/logger.js";
 import nodemailer from "nodemailer";
 import dotenv from 'dotenv'
 dotenv.config()
@@ -93,7 +94,7 @@ export const sentOTPemail = async (email: string, otp: string) => {
       `
     })
   } catch (e) {
-    console.log("Email sending error:", e);
+    logger.info("Email sending error:", e);
     throw e;
   }
 }
@@ -104,7 +105,7 @@ export const sentOTPemail = async (email: string, otp: string) => {
 
 // const resend = new Resend(process.env.RESEND_API_KEY);
 // export const sentOTPemail = async (email: string, otp: string) => {
-//     console.log(otp);
+//     logger.info(otp);
     
 //   try {
 //      await resend.emails.send({
@@ -117,7 +118,7 @@ export const sentOTPemail = async (email: string, otp: string) => {
 //   });
 
 //   } catch (e) {
-//     console.log("Email sending error:", e);
+//     logger.info("Email sending error:", e);
 //     throw e;
 //   }
 // }

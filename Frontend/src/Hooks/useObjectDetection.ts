@@ -47,9 +47,9 @@ export function useObjectDetection(
           maxResults:     10,
         })
         isLoaded.current = true
-        console.log("✅ MediaPipe Object Detector loaded")
+        // MediaPipe Object Detector loaded
       } catch (e) {
-        console.error("❌ MediaPipe Object Detector failed:", e)
+        // MediaPipe Object Detector load failed silently
       }
     }
 

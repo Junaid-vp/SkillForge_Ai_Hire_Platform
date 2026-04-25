@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import Stripe from "stripe";
 import { Request, Response } from "express";
 import dotenv from "dotenv";
@@ -60,8 +61,8 @@ export const stripeWebhook = async (req: Request, res: Response) => {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
     )
-    console.log("🔥 Webhook hit")
-    console.log("Event:", event.type)
+    logger.info("🔥 Webhook hit")
+    logger.info("Event:", event.type)
     switch (event.type) {
 
       case "checkout.session.completed": {

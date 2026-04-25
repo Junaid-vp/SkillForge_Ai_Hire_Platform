@@ -156,7 +156,7 @@ function ScheduledInterview() {
         );
       }, 1500);
     } catch (error) {
-      console.error("Failed to copy code:", error);
+      // copy failed silently
       toast.error('Failed to copy code.');
     }
   };

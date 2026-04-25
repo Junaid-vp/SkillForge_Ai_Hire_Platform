@@ -67,7 +67,7 @@ export default function EmailComposerModal({
       setPdfBase64(base64)
       setPdfFileName(fileName)
     } catch (e) {
-      console.error("Failed to generate PDF for email:", e)
+      // PDF generation error handled by toast
       toast.error("Failed to prepare PDF attachment")
     } finally {
       setGenerating(false)

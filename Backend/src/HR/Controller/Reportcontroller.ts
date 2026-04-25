@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 // src/HR/Controller/ReportController.ts
 import { Request, Response } from "express"
 import { prisma } from "../Lib/prisma.js"
@@ -154,7 +155,7 @@ export const sendReportEmail = async (req: Request, res: Response) => {
 
     res.status(200).json({ Message: "Email sent successfully", status: "success" })
   } catch (e: any) {
-    console.error("[REPORT_EMAIL_ERROR]", e)
+    logger.error("[REPORT_EMAIL_ERROR]", e)
     res.status(500).json({ 
       Message: "Failed to send email", 
       Error: e.message,

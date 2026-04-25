@@ -18,7 +18,7 @@ export default function UpgradePage() {
         const res = await api.get("/setting/hrSpecificDetails");
         setIsPro(res.data.Hr.plan === "pro");
       } catch (e) {
-        console.error(e);
+        
       } finally {
         setFetching(false);
       }
@@ -32,7 +32,7 @@ export default function UpgradePage() {
       const res = await api.post("/subscription/checkout");
       if (res.data.checkoutUrl) window.location.href = res.data.checkoutUrl;
     } catch (e) {
-      console.error(e);
+      
       toast.error("Failed to start checkout. Please try again.");
     } finally {
       setLoading(false);

@@ -48,7 +48,7 @@ function RescheduleModal({ open, onClose, interviewId, refetch }: Props) {
       refetch();
       onClose();
     } catch (err: any) {
-      console.error("Reschedule error:", err.response?.data || err);
+      // console removed
       setError(err.response?.data?.Message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);

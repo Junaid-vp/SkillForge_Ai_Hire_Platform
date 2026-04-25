@@ -28,7 +28,7 @@ useEffect(() => {
         toast.success("Logged out successfully.");
         navigate("/devLogin");
       } catch (err) {
-        console.error(err);
+        // confetti error ignored
       }
     };
 

@@ -149,7 +149,7 @@ function DevDashBoard() {
       clearAuth();
       toast.success("Logged out successfully.");
     } catch (e) {
-      console.log(e);
+      
       clearAuth();
     } finally {
       navigate("/devLogin");

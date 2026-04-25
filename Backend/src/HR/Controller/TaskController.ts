@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 // ============================================
 // backend/src/HR/Controller/TaskController.ts
 // Uses RabbitMQ to queue AI evaluation
@@ -55,7 +56,7 @@ export const assignTask = async (req: Request, res: Response) => {
     res.status(201).json({ Message: "Task Assigned Successfully", Status: "Success" })
 
   } catch (e: any) {
-    console.error("assignTask error:", e)
+    logger.error("assignTask error:", e)
     res.status(500).json({ Message: "Server Error", Error: e.message })
   }
 }
@@ -363,6 +364,6 @@ export const submitTask = async (req: Request, res: Response) => {
 
 
 //   } catch (err: any) {
-//     console.error("AI evaluation failed:", err.message)
+//     logger.error("AI evaluation failed:", err.message)
 //   }
 // }

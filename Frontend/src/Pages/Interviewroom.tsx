@@ -260,7 +260,7 @@ export default function InterviewRoom() {
             incomingScreenStreamRef.current = incomingScreenStream
             setRemoteSharing(true)
           })
-          screenCall.on("error", (err) => console.error("Screen call error:", err))
+          screenCall.on("error", () => {})
         })
 
         socket.on("screen-share-stopped", () => {
@@ -324,7 +324,7 @@ export default function InterviewRoom() {
         })
       })
       .catch((err) => {
-        console.error("Camera error:", err)
+        // camera access denied
         setCamError(true)
         toast.error("Camera or microphone access was denied.")
       })
@@ -642,7 +642,7 @@ export default function InterviewRoom() {
       if (localVideoRef.current) localVideoRef.current.srcObject = screenStream
       screenStream.getVideoTracks()[0].onended = () => stopScreenShare()
       setIsSharing(true)
-    } catch { console.log("Screen share cancelled") }
+    } catch { /* screen share cancelled */ }
   }
 
   const stopScreenShare = () => {

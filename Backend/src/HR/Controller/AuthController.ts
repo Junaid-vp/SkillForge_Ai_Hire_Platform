@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "../Lib/prisma.js";
@@ -151,7 +152,7 @@ export const otpResend = async (req: Request, res: Response) => {
       Status: "Success",
     });
   } catch (e: any) {
-    console.log(e.message);
+    logger.info(e.message);
   }
 };
 

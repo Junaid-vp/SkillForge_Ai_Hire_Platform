@@ -85,7 +85,7 @@ function TaskPreview() {
       toast.success('Task deleted successfully!');
       setTimeout(() => navigate("/dashboard/task-library"), 2000);
     } catch (e: any) {
-      console.error(e);
+      
       toast.error(e?.response?.data?.Message || 'Failed to delete task.');
     } finally {
       setIsDeleting(false);
@@ -100,7 +100,7 @@ function TaskPreview() {
     toast.success('Task assigned successfully!')
     
   } catch (e: any) {
-    console.error(e.message);
+    // error handled by toast
     toast.error(e?.response?.data?.Message || 'Failed to assign task.');
     throw e;
   } finally {

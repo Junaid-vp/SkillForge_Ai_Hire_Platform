@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import { Request, Response } from "express";
 import { prisma } from "../Lib/prisma.js";
 import bcrypt from "bcryptjs";
@@ -223,7 +224,7 @@ export const passCodeVarifyOtpResend = async (req: Request, res: Response) => {
       Status: "Success",
     });
   } catch (e: any) {
-    console.log(e.message);
+    logger.info(e.message);
   }
 };
 

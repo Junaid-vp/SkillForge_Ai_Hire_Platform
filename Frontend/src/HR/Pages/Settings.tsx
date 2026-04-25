@@ -62,7 +62,7 @@ function Settings() {
         });
         setProfile(hr);
       } catch (e) {
-        console.error("Failed to fetch HR profile:", e);
+        // error handled by toast
         toast.error('Failed to load profile. Please refresh.');
       } finally {
         setLoading(false);
@@ -83,7 +83,7 @@ function Settings() {
       if (profile) setProfile({ ...profile, ...values });
       setFormValues(values);
     } catch (e) {
-      console.error("Update failed:", e);
+      // error handled by toast
       toast.error('Failed to update profile. Please try again.');
     } finally {
       setSubmitting(false);
@@ -108,7 +108,7 @@ function Settings() {
       toast.success('Subscription cancellation scheduled.');
       setIsCancelModalOpen(false);
     } catch (e) {
-      console.error("Cancel error:", e);
+      // error handled by toast
       toast.error('Failed to cancel subscription. Please try again.');
     } finally {
       setIsCancelling(false);
@@ -139,7 +139,7 @@ function Settings() {
     : 0;
 
   const isPro = profile?.plan === "pro";
-console.log(profile);
+
 
   return (
     <div className="max-w-3xl mx-auto pb-10">

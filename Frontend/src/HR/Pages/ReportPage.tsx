@@ -373,7 +373,7 @@ function PDFDownloadButton({ interview }: { interview: ReportInterview }) {
 
       await generateReportPDF(fullData)
     } catch (e) {
-      console.error("PDF error:", e)
+      // PDF error handled by toast
     } finally {
       setLoading(false)
     }

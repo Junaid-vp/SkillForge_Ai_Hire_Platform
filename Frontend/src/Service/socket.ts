@@ -12,11 +12,11 @@ export const getSocket = (): Socket => {
     })
     
     socket.on("connect", () => {
-      console.log("✅ Socket connected:", socket?.id)
+      // socket connected
     })
     
     socket.on("disconnect", () => {
-      console.log("❌ Socket disconnected")
+      // socket disconnected
     })
   }
   return socket

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Formik, Form, Field } from "formik";
-import { LinkIcon, Send, CalendarDays, User, Sparkles, CheckCircle2, FileText, Upload, X } from 'lucide-react';
+import { LinkIcon, Send, CalendarDays, User, CheckCircle2, FileText, Upload, X } from 'lucide-react';
+import { GeminiStar } from '../Components/Icons';
 import toast from 'react-hot-toast';
 import { api } from '../../Api/Axios';
 import { InterviewValidation } from '../Validation/InterviewValidation';
@@ -120,7 +121,7 @@ function CreateInterview() {
       setTimeout(() => setSubmitted(false), 3000);
  
     } catch (e: any) {
-      console.error("Submission error:", e);
+      // error handled by toast
       const msg = e?.response?.data?.Message || e?.response?.data?.message;
       toast.error(msg || 'Failed to send invitation. Please try again.');
     } finally {
@@ -136,7 +137,7 @@ function CreateInterview() {
       toast.success('Invite code generated!');
     } catch (e) {
       toast.error('Failed to generate invite code. Please try again.');
-      console.error(e);
+      
     } finally {
       setIsGenerating(false);
     }
@@ -152,7 +153,7 @@ function CreateInterview() {
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-            <Sparkles size={12} className="text-white" />
+            <GeminiStar size={12} className="text-white" />
           </div>
           <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">
             HR Portal
@@ -180,7 +181,7 @@ function CreateInterview() {
         validationSchema={InterviewValidation}
         onSubmit={HandleSubmit}
       >
-        {({ errors, touched, isSubmitting, resetForm, setFieldValue }) => (
+        {({ errors, touched, isSubmitting, resetForm, setFieldValue, values }) => (
           <Form className="space-y-4">
  
             {/* Section 1 — Developer Information */}
@@ -257,7 +258,7 @@ function CreateInterview() {
                       )}
                       {resumeData && !isParsing && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
-                          <Sparkles size={10} className="text-blue-500 fill-blue-500/10" />
+                          <GeminiStar size={10} className="text-blue-500 fill-blue-500/10" />
                         </div>
                       )}
                     </div>
@@ -284,7 +285,7 @@ function CreateInterview() {
                       )}
                       {resumeData && !isParsing && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
-                          <Sparkles size={10} className="text-blue-500 fill-blue-500/10" />
+                          <GeminiStar size={10} className="text-blue-500 fill-blue-500/10" />
                         </div>
                       )}
                     </div>
@@ -314,7 +315,7 @@ function CreateInterview() {
                       )}
                       {resumeData && !isParsing && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
-                          <Sparkles size={10} className="text-blue-500 fill-blue-500/10" />
+                          <GeminiStar size={10} className="text-blue-500 fill-blue-500/10" />
                         </div>
                       )}
                     </div>
@@ -341,7 +342,7 @@ function CreateInterview() {
                       )}
                       {resumeData && !isParsing && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
-                          <Sparkles size={10} className="text-blue-500 fill-blue-500/10" />
+                          <GeminiStar size={10} className="text-blue-500 fill-blue-500/10" />
                         </div>
                       )}
                     </div>
@@ -372,7 +373,7 @@ function CreateInterview() {
                       )}
                       {resumeData && !isParsing && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
-                          <Sparkles size={10} className="text-blue-500 fill-blue-500/10" />
+                          <GeminiStar size={10} className="text-blue-500 fill-blue-500/10" />
                         </div>
                       )}
                     </div>
@@ -440,8 +441,17 @@ function CreateInterview() {
                   <button
                     type="button"
                     onClick={handleGenerateCode}
-                    disabled={isGenerating}
-                    className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm shadow-blue-100"
+                    disabled={
+                      isGenerating ||
+                      !values.developerName ||
+                      !values.developerEmail ||
+                      !values.position ||
+                      !values.experience ||
+                      !values.skills ||
+                      !values.interviewDate ||
+                      !values.interviewTime
+                    }
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-blue-100"
                   >
                     {isGenerating
                       ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -103,7 +103,7 @@ function TaskLibraryList() {
       queryClient.invalidateQueries({ queryKey: ["TaskLibrary"] });
       setTaskToDelete(null);
     } catch (e: any) {
-      console.error(e);
+      
       toast.error(e?.response?.data?.Message || 'Failed to delete task.');
     } finally {
       setIsDeleting(false);

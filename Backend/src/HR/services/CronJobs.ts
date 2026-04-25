@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import { CronJob } from "cron";
 import { prisma } from "../Lib/prisma.js";
 import { redis } from "../Lib/redis.js";
@@ -6,13 +7,13 @@ import { sendInterviewReminderEmail, sendDeveloperReminderEmail } from "./Email/
 import { createNotification } from "./NotificationService.js";
 
 export const startCronJobs = () => {
-  console.log("🚀 Initializing Cron Jobs...");
+  logger.info("🚀 Initializing Cron Jobs...");
 
   // ── Existing: Expire tasks every hour ────────────────────────────────────
   // 0 * * * * = at the start of every hour
   const taskExpiryJob = new CronJob("0 * * * *", async () => {
     try {
-      console.log("🕒 Running Task Expiry Cron Job...");
+      logger.info("🕒 Running Task Expiry Cron Job...");
       const now = new Date();
 
       const expiredTasks = await prisma.task.findMany({
@@ -38,9 +39,9 @@ export const startCronJobs = () => {
           "TASK_EXPIRED"
         );
       }
-      console.log(`✅ Expired ${expiredTasks.length} tasks.`);
+      logger.info(`✅ Expired ${expiredTasks.length} tasks.`);
     } catch (e: any) {
-      console.error("❌ Task Expiry Cron error:", e.message);
+      logger.error("❌ Task Expiry Cron error:", e.message);
     }
   });
 
@@ -106,16 +107,16 @@ export const startCronJobs = () => {
           data: { reminder10Sent: true },
         });
 
-        console.log(`📅 ${label} reminder sent for interview ${interview.id}`);
+        logger.info(`📅 ${label} reminder sent for interview ${interview.id}`);
       }
     } catch (e: any) {
-      console.error("❌ Interview reminder cron error:", e.message);
+      logger.error("❌ Interview reminder cron error:", e.message);
     }
   });
 
   taskExpiryJob.start();
   interviewReminderJob.start();
   
-  console.log("✅ All cron jobs started");
+  logger.info("✅ All cron jobs started");
 };
 2
