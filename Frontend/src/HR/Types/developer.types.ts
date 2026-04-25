@@ -23,7 +23,7 @@ export interface Interview {
 export interface TaskLibrary {
   title: string;
   description: string;
-  requirements: string;
+  requirements: string[];
   difficulty: string;
   duration: number;
   category: string;
@@ -49,7 +49,7 @@ export interface Task {
   taskLibrary: {
     title: string
     description: string
-    requirements: string
+    requirements: string[];
     difficulty: string
     duration: number
     category: string
