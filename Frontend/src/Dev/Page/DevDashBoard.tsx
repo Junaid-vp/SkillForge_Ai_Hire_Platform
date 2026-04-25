@@ -452,9 +452,14 @@ function DevDashBoard() {
                     <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-4">
                       <div className="flex items-center gap-3 px-6 py-3 bg-gray-50/60 border-b border-gray-100">
                         <BookOpen size={13} className="text-blue-600" />
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-                          Assigned Task
-                        </p>
+                        <div className="flex-1 flex items-center justify-between">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+                            Assigned Task
+                          </p>
+                          <p className="text-[10px] text-gray-400">
+                            Assigned {new Date(interview.createdAt).toLocaleDateString()} at {new Date(interview.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                          </p>
+                        </div>
                       </div>
                       <div className="px-6 py-5 space-y-4">
                         <div>

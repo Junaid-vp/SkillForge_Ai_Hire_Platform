@@ -367,10 +367,15 @@ function TaskLibraryList() {
 
                 {/* Footer */}
                 <div className="flex items-center justify-between px-6 py-2.5 bg-gray-50/60 border-t border-gray-50">
-                  <span className="text-[11px] text-gray-400">
-                    {requirementCount} requirement
-                    {requirementCount !== 1 ? "s" : ""}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-gray-400">
+                      {requirementCount} requirement
+                      {requirementCount !== 1 ? "s" : ""}
+                    </span>
+                    <span className="text-[11px] text-gray-400 border-l border-gray-200 pl-3">
+                      Added {new Date(task.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
                   <span className="text-[11px] text-gray-400">
                     Used{" "}
                     <strong className="text-gray-600">{task.usedCount}</strong>{" "}
