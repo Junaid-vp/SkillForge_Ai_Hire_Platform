@@ -728,7 +728,7 @@ const defaultTasks = [{
 
   
     await prisma.taskLibrary.createMany({
-      data: defaultTasks
+      data: defaultTasks as any
     })
 
     console.log(`✅ Successfully seeded ${defaultTasks.length} default tasks`)
@@ -741,3 +741,5 @@ const defaultTasks = [{
   }
 }
 
+
+main();
