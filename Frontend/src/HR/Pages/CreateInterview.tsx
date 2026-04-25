@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Formik, Form, Field } from "formik";
-import { LinkIcon, Send, CalendarDays, User, CheckCircle2, FileText, Upload, X } from 'lucide-react';
+import { LinkIcon, Send, CalendarDays, User, CheckCircle2, FileText, Upload, X, ClipboardList } from 'lucide-react';
 import { GeminiStar } from '../Components/Icons';
 import toast from 'react-hot-toast';
 import { api } from '../../Api/Axios';
@@ -153,7 +153,7 @@ function CreateInterview() {
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-8 h-8 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center">
-            <GeminiStar size={16} className="text-blue-500" />
+            <ClipboardList size={16} className="text-blue-500" />
           </div>
           <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">
             HR Portal
@@ -260,7 +260,7 @@ function CreateInterview() {
                       )}
                       {resumeData && !isParsing && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
-                          <GeminiStar size={14} className="text-blue-500 fill-blue-500/10" />
+                          <GeminiStar size={14} className="text-blue-500" />
                         </div>
                       )}
                     </div>
@@ -289,7 +289,7 @@ function CreateInterview() {
                       )}
                       {resumeData && !isParsing && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
-                          <GeminiStar size={14} className="text-blue-500 fill-blue-500/10" />
+                          <GeminiStar size={14} className="text-blue-500" />
                         </div>
                       )}
                     </div>
@@ -321,7 +321,7 @@ function CreateInterview() {
                       )}
                       {resumeData && !isParsing && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
-                          <GeminiStar size={14} className="text-blue-500 fill-blue-500/10" />
+                          <GeminiStar size={14} className="text-blue-500" />
                         </div>
                       )}
                     </div>
@@ -349,7 +349,7 @@ function CreateInterview() {
                       )}
                       {resumeData && !isParsing && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
-                          <GeminiStar size={14} className="text-blue-500 fill-blue-500/10" />
+                          <GeminiStar size={14} className="text-blue-500" />
                         </div>
                       )}
                     </div>
@@ -381,7 +381,7 @@ function CreateInterview() {
                       )}
                       {resumeData && !isParsing && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none animate-in fade-in zoom-in duration-500">
-                          <GeminiStar size={14} className="text-blue-500 fill-blue-500/10" />
+                          <GeminiStar size={14} className="text-blue-500" />
                         </div>
                       )}
                     </div>
