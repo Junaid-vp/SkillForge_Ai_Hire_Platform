@@ -1,72 +1,79 @@
-name: CI/CD Pipeline   # pipeline name
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]   # run when code pushed to main
+    branches: [ main ]
 
 jobs:
 
   build-and-push:
-    runs-on: ubuntu-latest   # use ubuntu server
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4   # get project code
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}   # aws access key
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}   # aws secret key
-          aws-region: ap-south-1   # aws region
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2   # login to :contentReference[oaicite:0]{index=0}
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, Tag, and Push Image to ECR
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}   # ecr url
-          ECR_REPOSITORY: production/skillforgeai   # repo name
-          IMAGE_TAG: ${{ github.sha }}   # use commit sha as image version
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: production/skillforgeai
+          IMAGE_TAG: ${{ github.sha }}
 
         run: |
           cd Backend
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .   # build docker image
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG        # push image to ecr
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
 
   deploy:
-    needs: build-and-push   # run after build
+    needs: build-and-push
     runs-on: ubuntu-latest
 
     steps:
       - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v1.0.3   # connect to server
+        uses: appleboy/ssh-action@v1.0.3
 
         env:
           IMAGE_TAG: ${{ github.sha }}
 
         with:
-          host: ${{ secrets.EC2_HOST }}   # server ip
-          username: ${{ secrets.EC2_USERNAME }}   # server user
-          key: ${{ secrets.SSH_PRIVATE_KEY }}   # ssh key
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: IMAGE_TAG
+          timeout: 60s
+          command_timeout: 20m
+          script_stop: true
 
           script: |
-            # login to ecr
-            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 723468358503.dkr.ecr.ap-south-1.amazonaws.com
-            # free up disk space by deleting old unused images BEFORE pulling
-            # this ensures we have enough space for the new image download
+            set -e
+
+            # Login to ECR
+            aws ecr get-login-password --region ap-south-1 | \
+              docker login --username AWS --password-stdin \
+              723468358503.dkr.ecr.ap-south-1.amazonaws.com
+
+            # Free disk space
             docker image prune -af
-            
-            # get latest image (old container is still running, so NO DOWNTIME)
+
+            # Pull new image
             docker pull 723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:$IMAGE_TAG
-            
-            # swap containers instantly (2 seconds of downtime instead of 2 minutes)
+
+            # Stop old container
             docker rm -f skillforge-app || true
-            
-            # run new container
+
+            # Start new container
             docker run -d \
               --name skillforge-app \
               -p 3005:3005 \
@@ -74,5 +81,8 @@ jobs:
               --restart unless-stopped \
               723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:$IMAGE_TAG
 
-            # update database (Skipped temporarily to unblock deployment)
-            # docker exec skillforge-app npx prisma db push --accept-data-loss
+            # Wait and verify it started
+            sleep 5
+            docker ps | grep skillforge-app
+
+            echo "✅ Deployment complete!"
