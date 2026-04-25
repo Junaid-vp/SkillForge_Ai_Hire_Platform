@@ -102,7 +102,7 @@ export const createTask = async (req: Request, res: Response) => {
         hrId: id,
         title,
         description,
-        requirements,
+        requirements: requirements as any,
         category,
         techStack,
         difficulty,
@@ -161,7 +161,7 @@ export const updateTask = async (req: Request, res: Response) => {
       data: {
         title,
         description,
-        requirements,
+        requirements: requirements as any,
         category,
         techStack,
         difficulty,
