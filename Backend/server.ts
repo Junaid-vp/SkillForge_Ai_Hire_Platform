@@ -155,6 +155,21 @@ app.use(
 
 
 app.post('/api/subscription/webhook', express.raw({ type: "application/json" }), stripeWebhook)
+app.get("/api/dev/force-migrate-requirements", async (req, res) => {
+  try {
+    const { prisma } = await import("./src/HR/Lib/prisma.js");
+    console.log("🛠️  Running emergency SQL migration...");
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "TaskLibrary" 
+      ALTER COLUMN "requirements" TYPE JSONB 
+      USING to_jsonb(requirements);
+    `);
+    res.send("✅ Database column converted successfully! You can now run db push.");
+  } catch (err: any) {
+    res.status(500).send("❌ Migration failed: " + err.message);
+  }
+});
+
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ limit: '500mb', extended: true }));
 app.use(cookieParser())

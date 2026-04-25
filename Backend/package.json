@@ -7,7 +7,8 @@
     "dev": "nodemon --exec node --import tsx server.ts",
     "prebuild": "prisma generate",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "migrate:requirements": "tsx prisma/migrate-requirements.ts"
   },
   "keywords": [],
   "author": "",
