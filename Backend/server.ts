@@ -128,8 +128,8 @@ app.use(
       const isAllowed = frontendUrl.some(url => url.trim().replace(/\/$/, "") === normalizedOrigin);
 
       // CRITICAL LOG: This will show up in `docker logs skillforge-app`
-      logger.info({ 
-        incomingOrigin: normalizedOrigin, 
+      logger.info({
+        incomingOrigin: normalizedOrigin,
         allowedOrigins: frontendUrl,
         isAllowed
       }, "CORS Validation Check");
@@ -138,10 +138,10 @@ app.use(
         // Return the explicit origin string back
         callback(null, origin);
       } else {
-        logger.warn({ 
-          origin: normalizedOrigin, 
+        logger.warn({
+          origin: normalizedOrigin,
           allowed: frontendUrl,
-          message: "CORS request blocked: Origin not in allowed list" 
+          message: "CORS request blocked: Origin not in allowed list"
         });
         callback(null, false);
       }
@@ -155,8 +155,8 @@ app.use(
 
 
 app.post('/api/subscription/webhook', express.raw({ type: "application/json" }), stripeWebhook)
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ limit: '500mb', extended: true }));
 app.use(cookieParser())
 app.use("/api/auth", AuthRoute);
 app.use('/api/interview', InterviewRoute)

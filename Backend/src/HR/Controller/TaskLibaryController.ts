@@ -12,11 +12,11 @@ export const getAllTask = async (req: Request, res: Response) => {
       return res.status(401).json({ Message: "HR not logged in" });
     }
 
-         const hr = await prisma.hR.findUnique({
-      where:{id}
-     })
-  
-   const isPro = (hr?.interviewCount ?? 0) < (hr?.interviewLimit ?? 5)
+    const hr = await prisma.hR.findUnique({
+      where: { id }
+    })
+
+    const isPro = (hr?.interviewCount ?? 0) < (hr?.interviewLimit ?? 5)
 
     const { category, isDefault } = req.query;
 
@@ -32,11 +32,11 @@ export const getAllTask = async (req: Request, res: Response) => {
       where.isDefault = isDefault === "true";
     }
 
-const data = await prisma.taskLibrary.findMany({
-  where,
-  orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
-  ...(isPro ? {} : { take: 10 }),
-})
+    const data = await prisma.taskLibrary.findMany({
+      where,
+      orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+      ...(isPro ? {} : { take: 10 }),
+    })
 
     if (data.length === 0) {
       return res.status(200).json({
