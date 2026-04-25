@@ -39,7 +39,7 @@ async function main() {
     if (finalArray.length > 0) {
       await prisma.taskLibrary.update({
         where: { id: task.id },
-        data: { requirements: finalArray }
+        data: { requirements: finalArray as any }
       });
       console.log(`✅ Migrated task: ${task.title}`);
     }
