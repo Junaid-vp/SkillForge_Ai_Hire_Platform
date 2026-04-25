@@ -7,7 +7,7 @@ import {
   PlusCircle, BookOpen, CalendarDays,
   Code2, ArrowRight, CheckCircle2, Clock, Users,
   Crown, X, ChevronRight, BellRing,
-  Zap, BarChart3, AlertCircle,
+  Zap, BarChart3,
 } from "lucide-react";
 import { Logo } from "../Components/Icons";
 
