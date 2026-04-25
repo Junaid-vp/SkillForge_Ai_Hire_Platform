@@ -142,12 +142,13 @@ function ChangePassForm() {
                 
                 {/* Current Password */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+                  <label htmlFor="currentPassword" className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
                     <KeyRound size={11} className="text-gray-400" />
                     Current Password <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
                     <Field
+                      id="currentPassword"
                       name="currentPassword"
                       type={showCurrentPassword ? "text" : "password"}
                       placeholder="Enter current password"
@@ -170,11 +171,12 @@ function ChangePassForm() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* New Password */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label htmlFor="newPassword" className="block text-xs font-medium text-gray-600 mb-1.5">
                       New Password <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
                       <Field
+                        id="newPassword"
                         name="newPassword"
                         type={showNewPassword ? "text" : "password"}
                         placeholder="Enter new password"
@@ -196,11 +198,12 @@ function ChangePassForm() {
 
                   {/* Confirm Password */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label htmlFor="confirmPassword" className="block text-xs font-medium text-gray-600 mb-1.5">
                       Confirm New Password <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
                       <Field
+                        id="confirmPassword"
                         name="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm new password"

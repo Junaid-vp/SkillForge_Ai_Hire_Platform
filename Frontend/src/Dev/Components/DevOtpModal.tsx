@@ -122,14 +122,18 @@ function DevOtpModal({ isOpen, onConfirm, onClose, isVerifying, isInvalid, reSen
             {otp.map((digit, i) => (
               <input
                 key={i}
+                id={`dev-otp-digit-${i}`}
+                name={`dev-otp-digit-${i}`}
                 ref={(el) => { inputs.current[i] = el; }}
                 type="text"
                 inputMode="numeric"
+                autoComplete="one-time-code"
                 maxLength={1}
                 value={digit}
                 onChange={(e) => handleChange(e.target.value, i)}
                 onKeyDown={(e) => handleKeyDown(e, i)}
                 onPaste={handlePaste}
+                aria-label={`Digit ${i + 1}`}
                 className={`w-11 text-center rounded-xl border transition-all duration-150 focus:outline-none focus:ring-2
                   ${isInvalid
                     ? 'border-red-300 bg-red-50 text-red-500 focus:ring-red-200 focus:border-red-400'

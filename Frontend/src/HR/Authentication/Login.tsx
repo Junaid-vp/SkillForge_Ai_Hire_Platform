@@ -140,10 +140,11 @@ function Login() {
 
                     {/* Email */}
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                      <label htmlFor="email" className="block text-xs font-medium text-gray-600 mb-1">
                         Email Address <span className="text-red-400">*</span>
                       </label>
                       <Field
+                        id="email"
                         placeholder="you@company.com"
                         name="email"
                         type="email"
@@ -157,11 +158,12 @@ function Login() {
 
                     {/* Password */}
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                      <label htmlFor="password" className="block text-xs font-medium text-gray-600 mb-1">
                         Password <span className="text-red-400">*</span>
                       </label>
                       <div className="relative">
                         <Field
+                          id="password"
                           placeholder="Enter your password"
                           name="password"
                           type={showPassword ? "text" : "password"}

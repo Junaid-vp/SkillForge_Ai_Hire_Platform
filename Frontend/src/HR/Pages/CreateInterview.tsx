@@ -240,14 +240,16 @@ function CreateInterview() {
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label htmlFor="developerName" className="block text-xs font-medium text-gray-600 mb-1.5">
                       Developer Name <span className="text-red-400">*</span>
                     </label>
                     <div className="relative group">
                       <Field
+                        id="developerName"
                         placeholder="John Doe"
                         name="developerName"
                         type="text"
+                        autoComplete="name"
                         disabled={isParsing}
                         className={`${inputClasses} ${isParsing ? 'text-transparent select-none border-blue-200' : ''} ${isParsing ? 'animate-border-glow' : ''} pr-10`}
                       />
@@ -267,14 +269,16 @@ function CreateInterview() {
                     )}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label htmlFor="developerEmail" className="block text-xs font-medium text-gray-600 mb-1.5">
                       Developer Email <span className="text-red-400">*</span>
                     </label>
                     <div className="relative group">
                       <Field
+                        id="developerEmail"
                         placeholder="john@example.com"
                         name="developerEmail"
                         type="email"
+                        autoComplete="email"
                         disabled={isParsing}
                         className={`${inputClasses} ${isParsing ? 'text-transparent select-none border-blue-200' : ''} ${isParsing ? 'animate-border-glow' : ''} pr-10`}
                       />
@@ -297,14 +301,16 @@ function CreateInterview() {
  
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label htmlFor="position" className="block text-xs font-medium text-gray-600 mb-1.5">
                       Position <span className="text-red-400">*</span>
                     </label>
                     <div className="relative group">
                       <Field
+                        id="position"
                         placeholder="Senior Full Stack Developer"
                         name="position"
                         type="text"
+                        autoComplete="organization-title"
                         disabled={isParsing}
                         className={`${inputClasses} ${isParsing ? 'text-transparent select-none border-blue-200' : ''} ${isParsing ? 'animate-border-glow' : ''} pr-10`}
                       />
@@ -324,11 +330,12 @@ function CreateInterview() {
                     )}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label htmlFor="experience" className="block text-xs font-medium text-gray-600 mb-1.5">
                       Experience Level <span className="text-red-400">*</span>
                     </label>
                     <div className="relative group">
                       <Field
+                        id="experience"
                         placeholder="5+ years"
                         name="experience"
                         type="text"
@@ -355,11 +362,12 @@ function CreateInterview() {
                 {/* Skills Field */}
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label htmlFor="skills" className="block text-xs font-medium text-gray-600 mb-1.5">
                       Skills <span className="text-red-400">*</span>
                     </label>
                     <div className="relative group">
                       <Field
+                        id="skills"
                         placeholder="React, Node.js, TypeScript (comma separated)"
                         name="skills"
                         type="text"
@@ -401,19 +409,19 @@ function CreateInterview() {
               <div className="p-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label htmlFor="interviewDate" className="block text-xs font-medium text-gray-600 mb-1.5">
                       Interview Date <span className="text-red-400">*</span>
                     </label>
-                    <Field name="interviewDate" type="date" className={inputClasses} />
+                    <Field id="interviewDate" name="interviewDate" type="date" className={inputClasses} />
                     {errors.interviewDate && touched.interviewDate && (
                       <p className="mt-1 text-[10px] text-red-500">{errors.interviewDate}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                    <label htmlFor="interviewTime" className="block text-xs font-medium text-gray-600 mb-1.5">
                       Interview Time <span className="text-red-400">*</span>
                     </label>
-                    <Field name="interviewTime" type="time" className={inputClasses} />
+                    <Field id="interviewTime" name="interviewTime" type="time" className={inputClasses} />
                     {errors.interviewTime && touched.interviewTime && (
                       <p className="mt-1 text-[10px] text-red-500">{errors.interviewTime}</p>
                     )}

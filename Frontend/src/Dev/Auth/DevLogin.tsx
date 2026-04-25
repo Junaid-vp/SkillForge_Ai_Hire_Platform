@@ -201,10 +201,11 @@ function DevLogin() {
 
                     {/* Email */}
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                      <label htmlFor="email" className="block text-xs font-medium text-gray-600 mb-1">
                         Email Address <span className="text-red-400">*</span>
                       </label>
                       <Field
+                        id="email"
                         name="email"
                         type="email"
                         placeholder="your@gmail.com"
@@ -220,11 +221,12 @@ function DevLogin() {
 
                     {/* Unique Code */}
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                      <label htmlFor="uniqueCode" className="block text-xs font-medium text-gray-600 mb-1">
                         Unique Code <span className="text-red-400">*</span>
                       </label>
                       <div className="relative">
                         <Field
+                          id="uniqueCode"
                           name="uniqueCode"
                        
                           type={showUniqueCode ? "text" : "password"}
