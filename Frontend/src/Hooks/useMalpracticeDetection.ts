@@ -51,7 +51,7 @@ export function useMalpracticeDetection(
         })
         modelsLoaded.current = true
         // MediaPipe Face Landmarker loaded
-      } catch (e) {
+      } catch (_e) {
         // MediaPipe load failed silently
       }
     }

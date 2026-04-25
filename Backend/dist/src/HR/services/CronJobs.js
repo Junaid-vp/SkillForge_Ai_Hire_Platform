@@ -1,15 +1,16 @@
+import { logger } from "../../System/utils/logger.js";
 import { CronJob } from "cron";
 import { prisma } from "../Lib/prisma.js";
 import { redis } from "../Lib/redis.js";
 import { sendInterviewReminderEmail, sendDeveloperReminderEmail } from "./Email/ReminderEmail.js";
 import { createNotification } from "./NotificationService.js";
 export const startCronJobs = () => {
-    console.log("🚀 Initializing Cron Jobs...");
+    logger.info("🚀 Initializing Cron Jobs...");
     // ── Existing: Expire tasks every hour ────────────────────────────────────
     // 0 * * * * = at the start of every hour
     const taskExpiryJob = new CronJob("0 * * * *", async () => {
         try {
-            console.log("🕒 Running Task Expiry Cron Job...");
+            logger.info("🕒 Running Task Expiry Cron Job...");
             const now = new Date();
             const expiredTasks = await prisma.task.findMany({
                 where: {
@@ -26,10 +27,10 @@ export const startCronJobs = () => {
                 });
                 await createNotification(task.hrId, "Task Expired", `The task deadline for ${task.developer.developerName} has passed without submission.`, "TASK_EXPIRED");
             }
-            console.log(`✅ Expired ${expiredTasks.length} tasks.`);
+            logger.info(`✅ Expired ${expiredTasks.length} tasks.`);
         }
         catch (e) {
-            console.error("❌ Task Expiry Cron error:", e.message);
+            logger.error({ err: e.message }, "❌ Task Expiry Cron error");
         }
     });
     // ── NEW: Interview reminders every minute ─────────────────────────────────
@@ -82,14 +83,15 @@ export const startCronJobs = () => {
                     where: { id: interview.id },
                     data: { reminder10Sent: true },
                 });
-                console.log(`📅 ${label} reminder sent for interview ${interview.id}`);
+                logger.info(`📅 ${label} reminder sent for interview ${interview.id}`);
             }
         }
         catch (e) {
-            console.error("❌ Interview reminder cron error:", e.message);
+            logger.error({ err: e.message }, "❌ Interview reminder cron error");
         }
     });
     taskExpiryJob.start();
     interviewReminderJob.start();
-    console.log("✅ All cron jobs started");
+    logger.info("✅ All cron jobs started");
 };
+2;

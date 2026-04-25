@@ -48,7 +48,7 @@ export default function DashboardLayout() {
     try {
       await api.post('/auth/hr/logout')
       toast.success('Logged out successfully.')
-    } catch (e) {
+    } catch (_e) {
       // console removed
     } finally {
       clearAuth()

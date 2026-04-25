@@ -1,3 +1,4 @@
+import { logger } from "../../../System/utils/logger.js";
 import nodemailer from "nodemailer";
 import dotenv from 'dotenv';
 dotenv.config();
@@ -13,6 +14,7 @@ export const sentChangePassOtp = async (email, otp) => {
         await transporter.sendMail({
             from: `"SkillForge AI" <${process.env.EMAIL_USER}>`,
             to: email,
+            subject: "Your Confirmation Code — SkillForge AI",
             html: `
     <!DOCTYPE html>
     <html>
@@ -100,7 +102,7 @@ export const sentChangePassOtp = async (email, otp) => {
         });
     }
     catch (e) {
-        console.log("Email sending error:", e);
+        logger.error({ err: e }, "Email sending error");
         throw e;
     }
 };

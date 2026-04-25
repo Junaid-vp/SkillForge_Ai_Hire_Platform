@@ -1,3 +1,4 @@
+import { logger } from "../../../System/utils/logger.js";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
@@ -16,7 +17,8 @@ const formatTime = (t) => {
 };
 // ── HR Reminder Email ─────────────────────────────────────────────────────────
 export const sendInterviewReminderEmail = async ({ to, hrName, developerName, intervalLabel, interviewId, startTime, }) => {
-    const joinUrl = `${process.env.FRONTEND_URL}/HrInterviewRoom/${interviewId}?role=HR&name=${encodeURIComponent(hrName)}`;
+    const origin = process.env.FRONTEND_URL?.split(',')[0] || "https://skillforge-ai.com";
+    const joinUrl = `${origin}/HrInterviewRoom/${interviewId}?role=HR&name=${encodeURIComponent(hrName)}`;
     const time = formatTime(startTime);
     const html = `
   <div style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
@@ -137,12 +139,13 @@ export const sendInterviewReminderEmail = async ({ to, hrName, developerName, in
         });
     }
     catch (e) {
-        console.error("HR reminder email error:", e.message);
+        logger.error({ err: e.message }, "HR reminder email error");
     }
 };
 // ── Developer Reminder Email ──────────────────────────────────────────────────
 export const sendDeveloperReminderEmail = async ({ to, developerName, hrName, companyName, intervalLabel, startTime, }) => {
-    const dashUrl = `${process.env.FRONTEND_URL}/devDashboard`;
+    const origin = process.env.FRONTEND_URL?.split(',')[0] || "https://skillforge-ai.com";
+    const dashUrl = `${origin}/devDashboard`;
     const time = formatTime(startTime);
     const html = `
   <div style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
@@ -288,6 +291,6 @@ export const sendDeveloperReminderEmail = async ({ to, developerName, hrName, co
         });
     }
     catch (e) {
-        console.error("Developer reminder email error:", e.message);
+        logger.error({ err: e.message }, "Developer reminder email error");
     }
 };

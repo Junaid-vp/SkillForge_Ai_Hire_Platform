@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import { prisma } from "../Lib/prisma.js";
 let ioInstance;
 export const setIoInstance = (io) => {
@@ -55,6 +56,6 @@ export const createNotification = async (hrId, title, message, type, silent = fa
         return notification;
     }
     catch (error) {
-        console.error("Error creating notification:", error);
+        logger.error({ err: error }, "Error creating notification");
     }
 };

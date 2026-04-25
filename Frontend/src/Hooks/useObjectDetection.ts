@@ -48,7 +48,7 @@ export function useObjectDetection(
         })
         isLoaded.current = true
         // MediaPipe Object Detector loaded
-      } catch (e) {
+      } catch (_e) {
         // MediaPipe Object Detector load failed silently
       }
     }

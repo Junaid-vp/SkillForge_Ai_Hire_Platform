@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import { prisma } from "../Lib/prisma.js";
 import bcrypt from "bcryptjs";
 import { generateOTP } from "../services/generateOTP.js";
@@ -194,7 +195,7 @@ export const passCodeVarifyOtpResend = async (req, res) => {
         });
     }
     catch (e) {
-        console.log(e.message);
+        logger.info(e.message);
     }
 };
 export const updateNotificationSettings = async (req, res) => {

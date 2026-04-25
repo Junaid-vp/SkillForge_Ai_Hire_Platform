@@ -56,7 +56,7 @@ function TaskLibraryEdit() {
           difficulty: t.difficulty,
           duration: t.duration,
         });
-      } catch (e) {
+      } catch (_e) {
         // error handled by toast
         toast.error('Failed to load task details.');
       } finally {

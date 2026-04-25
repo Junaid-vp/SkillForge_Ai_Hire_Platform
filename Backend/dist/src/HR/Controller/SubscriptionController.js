@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import Stripe from "stripe";
 import dotenv from "dotenv";
 import { prisma } from "../Lib/prisma.js";
@@ -17,6 +18,7 @@ export const createCheckout = async (req, res) => {
         if (!hr) {
             return res.status(404).json({ Message: "HR not found" });
         }
+        const origin = req.headers.origin || process.env.FRONTEND_URL?.split(',')[0] || "https://skillforge-ai.com";
         const session = await stripe.checkout.sessions.create({
             mode: "subscription",
             customer_email: hr.email,
@@ -29,8 +31,8 @@ export const createCheckout = async (req, res) => {
             metadata: {
                 hrId: id,
             },
-            success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
-            cancel_url: `${process.env.FRONTEND_URL}/dashboard?payment=cancelled`,
+            success_url: `${origin}/dashboard?payment=success`,
+            cancel_url: `${origin}/dashboard?payment=cancelled`,
         });
         res.status(200).json({
             checkoutUrl: session.url,
@@ -45,8 +47,8 @@ export const stripeWebhook = async (req, res) => {
     try {
         const sig = req.headers["stripe-signature"];
         const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-        console.log("🔥 Webhook hit");
-        console.log("Event:", event.type);
+        logger.info("🔥 Webhook hit");
+        logger.info({ eventType: event.type }, "Event processed");
         switch (event.type) {
             case "checkout.session.completed": {
                 const session = event.data.object;

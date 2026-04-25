@@ -1,3 +1,4 @@
+import { logger } from "../../../System/utils/logger.js";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
@@ -107,7 +108,7 @@ ${message.replace(/\n/g, "<br/>")}
         await transporter.sendMail(mailOptions);
     }
     catch (e) {
-        console.error("Email sending error:", e);
+        logger.error({ err: e }, "Email sending error");
         throw e;
     }
 };

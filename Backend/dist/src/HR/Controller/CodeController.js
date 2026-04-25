@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import { prisma } from "../Lib/prisma.js";
 const JUDGE0_URL = process.env.JUDGE0_URL;
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -44,7 +45,7 @@ export const runCode = async (req, res) => {
         });
         if (!submitRes.ok) {
             const errText = await submitRes.text().catch(() => submitRes.statusText);
-            console.error("Judge0 submit error:", errText);
+            logger.error({ detail: errText }, "Judge0 submit error");
             return res.status(502).json({
                 Message: `Judge0 submission failed (${submitRes.status})`,
                 Error: errText
@@ -90,7 +91,7 @@ export const runCode = async (req, res) => {
         });
     }
     catch (e) {
-        console.error("runCode error:", e);
+        logger.error({ err: e }, "runCode error");
         return res.status(500).json({ Message: "Server Error", Error: e.message });
     }
 };
@@ -147,7 +148,7 @@ export const submitCodeAnswer = async (req, res) => {
         res.status(200).json({ Message: "Code solution submitted successfully", status: "success" });
     }
     catch (e) {
-        console.error("submitCodeAnswer error:", e);
+        logger.error({ err: e }, "submitCodeAnswer error");
         res.status(500).json({ Message: "Server Error", Error: e.message });
     }
 };

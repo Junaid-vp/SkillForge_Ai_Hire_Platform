@@ -1,3 +1,4 @@
+import { logger } from "../../utils/logger.js";
 import nodemailer from "nodemailer";
 import dotenv from 'dotenv';
 dotenv.config();
@@ -91,7 +92,7 @@ export const sendContactEmail = async (name, email, subject, message) => {
         });
     }
     catch (e) {
-        console.log("Email sending error:", e);
+        logger.error({ err: e }, "Email sending error");
         throw e;
     }
 };

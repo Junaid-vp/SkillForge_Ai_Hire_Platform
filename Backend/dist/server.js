@@ -1,11 +1,13 @@
 import express from "express";
 import dotenv from "dotenv";
+dotenv.config({ override: false });
 import AuthRoute from "./src/HR/Routes/AuthRoute.js";
 import InterviewRoute from "./src/HR/Routes/InterviewRoute.js";
 import TaskLibaryRoute from "./src/HR/Routes/libarytask.js";
 import cors from "cors";
 import { startRedisServer } from "./src/HR/Lib/redis.js";
 import cookieParser from "cookie-parser";
+import { main } from "./prisma/seed.js";
 import ResumeRoute from "./src/HR/Routes/Resume.js";
 import DevAuthroute from "./src/Dev/Routes/AuthRoutes.js";
 import DevDashRoute from "./src/Dev/Routes/DevDashRoutes.js";
@@ -24,12 +26,18 @@ import ReportRoute from "./src/HR/Routes/Reportroute.js";
 import SystemRoute from "./src/System/Routes/ContactRoute.js";
 import helmet from "helmet";
 import { aiLimiter } from "./src/HR/Middleware/RateLimit.js";
-import { attachCsrfToken, csrfProtection } from "./src/HR/Middleware/Csrf.js";
+import { closeTaskQueue, startTaskWorker } from "./src/HR/services/Taskqueue.js";
+import { prisma } from "./src/HR/Lib/prisma.js";
+import { logger } from "./src/System/utils/logger.js";
+import pinoHttpModule from "pino-http";
+const pinoHttp = pinoHttpModule.default || pinoHttpModule;
 dotenv.config();
 const app = express();
+app.use(pinoHttp({ logger }));
 const PORT = process.env.PORT || 3005;
-const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").trim();
+const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").split(",").map(url => url.trim());
 const trustProxy = process.env.TRUST_PROXY ?? (process.env.NODE_ENV === "production" ? "1" : "0");
+logger.info({ allowedOrigins: frontendUrl }, "🚀 Server initializing with CORS origins");
 if (trustProxy !== "0") {
     app.set("trust proxy", trustProxy === "true" ? true : Number(trustProxy) || 1);
 }
@@ -84,21 +92,36 @@ app.use(helmet({
     }
 }));
 app.use(cors({
-    origin: frontendUrl,
+    origin: function (origin, callback) {
+        if (!origin)
+            return callback(null, true);
+        // Normalize origin and allowed URLs by removing trailing slashes
+        const normalizedOrigin = origin.replace(/\/$/, "");
+        const isAllowed = frontendUrl.some(url => url.replace(/\/$/, "") === normalizedOrigin);
+        if (isAllowed) {
+            callback(null, true);
+        }
+        else {
+            logger.warn({
+                origin: normalizedOrigin,
+                allowed: frontendUrl,
+                message: "CORS request blocked: Origin not in allowed list"
+            });
+            callback(null, false);
+        }
+    },
     credentials: true,
 }));
 app.post('/api/subscription/webhook', express.raw({ type: "application/json" }), stripeWebhook);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(attachCsrfToken);
-app.use(csrfProtection);
-app.use("/api/auth/", AuthRoute);
-app.use('/api/interview/', InterviewRoute);
+app.use("/api/auth", AuthRoute);
+app.use('/api/interview', InterviewRoute);
 app.use('/api/tasklibary', TaskLibaryRoute);
-app.use('/api/dev/', DevAuthroute);
+app.use('/api/dev', DevAuthroute);
 app.use('/api/dash/dev', DevDashRoute);
-app.use('/api/setting/', SettingRoute);
+app.use('/api/setting', SettingRoute);
 app.use('/api/task/', TaskRoute);
 app.use('/api/resume/', aiLimiter, ResumeRoute);
 app.use('/api/subscription', SubscriptonRoute);
@@ -109,6 +132,27 @@ app.use("/api/report", ReportRoute);
 app.use("/api/system", SystemRoute);
 startCronJobs();
 startRedisServer();
+main();
+// ── Database Connection Check ─────────────────
+prisma.$connect()
+    .then(() => logger.info("✅ Database connected successfully within Docker"))
+    .catch((err) => logger.error({ err }, "❌ Database connection failed within Docker"));
+startTaskWorker();
+// ── Health Check ─────────────────────────────
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+// ── Graceful shutdown ─────────────────────────
+process.on("SIGTERM", async () => {
+    logger.info("SIGTERM — shutting down");
+    await closeTaskQueue();
+    process.exit(0);
+});
+process.on("SIGINT", async () => {
+    logger.info("SIGINT — shutting down");
+    await closeTaskQueue();
+    process.exit(0);
+});
 httpServer.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    logger.info(`Server is running on port ${PORT}`);
 });

@@ -79,7 +79,9 @@ export const sheduleInterview = async (req, res) => {
                 skills: JSON.stringify(parsedSkills),
             },
         });
-        const scheduledAt = new Date(`${interviewDate}T${interviewTime}:00`);
+        // Append +05:30 to explicitly save the time in IST timezone
+        // Otherwise, the EC2 server saves it as UTC, causing a 5.5 hour shift for the developer
+        const scheduledAt = new Date(`${interviewDate}T${interviewTime}:00+05:30`);
         await prisma.interview.create({
             data: {
                 hrId: id,
@@ -91,7 +93,8 @@ export const sheduleInterview = async (req, res) => {
             where: { id },
             data: { interviewCount: { increment: 1 } },
         });
-        const magicLink = `${process.env.FRONTEND_URL}/devLogin?token=${uniqueCode}`;
+        const origin = process.env.FRONTEND_URL?.split(',')[0] || "https://skillforge-ai.com";
+        const magicLink = `${origin}/devLogin?token=${uniqueCode}`;
         const today = new Date();
         const secondsUntilExpired = Math.floor((scheduledAt.getTime() - today.getTime()) / 1000) + 604800;
         await redis.set(`magic:${uniqueCode}`, dev.id, { EX: secondsUntilExpired });
@@ -229,7 +232,8 @@ export const rescheduleInterview = async (req, res) => {
                 interviewTime: newTime,
             }
         });
-        const magicLink = `${process.env.FRONTEND_URL}/devLogin?token=${interview.developer.uniqueCode}`;
+        const origin = process.env.FRONTEND_URL?.split(',')[0] || "https://skillforge-ai.com";
+        const magicLink = `${origin}/devLogin?token=${interview.developer.uniqueCode}`;
         const today = new Date();
         const secondsUntilExpired = Math.floor((scheduledAt.getTime() - today.getTime()) / 1000) + 604800;
         await redis.set(`magic:${interview.developer.uniqueCode}`, interview.developerId, { EX: secondsUntilExpired });

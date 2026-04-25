@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import bcrypt from "bcryptjs";
 import { prisma } from "../Lib/prisma.js";
 import { generateOTP } from "../services/generateOTP.js";
@@ -5,7 +6,6 @@ import { sentOTPemail } from "../services/Email/sendEmailOTP.js";
 import { tokenGenerator } from "../services/tokenGeneratior.js";
 import { redis } from "../Lib/redis.js";
 import { authCookieOptions } from "../Lib/cookieOptions.js";
-import jwt from "jsonwebtoken";
 export const HRregisterController = async (req, res) => {
     try {
         const { name, email, companyName, designation, companyWebsite, password, } = req.body;
@@ -90,7 +90,7 @@ export const otpValidation = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        const { RefreshToken, AccessToken } = await tokenGenerator(email, user.id);
+        const { RefreshToken, AccessToken } = tokenGenerator(email, user.id);
         res
             .status(200)
             .cookie("Access_Token", AccessToken, authCookieOptions)
@@ -122,24 +122,11 @@ export const otpResend = async (req, res) => {
         });
     }
     catch (e) {
-        console.log(e.message);
+        logger.info(e.message);
     }
 };
 export const HrLogoutController = async (req, res) => {
     try {
-        const accessToken = req.cookies?.Access_Token;
-        const accessKey = process.env.ACCESS_TOKEN_KEY;
-        if (accessToken && accessKey) {
-            try {
-                const decode = jwt.verify(accessToken, accessKey);
-                if (decode?.Id) {
-                    await redis.del(`refresh:hr:${decode.Id}`);
-                }
-            }
-            catch {
-                // Ignore decode failures on logout.
-            }
-        }
         res
             .clearCookie("Access_Token", authCookieOptions)
             .clearCookie("Refresh_Token", authCookieOptions)

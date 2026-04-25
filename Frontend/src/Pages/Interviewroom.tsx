@@ -323,7 +323,7 @@ export default function InterviewRoom() {
           if (state.messages)               setMessages(state.messages)
         })
       })
-      .catch((err) => {
+      .catch((_err) => {
         // camera access denied
         setCamError(true)
         toast.error("Camera or microphone access was denied.")

@@ -66,7 +66,7 @@ export default function EmailComposerModal({
       const { base64, fileName } = await generateReportPDFBase64(res.data.data)
       setPdfBase64(base64)
       setPdfFileName(fileName)
-    } catch (e) {
+    } catch (_e) {
       // PDF generation error handled by toast
       toast.error("Failed to prepare PDF attachment")
     } finally {

@@ -135,7 +135,7 @@ function CreateInterview() {
       const res = await api.post('/interview/generate-code');
       setGeneratedCode(res.data.Code);
       toast.success('Invite code generated!');
-    } catch (e) {
+    } catch (_e) {
       toast.error('Failed to generate invite code. Please try again.');
       
     } finally {

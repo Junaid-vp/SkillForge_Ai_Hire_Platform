@@ -372,7 +372,7 @@ function PDFDownloadButton({ interview }: { interview: ReportInterview }) {
       const fullData = res.data.data
 
       await generateReportPDF(fullData)
-    } catch (e) {
+    } catch (_e) {
       // PDF error handled by toast
     } finally {
       setLoading(false)

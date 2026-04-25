@@ -1,3 +1,4 @@
+import { logger } from "../../../System/utils/logger.js";
 import nodemailer from "nodemailer";
 import dotenv from 'dotenv';
 dotenv.config();
@@ -19,11 +20,12 @@ export const sendResheduledTime = async (developerName, developerEmail, position
             const [h, m] = t.split(':').map(Number);
             return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
         };
-        console.log("Sending Reschedule Email With Transporter...");
-        console.log("To:", developerEmail);
+        logger.info("Sending Reschedule Email With Transporter...");
+        logger.info({ developerEmail }, "Sending to recipient");
         const info = await transporter.sendMail({
             from: `"${companyName ?? 'SkillForge AI'}" <${process.env.EMAIL_USER}>`,
             to: developerEmail,
+            subject: "Interview Rescheduled - SkillForge AI",
             html: `<!DOCTYPE html>
 <html>
 <head>
@@ -208,11 +210,11 @@ export const sendResheduledTime = async (developerName, developerEmail, position
 </body>
 </html>`
         });
-        console.log("Message sent:", info.messageId);
-        console.log("Response:", info.response);
+        logger.info({ messageId: info.messageId }, "Message sent");
+        logger.info({ response: info.response }, "Reschedule email response");
     }
     catch (e) {
-        console.error('Failed to send reschedule email:', e);
+        logger.error({ err: e }, "Failed to send reschedule email");
         throw e;
     }
 };

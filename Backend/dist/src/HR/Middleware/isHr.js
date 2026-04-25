@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
@@ -30,7 +31,7 @@ const isHr = (req, res, next) => {
                 code: "INVALID_TOKEN",
             });
         }
-        console.error("HR auth middleware error", error);
+        logger.error({ err: error }, "HR auth middleware error");
         return res.status(401).json({ message: "Unauthorized" });
     }
 };

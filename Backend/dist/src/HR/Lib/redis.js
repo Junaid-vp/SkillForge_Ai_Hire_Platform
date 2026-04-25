@@ -1,16 +1,17 @@
+import { logger } from "../../System/utils/logger.js";
 import { createClient } from "redis";
 export const redis = createClient({
-    url: "redis://localhost:6379",
+    url: process.env.REDIS_URL || "redis://localhost:6379",
 });
 redis.on("error", (err) => {
-    console.log(err, "Error In Redis");
+    logger.info(err, "Error In Redis");
 });
 export const startRedisServer = async () => {
     try {
         await redis.connect();
-        console.log("Redis Server is Started");
+        logger.info("Redis Server is Started");
     }
     catch (e) {
-        console.log(e, "Redis Server Start Issue");
+        logger.info(e, "Redis Server Start Issue");
     }
 };

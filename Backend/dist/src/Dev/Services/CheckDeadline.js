@@ -1,8 +1,9 @@
+import { logger } from "../../System/utils/logger.js";
 import cron from "node-cron";
 import { prisma } from "../../HR/Lib/prisma.js";
 import { redis } from "../../HR/Lib/redis.js";
 export const CheckTaskDeadLine = () => {
-    console.log("✅ Cron job started");
+    logger.info("✅ Cron job started");
     cron.schedule("0 * * * *", async () => {
         try {
             const now = new Date();
@@ -20,10 +21,10 @@ export const CheckTaskDeadLine = () => {
                     data: { status: "EXPIRED" },
                 });
             }
-            console.log(" Cron job Finished");
+            logger.info(" Cron job Finished");
         }
         catch (e) {
-            console.error("❌ Cron job error:", e.message);
+            logger.error({ err: e.message }, "❌ Cron job error");
         }
     });
 };

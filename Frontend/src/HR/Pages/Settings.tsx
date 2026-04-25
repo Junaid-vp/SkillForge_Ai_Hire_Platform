@@ -61,7 +61,7 @@ function Settings() {
           companyWebsite: hr.companyWebsite ?? "",
         });
         setProfile(hr);
-      } catch (e) {
+      } catch (_e) {
         // error handled by toast
         toast.error('Failed to load profile. Please refresh.');
       } finally {
@@ -82,7 +82,7 @@ function Settings() {
       setTimeout(() => setSaved(false), 3000);
       if (profile) setProfile({ ...profile, ...values });
       setFormValues(values);
-    } catch (e) {
+    } catch (_e) {
       // error handled by toast
       toast.error('Failed to update profile. Please try again.');
     } finally {
@@ -107,7 +107,7 @@ function Settings() {
       onCancelSuccess();
       toast.success('Subscription cancellation scheduled.');
       setIsCancelModalOpen(false);
-    } catch (e) {
+    } catch (_e) {
       // error handled by toast
       toast.error('Failed to cancel subscription. Please try again.');
     } finally {
