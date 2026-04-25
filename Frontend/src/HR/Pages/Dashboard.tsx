@@ -349,11 +349,11 @@ export default function Dashboard() {
         </div>
 
         {/* Activity feed */}
-        <div className="lg:col-span-4 bg-gray-950 rounded-3xl p-6 flex flex-col">
+        <div className="lg:col-span-4 bg-white border border-gray-100 rounded-3xl p-6 flex flex-col shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <BellRing size={15} className="text-blue-400" />
-              <p className="text-xs font-black text-white uppercase tracking-[0.15em]">Activity</p>
+              <BellRing size={15} className="text-blue-600" />
+              <p className="text-xs font-black text-gray-900 uppercase tracking-[0.15em]">Activity</p>
             </div>
             {(notifications ?? []).filter((n) => !n.isRead).length > 0 && (
               <span className="text-[9px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full">
@@ -365,31 +365,34 @@ export default function Dashboard() {
           <div className="flex-1 space-y-1">
             {notifLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="px-3 py-3 rounded-xl bg-white/5 animate-pulse">
-                  <div className="h-2.5 w-24 bg-white/10 rounded mb-2" />
-                  <div className="h-3 w-full bg-white/10 rounded" />
+                <div key={i} className="px-3 py-3 rounded-xl bg-gray-50 animate-pulse">
+                  <div className="h-2.5 w-24 bg-gray-100 rounded mb-2" />
+                  <div className="h-3 w-full bg-gray-100 rounded" />
                 </div>
               ))
             ) : (notifications ?? []).length > 0 ? (
               notifications!.map((notif) => (
-                <div key={notif.id} onClick={() => !notif.isRead && handleMarkRead(notif.id)} className={`px-3 py-3 rounded-xl transition-colors group ${notif.isRead ? "hover:bg-white/5 cursor-default" : "bg-blue-600/10 hover:bg-blue-600/15 cursor-pointer"}`}>
+                <div key={notif.id} onClick={() => !notif.isRead && handleMarkRead(notif.id)} className={`px-3 py-3 rounded-xl transition-colors group ${notif.isRead ? "hover:bg-gray-50/80 cursor-default" : "bg-blue-50 hover:bg-blue-100/50 cursor-pointer"}`}>
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{formatRelativeTime(notif.createdAt)}</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{formatRelativeTime(notif.createdAt)}</p>
                     {!notif.isRead && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />}
                   </div>
-                  <p className="text-[11px] font-semibold text-white/80 group-hover:text-white leading-snug transition-colors">{notif.title}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1 group-hover:text-gray-400 transition-colors">{formatMessageTime(notif.message)}</p>
+                  <p className="text-[11px] font-semibold text-gray-700 group-hover:text-gray-900 leading-snug transition-colors">{notif.title}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1 group-hover:text-gray-500 transition-colors">{formatMessageTime(notif.message)}</p>
                 </div>
               ))
             ) : (
               <div className="flex flex-col items-center justify-center py-10 text-center">
-                <AlertCircle size={24} className="text-gray-700 mb-2" />
-                <p className="text-xs text-gray-500">No recent activity</p>
+                <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mb-3">
+                  <BellRing size={20} className="text-gray-300" />
+                </div>
+                <p className="text-sm font-semibold text-gray-700">No recent activity</p>
+                <p className="text-xs text-gray-400 mt-1">We'll notify you here</p>
               </div>
             )}
           </div>
 
-          <button onClick={() => navigate("/dashboard/notifications")} className="mt-4 w-full py-2.5 bg-white/5 hover:bg-white/10 text-gray-500 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border border-white/5">
+          <button onClick={() => navigate("/dashboard/notifications")} className="mt-6 w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-900 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border border-gray-100">
             View all notifications
           </button>
         </div>
