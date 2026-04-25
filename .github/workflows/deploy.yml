@@ -75,4 +75,4 @@ jobs:
               723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:$IMAGE_TAG
             
             # update database
-            docker exec skillforge-app npx prisma db push
+            docker exec skillforge-app npx prisma db push --accept-data-loss

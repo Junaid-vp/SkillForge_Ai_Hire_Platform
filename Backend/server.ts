@@ -171,6 +171,20 @@ app.use('/api/code/', CodeRoute)
 app.use('/api/notification', NotificationRoute)
 app.use("/api/report", ReportRoute)
 app.use("/api/system", SystemRoute)
+app.get("/api/dev/reverse-migrate-requirements", async (req, res) => {
+  try {
+    console.log("🛠️  Running reverse SQL migration (JSONB -> TEXT)...");
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "TaskLibrary" 
+      ALTER COLUMN "requirements" TYPE TEXT 
+      USING requirements::TEXT;
+    `);
+    res.send("✅ Database column converted back to TEXT successfully!");
+  } catch (error: any) {
+    res.status(500).send("❌ Migration failed: " + error.message);
+  }
+});
+
 startCronJobs()
 startRedisServer()
 
