@@ -49,7 +49,13 @@ const httpServer = createServer(app)
 
 export const io = new Server(httpServer, {
   cors: {
-    origin: frontendUrl,
+    origin: function (origin, callback) {
+      if (!origin || frontendUrl.some(url => url.trim().replace(/\/$/, "") === origin.replace(/\/$/, ""))) {
+        callback(null, origin || true);
+      } else {
+        callback(new Error("Not allowed by CORS"), false);
+      }
+    },
     credentials: true,
   }
 })
@@ -119,10 +125,18 @@ app.use(
 
       // Normalize origin and allowed URLs by removing trailing slashes
       const normalizedOrigin = origin.replace(/\/$/, "");
-      const isAllowed = frontendUrl.some(url => url.replace(/\/$/, "") === normalizedOrigin);
+      const isAllowed = frontendUrl.some(url => url.trim().replace(/\/$/, "") === normalizedOrigin);
+
+      // CRITICAL LOG: This will show up in `docker logs skillforge-app`
+      logger.info({ 
+        incomingOrigin: normalizedOrigin, 
+        allowedOrigins: frontendUrl,
+        isAllowed
+      }, "CORS Validation Check");
 
       if (isAllowed) {
-        callback(null, true);
+        // Return the explicit origin string back
+        callback(null, origin);
       } else {
         logger.warn({ 
           origin: normalizedOrigin, 
