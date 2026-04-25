@@ -64,14 +64,14 @@ jobs:
               docker login --username AWS --password-stdin \
               723468358503.dkr.ecr.ap-south-1.amazonaws.com
 
-            # Free disk space
-            docker image prune -af
+            # Stop old container FIRST to free up RAM
+            docker rm -f skillforge-app || true
+
+            # Free up maximum disk space before downloading
+            docker system prune -af
 
             # Pull new image
             docker pull 723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:$IMAGE_TAG
-
-            # Stop old container
-            docker rm -f skillforge-app || true
 
             # Start new container
             docker run -d \

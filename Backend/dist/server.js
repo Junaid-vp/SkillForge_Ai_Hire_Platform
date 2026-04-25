@@ -1,13 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
-dotenv.config({ override: false });
 import AuthRoute from "./src/HR/Routes/AuthRoute.js";
 import InterviewRoute from "./src/HR/Routes/InterviewRoute.js";
 import TaskLibaryRoute from "./src/HR/Routes/libarytask.js";
 import cors from "cors";
 import { startRedisServer } from "./src/HR/Lib/redis.js";
 import cookieParser from "cookie-parser";
-import { main } from "./prisma/seed.js";
 import ResumeRoute from "./src/HR/Routes/Resume.js";
 import DevAuthroute from "./src/Dev/Routes/AuthRoutes.js";
 import DevDashRoute from "./src/Dev/Routes/DevDashRoutes.js";
@@ -29,8 +27,7 @@ import { aiLimiter } from "./src/HR/Middleware/RateLimit.js";
 import { closeTaskQueue, startTaskWorker } from "./src/HR/services/Taskqueue.js";
 import { prisma } from "./src/HR/Lib/prisma.js";
 import { logger } from "./src/System/utils/logger.js";
-import pinoHttpModule from "pino-http";
-const pinoHttp = pinoHttpModule.default || pinoHttpModule;
+import { pinoHttp } from "pino-http";
 dotenv.config();
 const app = express();
 app.use(pinoHttp({ logger }));
@@ -44,7 +41,14 @@ if (trustProxy !== "0") {
 const httpServer = createServer(app);
 export const io = new Server(httpServer, {
     cors: {
-        origin: frontendUrl,
+        origin: function (origin, callback) {
+            if (!origin || frontendUrl.some(url => url.trim().replace(/\/$/, "") === origin.replace(/\/$/, ""))) {
+                callback(null, origin || true);
+            }
+            else {
+                callback(new Error("Not allowed by CORS"), false);
+            }
+        },
         credentials: true,
     }
 });
@@ -97,9 +101,16 @@ app.use(cors({
             return callback(null, true);
         // Normalize origin and allowed URLs by removing trailing slashes
         const normalizedOrigin = origin.replace(/\/$/, "");
-        const isAllowed = frontendUrl.some(url => url.replace(/\/$/, "") === normalizedOrigin);
+        const isAllowed = frontendUrl.some(url => url.trim().replace(/\/$/, "") === normalizedOrigin);
+        // CRITICAL LOG: This will show up in `docker logs skillforge-app`
+        logger.info({
+            incomingOrigin: normalizedOrigin,
+            allowedOrigins: frontendUrl,
+            isAllowed
+        }, "CORS Validation Check");
         if (isAllowed) {
-            callback(null, true);
+            // Return the explicit origin string back
+            callback(null, origin);
         }
         else {
             logger.warn({
@@ -113,8 +124,8 @@ app.use(cors({
     credentials: true,
 }));
 app.post('/api/subscription/webhook', express.raw({ type: "application/json" }), stripeWebhook);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ limit: '500mb', extended: true }));
 app.use(cookieParser());
 app.use("/api/auth", AuthRoute);
 app.use('/api/interview', InterviewRoute);
@@ -130,9 +141,22 @@ app.use('/api/code/', CodeRoute);
 app.use('/api/notification', NotificationRoute);
 app.use("/api/report", ReportRoute);
 app.use("/api/system", SystemRoute);
+app.get("/api/dev/reverse-migrate-requirements", async (req, res) => {
+    try {
+        console.log("🛠️  Running reverse SQL migration (JSONB -> TEXT)...");
+        await prisma.$executeRawUnsafe(`
+      ALTER TABLE "TaskLibrary" 
+      ALTER COLUMN "requirements" TYPE TEXT 
+      USING requirements::TEXT;
+    `);
+        res.send("✅ Database column converted back to TEXT successfully!");
+    }
+    catch (error) {
+        res.status(500).send("❌ Migration failed: " + error.message);
+    }
+});
 startCronJobs();
 startRedisServer();
-main();
 // ── Database Connection Check ─────────────────
 prisma.$connect()
     .then(() => logger.info("✅ Database connected successfully within Docker"))

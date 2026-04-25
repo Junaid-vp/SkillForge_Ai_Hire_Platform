@@ -71,9 +71,7 @@ export const createTask = async (req, res) => {
                 hrId: id,
                 title,
                 description,
-                requirements: Array.isArray(requirements)
-                    ? requirements.join("|")
-                    : requirements,
+                requirements: Array.isArray(requirements) ? requirements.join("|") : requirements,
                 category,
                 techStack,
                 difficulty,
@@ -115,9 +113,7 @@ export const updateTask = async (req, res) => {
             data: {
                 title,
                 description,
-                requirements: Array.isArray(requirements)
-                    ? requirements.join("|")
-                    : requirements,
+                requirements: Array.isArray(requirements) ? requirements.join("|") : requirements,
                 category,
                 techStack,
                 difficulty,
