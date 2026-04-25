@@ -1,14 +1,22 @@
 import pino from 'pino';
 
-// Create a Pino logger instance
-// In development, logs will be formatted nicely using pino-pretty
-// In production, logs will be standard JSON suitable for DataDog / ELK
+// Helper to check if pino-pretty is available
+let hasPinoPretty = false;
+try {
+  // In ESM, we can't easily check with require, so we might just rely on NODE_ENV 
+  // or a more robust check. For now, let's keep it simple: 
+  // only use it if explicitly in development AND we are not in a container environment 
+  // that might lack devDeps.
+  hasPinoPretty = process.env.NODE_ENV === 'development';
+} catch { }
+
 export const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   base: {
     service: 'skillforge-backend',
   },
-  ...(process.env.NODE_ENV !== 'production' && {
+  // Only use pretty printing if in development and NOT in production
+  ...(process.env.NODE_ENV === 'development' && {
     transport: {
       target: 'pino-pretty',
       options: {

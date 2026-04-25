@@ -1,6 +1,5 @@
 import express, { Application } from "express";
 import dotenv from "dotenv";
-dotenv.config({ override: false });
 import AuthRoute from "./src/HR/Routes/AuthRoute.js";
 import InterviewRoute from "./src/HR/Routes/InterviewRoute.js"
 import TaskLibaryRoute from "./src/HR/Routes/libarytask.js";
@@ -29,8 +28,7 @@ import { aiLimiter } from "./src/HR/Middleware/RateLimit.js";
 import { closeTaskQueue, startTaskWorker } from "./src/HR/services/Taskqueue.js";
 import { prisma } from "./src/HR/Lib/prisma.js";
 import { logger } from "./src/System/utils/logger.js";
-import pinoHttpModule from "pino-http";
-const pinoHttp = (pinoHttpModule as any).default || pinoHttpModule;
+import { pinoHttp } from "pino-http";
 
 dotenv.config();
 const app: Application = express();
