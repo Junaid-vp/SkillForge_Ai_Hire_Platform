@@ -1,7 +1,7 @@
 // src/Pages/ContactPage.tsx
 import { useState, useEffect } from "react"
 import { Mail, MessageSquare, Clock, Send, Loader2, CheckCircle2, ArrowLeft } from "lucide-react"
-import { Logo, Bolt } from "../HR/Components/Icons"
+import { Logo } from "../HR/Components/Icons"
 import { useNavigate } from "react-router-dom"
 import { api } from "../Api/Axios"
 
