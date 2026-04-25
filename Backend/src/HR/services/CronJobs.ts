@@ -41,7 +41,7 @@ export const startCronJobs = () => {
       }
       logger.info(`✅ Expired ${expiredTasks.length} tasks.`);
     } catch (e: any) {
-      logger.error("❌ Task Expiry Cron error:", e.message);
+      logger.error({ err: e.message }, "❌ Task Expiry Cron error");
     }
   });
 
@@ -110,7 +110,7 @@ export const startCronJobs = () => {
         logger.info(`📅 ${label} reminder sent for interview ${interview.id}`);
       }
     } catch (e: any) {
-      logger.error("❌ Interview reminder cron error:", e.message);
+      logger.error({ err: e.message }, "❌ Interview reminder cron error");
     }
   });
 

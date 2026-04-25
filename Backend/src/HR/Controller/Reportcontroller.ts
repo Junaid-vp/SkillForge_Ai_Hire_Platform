@@ -155,7 +155,7 @@ export const sendReportEmail = async (req: Request, res: Response) => {
 
     res.status(200).json({ Message: "Email sent successfully", status: "success" })
   } catch (e: any) {
-    logger.error("[REPORT_EMAIL_ERROR]", e)
+    logger.error({ err: e }, "[REPORT_EMAIL_ERROR]");
     res.status(500).json({ 
       Message: "Failed to send email", 
       Error: e.message,

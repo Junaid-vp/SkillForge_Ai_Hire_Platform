@@ -56,7 +56,7 @@ export const runCode = async (req: Request, res: Response) => {
 
     if (!submitRes.ok) {
       const errText = await submitRes.text().catch(() => submitRes.statusText)
-      logger.error("Judge0 submit error:", errText)
+      logger.error({ detail: errText }, "Judge0 submit error")
       return res.status(502).json({
         Message: `Judge0 submission failed (${submitRes.status})`,
         Error:   errText
@@ -115,7 +115,7 @@ export const runCode = async (req: Request, res: Response) => {
     })
 
   } catch (e: any) {
-    logger.error("runCode error:", e)
+    logger.error({ err: e }, "runCode error")
     return res.status(500).json({ Message: "Server Error", Error: e.message })
   }
 }
@@ -180,7 +180,7 @@ export const submitCodeAnswer = async (req: Request, res: Response) => {
     res.status(200).json({ Message: "Code solution submitted successfully", status: "success" })
  
   } catch (e: any) {
-    logger.error("submitCodeAnswer error:", e)
+    logger.error({ err: e }, "submitCodeAnswer error")
     res.status(500).json({ Message: "Server Error", Error: e.message })
   }
 }

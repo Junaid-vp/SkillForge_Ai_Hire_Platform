@@ -43,7 +43,7 @@ const isHr = (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    logger.error("HR auth middleware error", error);
+    logger.error({ err: error }, "HR auth middleware error");
     return res.status(401).json({ message: "Unauthorized" });
   }
 };

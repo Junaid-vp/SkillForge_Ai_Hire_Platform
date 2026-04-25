@@ -93,7 +93,7 @@ export const sendContactEmail = async (name: string, email: string, subject: str
       `
     });
   } catch (e) {
-    logger.info("Email sending error:", e);
+    logger.error({ err: e }, "Email sending error");
     throw e;
   }
 }

@@ -130,7 +130,7 @@ ${message.replace(/\n/g, "<br/>")}
 
     await transporter.sendMail(mailOptions);
   } catch (e) {
-    logger.error("Email sending error:", e);
+    logger.error({ err: e }, "Email sending error");
     throw e;
   }
 };

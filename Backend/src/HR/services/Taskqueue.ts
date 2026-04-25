@@ -87,11 +87,11 @@ export async function enqueueTaskEvaluation(data: TaskEvalJobData): Promise<void
     logger.info(`📤 Queued task evaluation — taskId: ${data.taskId}`)
 
   } catch (err: any) {
-    logger.error("RabbitMQ enqueue error:", err.message)
+    logger.error({ err: err.message }, "RabbitMQ enqueue error");
 
     // FALLBACK: if RabbitMQ is down, run inline so developer still gets result
     logger.warn("⚠️  Running evaluation inline (RabbitMQ unavailable)")
-    evaluateTaskWithAI(data).catch(e => logger.error("Inline eval error:", e.message))
+    evaluateTaskWithAI(data).catch(e => logger.error({ err: e.message }, "Inline eval error"))
   }
 }
 
@@ -120,7 +120,7 @@ export async function startTaskWorker(): Promise<void> {
         logger.info(`✅ Completed — taskId: ${data.taskId}`)
 
       } catch (err: any) {
-        logger.error(`❌ Failed — taskId: ${data?.taskId}`, err.message)
+        logger.error({ err: err.message, taskId: data?.taskId }, "Task processing failed")
 
         // nack = job failed, discard (don't requeue to avoid infinite loop)
         ch.nack(msg, false, false)
@@ -128,7 +128,7 @@ export async function startTaskWorker(): Promise<void> {
     }, { noAck: false })
 
   } catch (err: any) {
-    logger.error("RabbitMQ worker start error:", err.message)
+    logger.error({ err: err.message }, "RabbitMQ worker start error");
     logger.warn("⚠️  Worker not started — evaluations run inline as fallback")
   }
 }
@@ -333,7 +333,7 @@ STRICT RULES:
     logger.info(`📊 Evaluation saved — taskId: ${taskId} score: ${evaluation.overallScore}/10`)
 
   } catch (err: any) {
-    logger.error("evaluateTaskWithAI error:", err.message)
+    logger.error({ err: err.message }, "evaluateTaskWithAI error");
     throw err // re-throw so RabbitMQ calls nack()
   } finally {
     // Always delete temp ZIP file

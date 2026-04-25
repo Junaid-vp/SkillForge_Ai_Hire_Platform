@@ -56,7 +56,7 @@ export const assignTask = async (req: Request, res: Response) => {
     res.status(201).json({ Message: "Task Assigned Successfully", Status: "Success" })
 
   } catch (e: any) {
-    logger.error("assignTask error:", e)
+    logger.error({ err: e }, "assignTask error");
     res.status(500).json({ Message: "Server Error", Error: e.message })
   }
 }
@@ -364,6 +364,6 @@ export const submitTask = async (req: Request, res: Response) => {
 
 
 //   } catch (err: any) {
-//     logger.error("AI evaluation failed:", err.message)
+//     logger.error({ err: err.message }, "AI evaluation failed")
 //   }
 // }

@@ -69,6 +69,6 @@ export const createNotification = async (
 
     return notification;
   } catch (error) {
-    logger.error("Error creating notification:", error);
+    logger.error({ err: error }, "Error creating notification");
   }
 };

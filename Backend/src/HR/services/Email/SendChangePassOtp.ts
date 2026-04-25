@@ -103,7 +103,7 @@ export const sentChangePassOtp = async (email: string, otp: string) => {
   `
 });
   } catch (e) {
-    logger.info("Email sending error:", e);
+    logger.error({ err: e }, "Email sending error");
     throw e;
   }
 }

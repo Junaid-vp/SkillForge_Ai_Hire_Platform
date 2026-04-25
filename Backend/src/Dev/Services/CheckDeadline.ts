@@ -30,7 +30,7 @@ export const CheckTaskDeadLine = () => {
        logger.info(" Cron job Finished");
 
     } catch (e: any) {
-      logger.error("❌ Cron job error:", e.message);
+      logger.error({ err: e.message }, "❌ Cron job error");
     }
   });
 };

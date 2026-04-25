@@ -62,7 +62,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
       process.env.STRIPE_WEBHOOK_SECRET!
     )
     logger.info("🔥 Webhook hit")
-    logger.info("Event:", event.type)
+    logger.info({ eventType: event.type }, "Event processed")
     switch (event.type) {
 
       case "checkout.session.completed": {

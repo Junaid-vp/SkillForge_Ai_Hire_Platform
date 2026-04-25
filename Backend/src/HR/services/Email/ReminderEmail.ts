@@ -158,7 +158,7 @@ export const sendInterviewReminderEmail = async ({
       html,
     });
   } catch (e: any) {
-    logger.error("HR reminder email error:", e.message);
+    logger.error({ err: e.message }, "HR reminder email error");
   }
 };
 
@@ -328,6 +328,6 @@ export const sendDeveloperReminderEmail = async ({
       html,
     });
   } catch (e: any) {
-    logger.error("Developer reminder email error:", e.message);
+    logger.error({ err: e.message }, "Developer reminder email error");
   }
 };

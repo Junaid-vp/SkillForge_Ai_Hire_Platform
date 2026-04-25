@@ -35,7 +35,7 @@ export const sendResheduledTime = async (
     };
 
     logger.info("Sending Reschedule Email With Transporter...");
-    logger.info("To:", developerEmail);
+    logger.info({ developerEmail }, "Sending to recipient");
 
   const info =   await transporter.sendMail({
       from: `"${companyName ?? 'SkillForge AI'}" <${process.env.EMAIL_USER}>`,
@@ -226,11 +226,11 @@ export const sendResheduledTime = async (
 </html>`
     });
 
-    logger.info("Message sent:", info.messageId);
-logger.info("Response:", info.response);
+    logger.info({ messageId: info.messageId }, "Message sent");
+    logger.info({ response: info.response }, "Reschedule email response");
 
   } catch (e) {
-    logger.error('Failed to send reschedule email:', e);
+    logger.error({ err: e }, "Failed to send reschedule email");
     throw e;
   }
 };

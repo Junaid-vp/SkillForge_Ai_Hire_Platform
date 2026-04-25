@@ -41,7 +41,7 @@ export const sendUniqueCode = async (
     };
 
     logger.info("Sending Schedule Email With Transporter...");
-    logger.info("To:", developerEmail);
+    logger.info({ developerEmail }, "Sending to recipient");
 
     await transporter.sendMail({
       from: `"${companyName ?? "SkillForge AI"}" <${process.env.EMAIL_USER}>`,
@@ -183,7 +183,7 @@ export const sendUniqueCode = async (
 `,
     });
   } catch (e) {
-    logger.error("Email sending error:", e);
+    logger.error({ err: e }, "Email sending error");
     throw e;
   }
 };

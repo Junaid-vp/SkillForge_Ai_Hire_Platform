@@ -137,7 +137,7 @@ Return ONLY a valid JSON array of exactly 15 objects. No markdown. No extra text
     })
  
   } catch (e: any) {
-    logger.error("generateQuestions error:", e)
+    logger.error({ err: e }, "generateQuestions error");
     res.status(500).json({ Message: "Server Error", Error: e.message })
   }
 }
