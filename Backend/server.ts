@@ -6,7 +6,6 @@ import TaskLibaryRoute from "./src/HR/Routes/libarytask.js";
 import cors from "cors";
 import { startRedisServer } from "./src/HR/Lib/redis.js";
 import cookieParser from "cookie-parser";
-import { main } from "./prisma/seed.js";
 import ResumeRoute from "./src/HR/Routes/Resume.js";
 import DevAuthroute from "./src/Dev/Routes/AuthRoutes.js";
 import DevDashRoute from "./src/Dev/Routes/DevDashRoutes.js";
@@ -155,31 +154,6 @@ app.use(
 
 
 app.post('/api/subscription/webhook', express.raw({ type: "application/json" }), stripeWebhook)
-app.get("/api/dev/force-migrate-requirements", async (req, res) => {
-  try {
-    const { prisma } = await import("./src/HR/Lib/prisma.js");
-    console.log("🛠️  Running emergency SQL migration...");
-    await prisma.$executeRawUnsafe(`
-      ALTER TABLE "TaskLibrary" 
-      ALTER COLUMN "requirements" TYPE JSONB 
-      USING to_jsonb(requirements);
-    `);
-    // 2. Clear and Re-seed default tasks to fix their formatting
-    console.log("🌱 Re-seeding default tasks...");
-    await prisma.taskLibrary.deleteMany({ where: { isDefault: true } });
-    const { defaultTasks } = await import("./prisma/seed.js");
-    const tasksToSeed = defaultTasks.map((task: any) => ({
-      ...task,
-      requirements: Array.isArray(task.requirements) ? task.requirements.join("|") : task.requirements
-    }));
-    await prisma.taskLibrary.createMany({ data: tasksToSeed });
-
-    res.send("✅ Database column converted and default tasks re-seeded successfully!");
-  } catch (err: any) {
-    res.status(500).send("❌ Migration failed: " + err.message);
-  }
-});
-
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ limit: '500mb', extended: true }));
 app.use(cookieParser())
@@ -199,7 +173,6 @@ app.use("/api/report", ReportRoute)
 app.use("/api/system", SystemRoute)
 startCronJobs()
 startRedisServer()
-main()
 
 // ── Database Connection Check ─────────────────
 prisma.$connect()

@@ -727,13 +727,8 @@ export const defaultTasks = [{
     })
 
   
-    const tasksToSeed = defaultTasks.map(task => ({
-      ...task,
-      requirements: Array.isArray(task.requirements) ? task.requirements.join("|") : task.requirements
-    }));
-
     await prisma.taskLibrary.createMany({
-      data: tasksToSeed as any
+      data: defaultTasks as any
     })
 
     console.log(`✅ Successfully seeded ${defaultTasks.length} default tasks`)

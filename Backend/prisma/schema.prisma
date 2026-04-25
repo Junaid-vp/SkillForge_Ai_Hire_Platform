@@ -104,7 +104,7 @@ model TaskLibrary {
   hrId         String?
   title        String
   description  String
-  requirements String?
+  requirements Json
   category     String
   techStack    String
   difficulty   String
