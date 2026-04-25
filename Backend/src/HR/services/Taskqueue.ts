@@ -24,7 +24,7 @@ export interface TaskEvalJobData {
     taskLibrary: {
       title: string
       description: string
-      requirements: string
+      requirements: any
       techStack: string
     }
     developer: { developerName: string }
@@ -200,7 +200,7 @@ TASK DETAILS
 ══════════════════════════════════════
 Title:        ${task.taskLibrary.title}
 Description:  ${task.taskLibrary.description}
-Requirements: ${task.taskLibrary.requirements}
+Requirements: ${Array.isArray(task.taskLibrary.requirements) ? task.taskLibrary.requirements.join("\n") : task.taskLibrary.requirements}
 Tech Stack:   ${task.taskLibrary.techStack}
 
 ══════════════════════════════════════

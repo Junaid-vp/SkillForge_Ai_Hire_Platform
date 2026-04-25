@@ -26,7 +26,7 @@ interface Task {
   taskLibrary: {
     title: string;
     description: string;
-    requirements: string;
+    requirements: string[];
     difficulty: string;
     duration: number;
     category: string;
@@ -479,24 +479,14 @@ function DevDashBoard() {
                               Requirements
                             </p>
                             <div className="space-y-2">
-                              {(() => {
-                                let reqs: string[] = [];
-                                try {
-                                  const parsed = JSON.parse(task.taskLibrary.requirements);
-                                  reqs = Array.isArray(parsed) ? parsed : [parsed.toString()];
-                                } catch {
-                                  reqs = task.taskLibrary.requirements.split("|").filter(r => r.trim());
-                                }
-                                
-                                return reqs.map((req, i) => (
-                                  <div key={i} className="flex items-start gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-                                    <p className="text-xs text-gray-600 leading-relaxed">
-                                      {req.trim()}
-                                    </p>
-                                  </div>
-                                ));
-                              })()}
+                              {(task.taskLibrary.requirements || []).map((req: any, i: number) => (
+                                <div key={i} className="flex items-start gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+                                  <p className="text-xs text-gray-600 leading-relaxed">
+                                    {req.trim ? req.trim() : req}
+                                  </p>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}

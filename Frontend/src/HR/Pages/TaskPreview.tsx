@@ -24,7 +24,7 @@ interface TaskLibrary {
   id: string;
   title: string;
   description: string;
-  requirements: string;
+  requirements: string[];
   category: string;
   techStack: string;
   difficulty: string;
@@ -117,9 +117,7 @@ function TaskPreview() {
       }
     : null;
 
-  const requirements = data?.requirements
-    ? data.requirements.split("|").filter((r) => r.trim())
-    : [];
+  const requirements = data?.requirements || [];
 
   if (isLoading)
     return (

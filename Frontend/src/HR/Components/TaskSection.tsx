@@ -236,13 +236,7 @@ export function TaskSection({ task }: { task: Task | null }) {
   const difficultyStyle = DIFFICULTY_STYLES[lib.difficulty.toUpperCase()] ?? DIFFICULTY_STYLES.MEDIUM;
   const techStackList   = lib.techStack.split(",").map((t) => t.trim()).filter(Boolean);
 
-  let requirements: string[] = [];
-  try {
-    const parsed = JSON.parse(lib.requirements);
-    requirements = Array.isArray(parsed) ? parsed : [lib.requirements];
-  } catch {
-    requirements = lib.requirements.split("\n").filter((r) => r.trim() !== "");
-  }
+  const requirements = lib.requirements || [];
 
   // ── Submission state helpers ──────────────────────────────────────────────
   const isSubmitted = task.status === "SUBMITTED" || task.status === "EVALUATED";

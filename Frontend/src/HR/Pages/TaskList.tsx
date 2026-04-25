@@ -23,7 +23,7 @@ interface TaskLibrary {
   id: string;
   title: string;
   description: string;
-  requirements: string;
+  requirements: string[];
   category: string;
   techStack: string;
   difficulty: string;
@@ -255,10 +255,7 @@ function TaskLibraryList() {
         <div className="space-y-3">
           {data.map((task) => {
             const diff = getDifficultyStyle(task.difficulty);
-            let requirementCount = 0;
-            requirementCount = task.requirements
-              ? task.requirements.split("|").filter((r) => r.trim()).length
-              : 0;
+            const requirementCount = (task.requirements || []).length;
 
             return (
               <div

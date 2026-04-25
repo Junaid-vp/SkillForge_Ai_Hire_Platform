@@ -45,7 +45,7 @@ function TaskLibraryEdit() {
         const res = await api.get(`/tasklibary/specifictask/${id}`);
         const t = res.data.data;
 
-        let requirements = t.requirements.split("|").join("\n");
+        let requirements = Array.isArray(t.requirements) ? t.requirements.join("\n") : "";
 
         setFormValues({
           title: t.title,
@@ -83,8 +83,7 @@ function TaskLibraryEdit() {
         requirements: values.requirements
           .split("\n")
           .map((r) => r.trim())
-          .filter((r) => r)
-          .join("|"),
+          .filter((r) => r),
         category: values.category,
         techStack: values.techStack,
         difficulty: values.difficulty,
