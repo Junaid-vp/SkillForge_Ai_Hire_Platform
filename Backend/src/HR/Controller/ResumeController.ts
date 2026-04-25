@@ -21,7 +21,7 @@ export const parseResumeController = async (req: Request, res: Response) => {
     if (hr?.plan === "free" && (hr?.interviewCount ?? 0) >= (hr?.interviewLimit ?? 5)) {
       return res.status(403).json({
         Message: "Limit is Over Upgrade to pro",
-        upgrade: true,
+
       })
     }
 

@@ -53,7 +53,7 @@ export default function ContactPage() {
       {/* Hero */}
       <section className="max-w-3xl mx-auto px-6 pt-16 pb-12 text-center">
         <div className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full mb-6">
-          <Bolt size={10} className="text-blue-600" />
+          <MessageSquare size={10} className="text-blue-600" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-600">Contact Us</span>
         </div>
         <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-3">
