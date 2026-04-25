@@ -73,6 +73,6 @@ jobs:
               --env-file /home/ubuntu/.env \
               --restart unless-stopped \
               723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:$IMAGE_TAG
-            
-            # update database
-            docker exec skillforge-app npx prisma db push --accept-data-loss
+
+            # update database (Skipped temporarily to unblock deployment)
+            # docker exec skillforge-app npx prisma db push --accept-data-loss
