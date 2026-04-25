@@ -39,6 +39,8 @@ const PORT = process.env.PORT || 3005;
 const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").split(",").map(url => url.trim());
 const trustProxy = process.env.TRUST_PROXY ?? (process.env.NODE_ENV === "production" ? "1" : "0");
 
+logger.info({ allowedOrigins: frontendUrl }, "🚀 Server initializing with CORS origins");
+
 if (trustProxy !== "0") {
   app.set("trust proxy", trustProxy === "true" ? true : Number(trustProxy) || 1);
 }
@@ -115,12 +117,21 @@ app.use(helmet({
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      // or requests from our allowed frontendUrl array
-      if (!origin || frontendUrl.includes(origin)) {
-        callback(null, origin || false);
+      if (!origin) return callback(null, true);
+
+      // Normalize origin and allowed URLs by removing trailing slashes
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      const isAllowed = frontendUrl.some(url => url.replace(/\/$/, "") === normalizedOrigin);
+
+      if (isAllowed) {
+        callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        logger.warn({ 
+          origin: normalizedOrigin, 
+          allowed: frontendUrl,
+          message: "CORS request blocked: Origin not in allowed list" 
+        });
+        callback(null, false);
       }
     },
     credentials: true,
