@@ -3,6 +3,7 @@ import { Brain, Shield, Zap, Users, Target, CheckCircle2, Clock, ArrowLeft } fro
 import { Logo, Bolt } from "../HR/Components/Icons"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
+import SEOHead from '../Components/SEOHead'
 
 export default function AboutPage() {
   const navigate = useNavigate()
@@ -13,6 +14,12 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
+      <SEOHead
+        title="About SkillForge AI — AI-Powered Interview Platform"
+        description="Learn how SkillForge AI is revolutionizing developer hiring with AI-powered interviews, automated question generation, real-time code evaluation, and intelligent candidate assessment."
+        keywords="about SkillForge AI, AI interview company, automated hiring platform, developer assessment technology, AI recruitment tool"
+        path="/about"
+      />
 
       {/* Navbar */}
       <nav className="border-b border-gray-100 bg-white/90 backdrop-blur-md sticky top-0 z-50">

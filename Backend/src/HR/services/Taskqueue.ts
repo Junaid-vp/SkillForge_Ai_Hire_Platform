@@ -75,6 +75,12 @@ async function getChannel(): Promise<Channel> {
 // ══════════════════════════════════════════════
 export async function enqueueTaskEvaluation(data: TaskEvalJobData): Promise<void> {
   try {
+    if (process.env.DISABLE_BACKGROUND_JOBS === "true") {
+      logger.info("ℹ️ Running evaluation inline (asynchronously) because background workers are disabled.")
+      evaluateTaskWithAI(data).catch(e => logger.error({ err: e.message }, "Inline eval error"))
+      return
+    }
+
     const ch = await getChannel()
 
     // persistent: true = job survives RabbitMQ restart

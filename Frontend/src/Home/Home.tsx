@@ -2,6 +2,7 @@ import { Code, BarChart, Target, Users, Layout, MessageSquare, Zap, FileText, Ar
 import { Logo, Bolt } from '../HR/Components/Icons';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import SEOHead from '../Components/SEOHead';
 
 
 const howItWorks = [
@@ -113,6 +114,12 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans antialiased flex flex-col">
+      <SEOHead
+        title="SkillForge AI — AI-Powered Interview Platform for Smarter Hiring"
+        description="Automate your developer hiring with AI-powered live video interviews, AI question generation, code evaluation, malpractice detection, and detailed PDF reports. Hire smarter, faster."
+        keywords="AI interview platform, AI hiring tool, automated developer interviews, technical interview software, AI code evaluation, video interview platform, HR interview automation, developer assessment, AI malpractice detection, SkillForge AI"
+        path="/"
+      />
 
       {/* Navbar */}
       <nav className="border-b border-gray-100 bg-white/90 backdrop-blur-md sticky top-0 z-50">

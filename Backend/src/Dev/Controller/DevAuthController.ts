@@ -1,3 +1,4 @@
+import { logger } from "../../System/utils/logger.js";
 import { Request, Response } from "express";
 import { prisma } from "../../HR/Lib/prisma.js";
 import { otpGenerate } from "../Services/OtpGenerator.js";
@@ -75,12 +76,16 @@ export const DevLoginController = async (req: Request, res: Response) => {
 
     await redis.del(`otp:${email}`)
     const otp = otpGenerate();
-    await sentOTPtoDev(email, otp);
     await redis.set(`otp:${email}`, otp, { EX: 300 });
 
     res.status(200).json({
       Message: "OTP sent to email",
       Status: "Success"
+    });
+
+    // Fire email in background
+    sentOTPtoDev(email, otp).catch((err) => {
+      logger.error({ err }, "Background Dev OTP email failed");
     });
 
   } catch (e: any) {
@@ -146,13 +151,16 @@ export const DevOtpResend = async (req: Request, res: Response) => {
 
     const otp = otpGenerate();
 
-    await sentOTPtoDev(email, otp);
-
     await redis.set(`otp:${email}`, otp, { EX: 300 });
 
     res.status(200).json({
       Message: "OTP Re-sent to email",
       Status: "Success"
+    });
+
+    // Fire email in background
+    sentOTPtoDev(email, otp).catch((err) => {
+      logger.error({ err }, "Background Dev OTP resend failed");
     });
 
   } catch (e: any) {

@@ -4,6 +4,7 @@ import { Mail, MessageSquare, Clock, Send, Loader2, CheckCircle2, ArrowLeft } fr
 import { Logo } from "../HR/Components/Icons"
 import { useNavigate } from "react-router-dom"
 import { api } from "../Api/Axios"
+import SEOHead from '../Components/SEOHead'
 
 export default function ContactPage() {
   const navigate = useNavigate()
@@ -36,6 +37,12 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
+      <SEOHead
+        title="Contact Us"
+        description="Get in touch with SkillForge AI team. Have questions about our AI interview platform? We're here to help you streamline your developer hiring process."
+        keywords="contact SkillForge AI, AI interview support, hiring platform help"
+        path="/contact"
+      />
 
       {/* Navbar */}
       <nav className="border-b border-gray-100 bg-white/90 backdrop-blur-md sticky top-0 z-50">

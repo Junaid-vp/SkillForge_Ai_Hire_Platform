@@ -77,8 +77,6 @@ export const HrloginController = async (req: Request, res: Response) => {
 
     const otp : string = generateOTP();
 
-    await sentOTPemail(email, otp);
-
     await redis.set(`otp:${email}`, otp, {
       EX: 300,
     });
@@ -86,6 +84,11 @@ export const HrloginController = async (req: Request, res: Response) => {
     res.json({
       Message: "Otp Sent To Email",
       Status: "Success",
+    });
+
+    // Fire email in background — don't block the HTTP response
+    sentOTPemail(email, otp).catch((err) => {
+      logger.error({ err }, "Background OTP email failed");
     });
   } catch (e: any) {
     res.json({
@@ -142,7 +145,6 @@ export const otpResend = async (req: Request, res: Response) => {
     const { email } = req.body;
     await redis.del(`otp:${email}`)
     const otp: string = generateOTP();
-    await sentOTPemail(email, otp);
     await redis.set(`otp:${email}`, otp, {
       EX: 300,
     });
@@ -150,6 +152,11 @@ export const otpResend = async (req: Request, res: Response) => {
     res.json({
       Message: "Otp Sent To Email",
       Status: "Success",
+    });
+
+    // Fire email in background
+    sentOTPemail(email, otp).catch((err) => {
+      logger.error({ err }, "Background OTP resend email failed");
     });
   } catch (e: any) {
     logger.info(e.message);

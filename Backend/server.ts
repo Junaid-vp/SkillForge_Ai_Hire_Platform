@@ -1,3 +1,4 @@
+console.log("🚀 Starting Server...");
 import express, { Application } from "express";
 import dotenv from "dotenv";
 import AuthRoute from "./src/HR/Routes/AuthRoute.js";
@@ -185,15 +186,19 @@ app.get("/api/dev/reverse-migrate-requirements", async (req, res) => {
   }
 });
 
-startCronJobs()
+if (process.env.DISABLE_BACKGROUND_JOBS === "true") {
+  logger.info("⏸️ Background cron jobs and RabbitMQ task worker are disabled via DISABLE_BACKGROUND_JOBS environment variable.");
+} else {
+  startCronJobs();
+  startTaskWorker();
+}
 startRedisServer()
 
 // ── Database Connection Check ─────────────────
 prisma.$connect()
   .then(() => logger.info("✅ Database connected successfully within Docker"))
-  .catch((err) => logger.error({ err }, "❌ Database connection failed within Docker"));
+  .catch((err: any) => logger.error({ err }, "❌ Database connection failed within Docker"));
 
-startTaskWorker()
 
 // ── Health Check ─────────────────────────────
 app.get("/health", (req, res) => {

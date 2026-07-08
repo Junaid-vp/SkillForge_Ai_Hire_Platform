@@ -88,6 +88,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3005
+      DISABLE_BACKGROUND_JOBS: ${DISABLE_BACKGROUND_JOBS:-true}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@host.docker.internal:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672

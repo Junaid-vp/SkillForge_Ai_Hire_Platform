@@ -717,19 +717,45 @@ export const defaultTasks = [{
 },]
 
 
- export const main = async () => {
+export const main = async () => {
   try {
     console.log("Seeding default tasks...")
 
-    
-    await prisma.taskLibrary.deleteMany({
-      where: { isDefault: true }
-    })
+    for (const task of defaultTasks) {
+      const requirementsStr = Array.isArray(task.requirements) ? task.requirements.join("|") : task.requirements;
 
-  
-    await prisma.taskLibrary.createMany({
-      data: defaultTasks as any
-    })
+      const existing = await prisma.taskLibrary.findFirst({
+        where: { title: task.title }
+      });
+
+      if (existing) {
+        await prisma.taskLibrary.update({
+          where: { id: existing.id },
+          data: {
+            description: task.description,
+            requirements: requirementsStr,
+            category: task.category,
+            techStack: task.techStack,
+            difficulty: task.difficulty,
+            duration: task.duration,
+            isDefault: true
+          }
+        });
+      } else {
+        await prisma.taskLibrary.create({
+          data: {
+            title: task.title,
+            description: task.description,
+            requirements: requirementsStr,
+            category: task.category,
+            techStack: task.techStack,
+            difficulty: task.difficulty,
+            duration: task.duration,
+            isDefault: true
+          }
+        });
+      }
+    }
 
     console.log(`✅ Successfully seeded ${defaultTasks.length} default tasks`)
 
@@ -740,6 +766,5 @@ export const defaultTasks = [{
     await prisma.$disconnect()
   }
 }
-
 
 main();

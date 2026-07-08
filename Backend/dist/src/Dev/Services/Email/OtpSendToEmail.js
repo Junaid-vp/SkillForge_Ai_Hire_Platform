@@ -3,13 +3,17 @@ import nodemailer from "nodemailer";
 import dotenv from 'dotenv';
 dotenv.config();
 export const sentOTPtoDev = async (email, otp) => {
+    logger.info(`[Developer OTP Verification] Code for ${email} is: ${otp}`);
     try {
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
-            }
+            },
+            connectionTimeout: 5000,
+            greetingTimeout: 5000,
+            socketTimeout: 5000
         });
         await transporter.sendMail({
             from: `"SkillForge AI" <${process.env.EMAIL_USER}>`,

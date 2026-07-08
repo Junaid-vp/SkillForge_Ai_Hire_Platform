@@ -1,6 +1,7 @@
 import { Briefcase, Code, User, Sparkles, ArrowRight, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Logo } from '../HR/Components/Icons';
+import SEOHead from '../Components/SEOHead';
 
 const roles = [
   {
@@ -44,6 +45,12 @@ function RollSelection() {
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased text-gray-900 flex flex-col">
+      <SEOHead
+        title="Choose Your Role"
+        description="Select your role on SkillForge AI: sign in or sign up as an HR/Employer to recruit, or log in as a developer to participate in technical interviews."
+        keywords="SkillForge roles, HR sign up, Developer sign in, candidate login"
+        path="/rollselection"
+      />
 
       {/* Navbar */}
       <nav className="border-b border-gray-100 bg-white/90 backdrop-blur-md sticky top-0 z-50">

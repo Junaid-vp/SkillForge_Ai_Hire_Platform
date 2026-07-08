@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { api } from '../../Api/Axios';
 import OTPModal from '../Components/Mod/OtpModal';
 import { LoginValidation } from '../Validation/LoginValidation';
+import SEOHead from '../../Components/SEOHead';
 
 const initialValues = {
   email: "",
@@ -90,6 +91,12 @@ function Login() {
 
   return (
     <>
+      <SEOHead
+        title="HR Login"
+        description="Sign in to your SkillForge AI employer account. Manage AI-powered interviews, evaluate developer candidates, and streamline your hiring process."
+        keywords="SkillForge login, HR login, employer sign in, AI interview dashboard"
+        path="/login"
+      />
       <OTPModal
         isOpen={showOTP}
         onConfirm={handleOTPConfirm}

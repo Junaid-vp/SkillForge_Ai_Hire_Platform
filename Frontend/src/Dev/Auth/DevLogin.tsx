@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { api } from "../../Api/Axios";
 import DevOtpModal from "../Components/DevOtpModal";
 import { DevLoginValidation } from "../Validation/DevLoginValidation";
+import SEOHead from "../../Components/SEOHead";
 
 const initialValues = {
   email: "",
@@ -135,6 +136,12 @@ function DevLogin() {
 
   return (
     <>
+      <SEOHead
+        title="Developer Login — Access Interview Room"
+        description="Sign in to your SkillForge AI developer panel or join a scheduled live technical interview via your magic link."
+        keywords="developer login, technical interview room login, SkillForge candidate login"
+        path="/devLogin"
+      />
       <DevOtpModal
         isOpen={showOTP}
         onConfirm={handleOTPConfirm}

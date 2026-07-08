@@ -7,6 +7,7 @@ import {  Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Logo, Bolt } from '../Components/Icons';
 import { api } from '../../Api/Axios';
 import { SignUPValidation } from '../Validation/SignUpValidation';
+import SEOHead from '../../Components/SEOHead';
 
 interface HrDetails {
   name: string;
@@ -69,6 +70,12 @@ function SignUp() {
 
   return (
     <div className="h-screen overflow-hidden bg-gray-50 font-sans antialiased text-gray-900 flex flex-col">
+      <SEOHead
+        title="Create Account — Start Hiring with AI"
+        description="Sign up for SkillForge AI and start automating your developer interviews. AI-powered question generation, live code evaluation, and detailed hiring reports."
+        keywords="SkillForge signup, create employer account, AI interview platform registration, hire developers with AI"
+        path="/signup"
+      />
 
       {/* Navbar */}
       <nav className="border-b border-gray-100 bg-white/90 backdrop-blur-md z-50 shrink-0">

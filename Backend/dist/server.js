@@ -155,13 +155,18 @@ app.get("/api/dev/reverse-migrate-requirements", async (req, res) => {
         res.status(500).send("❌ Migration failed: " + error.message);
     }
 });
-startCronJobs();
+if (process.env.DISABLE_BACKGROUND_JOBS === "true") {
+    logger.info("⏸️ Background cron jobs and RabbitMQ task worker are disabled via DISABLE_BACKGROUND_JOBS environment variable.");
+}
+else {
+    startCronJobs();
+    startTaskWorker();
+}
 startRedisServer();
 // ── Database Connection Check ─────────────────
 prisma.$connect()
     .then(() => logger.info("✅ Database connected successfully within Docker"))
     .catch((err) => logger.error({ err }, "❌ Database connection failed within Docker"));
-startTaskWorker();
 // ── Health Check ─────────────────────────────
 app.get("/health", (req, res) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });

@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react"
 import { Logo, Bolt } from "../HR/Components/Icons"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
+import SEOHead from '../Components/SEOHead'
 
 const LAST_UPDATED = "April 2026"
 const EMAIL        = "skillforgeoffical@gmail.com"
@@ -16,6 +17,12 @@ export default function PrivacyPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
+      <SEOHead
+        title="Privacy Policy"
+        description="SkillForge AI privacy policy. Learn how we collect, use, and protect your data when using our AI-powered interview platform."
+        keywords="SkillForge AI privacy policy, data protection, interview data security"
+        path="/privacy"
+      />
 
       {/* Navbar */}
       <nav className="border-b border-gray-100 bg-white/90 backdrop-blur-md sticky top-0 z-50">

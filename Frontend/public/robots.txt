@@ -1,0 +1,12 @@
+# SkillForge AI — robots.txt
+# https://skillforge-ai.com
+
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /devDashboard/
+Disallow: /DevInterviewRoom/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://skillforge-ai.com/sitemap.xml
