@@ -32,8 +32,9 @@ jobs:
 
         run: |
           cd Backend
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
 
   deploy:
@@ -64,22 +65,13 @@ jobs:
               docker login --username AWS --password-stdin \
               312957453068.dkr.ecr.ap-south-1.amazonaws.com
 
-            # Stop old container FIRST to free up RAM
-            docker rm -f skillforge_backend || true
+            cd /home/ubuntu/app
 
-            # Free up maximum disk space before downloading
-            docker system prune -af
+            # Pull latest backend image
+            docker compose pull backend
 
-            # Pull new image
-            docker pull 312957453068.dkr.ecr.ap-south-1.amazonaws.com/skillforge-backend:$IMAGE_TAG
-
-            # Start new container
-            docker run -d \
-              --name skillforge_backend \
-              -p 3005:3005 \
-              --env-file /home/ubuntu/.env \
-              --restart unless-stopped \
-              312957453068.dkr.ecr.ap-south-1.amazonaws.com/skillforge-backend:$IMAGE_TAG
+            # Recreate container with new image
+            docker compose up -d --force-recreate backend
 
             # Wait and verify it started
             sleep 5
