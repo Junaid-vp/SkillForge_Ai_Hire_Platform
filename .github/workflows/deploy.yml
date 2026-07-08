@@ -62,17 +62,23 @@ jobs:
             --port 22 \
             --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
+      - name: Get ECR Login Token
+        id: ecr-token
+        run: |
+          echo "token=$(aws ecr get-login-password --region ap-south-1)" >> $GITHUB_OUTPUT
+
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
 
         env:
           IMAGE_TAG: ${{ github.sha }}
+          ECR_TOKEN: ${{ steps.ecr-token.outputs.token }}
 
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: IMAGE_TAG
+          envs: IMAGE_TAG,ECR_TOKEN
           timeout: 60s
           command_timeout: 20m
           script_stop: true
@@ -80,10 +86,8 @@ jobs:
           script: |
             set -e
 
-            # Login to ECR
-            aws ecr get-login-password --region ap-south-1 | \
-              docker login --username AWS --password-stdin \
-              312957453068.dkr.ecr.ap-south-1.amazonaws.com
+            # Login to ECR using forwarded token
+            echo "$ECR_TOKEN" | docker login --username AWS --password-stdin 312957453068.dkr.ecr.ap-south-1.amazonaws.com
 
             cd /home/ubuntu/app
 
