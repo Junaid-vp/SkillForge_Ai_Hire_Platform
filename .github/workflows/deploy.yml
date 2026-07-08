@@ -27,7 +27,7 @@ jobs:
       - name: Build, Tag, and Push Image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: production/skillforgeai
+          ECR_REPOSITORY: skillforge-backend
           IMAGE_TAG: ${{ github.sha }}
 
         run: |
@@ -62,27 +62,27 @@ jobs:
             # Login to ECR
             aws ecr get-login-password --region ap-south-1 | \
               docker login --username AWS --password-stdin \
-              723468358503.dkr.ecr.ap-south-1.amazonaws.com
+              312957453068.dkr.ecr.ap-south-1.amazonaws.com
 
             # Stop old container FIRST to free up RAM
-            docker rm -f skillforge-app || true
+            docker rm -f skillforge_backend || true
 
             # Free up maximum disk space before downloading
             docker system prune -af
 
             # Pull new image
-            docker pull 723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:$IMAGE_TAG
+            docker pull 312957453068.dkr.ecr.ap-south-1.amazonaws.com/skillforge-backend:$IMAGE_TAG
 
             # Start new container
             docker run -d \
-              --name skillforge-app \
+              --name skillforge_backend \
               -p 3005:3005 \
               --env-file /home/ubuntu/.env \
               --restart unless-stopped \
-              723468358503.dkr.ecr.ap-south-1.amazonaws.com/production/skillforgeai:$IMAGE_TAG
+              312957453068.dkr.ecr.ap-south-1.amazonaws.com/skillforge-backend:$IMAGE_TAG
 
             # Wait and verify it started
             sleep 5
-            docker ps | grep skillforge-app
+            docker ps | grep skillforge_backend
 
             echo "✅ Deployment complete!"
